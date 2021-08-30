@@ -4,78 +4,76 @@ XLua Module, required by xlua_utils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
+--[[ Test variable table for the menu items ]]
+local MenuVarTest = {0,false}
 --[[
 
-MENU LABELS, ITEMS AND ACTIONS
+XLUA MENU
 
 ]]
-local Menu_Items = {" Test 1","[Separator]","Test 2"}  -- Menu entries, index starts at 1
---[[ Variables for FFI ]]
-local Menu_ID = nil
-local Menu_Pointer = ffi.new("const char")
---[[
-
-INITIALIZATION
-
-]]
---[[ Menu item callback wrapper ]]
-local function CallbackWrapper(itemref,intable)
-    for i=2,#intable do
-        if itemref == intable[i] then
-            MenuCallbacks(i)
-            MenuWatchdog(intable,i)
+--[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
+local XluaUtils_Menu_Items = {
+"XLua Utils",
+"Persistence Config File",
+}
+--[[ Menu variables for FFI ]]
+--local XluaUtils_Menu_ID = nil
+XluaUtils_Menu_ID = nil     -- GLOBAL!
+XluaUtils_Menu_Index = nil  --  GLOBAL!
+local XluaUtils_Menu_Pointer = ffi.new("const char")
+--[[ Menu callbacks. The functions to run or actions to do when picking any non-title and nonseparator item from the table above ]]
+function XluaUtils_Menu_Callbacks(itemref)
+    for i=2,#XluaUtils_Menu_Items do
+        if itemref == XluaUtils_Menu_Items[i] then
+            if i == 2 then
+                if XluaPersist_HasConfig == 0 then
+                    Persistence_Config_Write(Xlua_Utils_Path.."persistence.cfg")
+                    Persistence_Menu_Init(XluaUtils_Menu_ID)
+                    XluaPersist_HasConfig = 1
+                elseif XluaPersist_HasConfig == 1 then
+                    Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+                end
+            end
+            if i == 3 then
+                if MenuVarTest[2] == false then MenuVarTest[2] = true else MenuVarTest[2] = false end
+            end
+            XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,i)
         end
     end
 end
---[[
-
-MENU INITALIZATION AND CLEANUP
-
-]]
---[[ Menu initialization ]]
-function Menu_Init(intable)
+--[[ Menu watchdog that is used to check an item or change its prefix ]]
+function XluaUtils_Menu_Watchdog(intable,index)
+    if index == 2 then
+        if XluaPersist_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Generate",intable)
+        elseif XluaPersist_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload",intable) end
+    end
+    --if index == 3 then
+    --    if MenuVarTest[2] == false then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
+    --    elseif MenuVarTest[2] == true then Menu_CheckItem(XluaUtils_Menu_ID,index,"Activate") end
+    --end
+end
+--[[ Menu initialization routine ]]
+function XluaUtils_Menu_Init()
     local Menu_Indices = {}
-    for i=2,#intable do Menu_Indices[i] = 0 end
+    for i=2,#XluaUtils_Menu_Items do Menu_Indices[i] = 0 end
     if XPLM ~= nil then
-        Menu_ID = XPLM.XPLMCreateMenu(intable[1],nil,0, function(inMenuRef,inItemRef) CallbackWrapper(inItemRef,intable) end,ffi.cast("void *",Menu_Pointer))
-        for i=2,#intable do
-            if intable[i] ~= "[Separator]" then
-                Menu_Pointer = intable[i]
-                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Menu_ID,intable[i],ffi.cast("void *",Menu_Pointer),1)
+        XluaUtils_Menu_Index = XPLM.XPLMAppendMenuItem(XPLM.XPLMFindAircraftMenu(),XluaUtils_Menu_Items[1],ffi.cast("void *","None"),1)
+        XluaUtils_Menu_ID = XPLM.XPLMCreateMenu(XluaUtils_Menu_Items[1],XPLM.XPLMFindAircraftMenu(),XluaUtils_Menu_Index, function(inMenuRef,inItemRef) XluaUtils_Menu_Callbacks(inItemRef) end,ffi.cast("void *",XluaUtils_Menu_Pointer))
+        for i=2,#XluaUtils_Menu_Items do
+            if XluaUtils_Menu_Items[i] ~= "[Separator]" then
+                XluaUtils_Menu_Pointer = XluaUtils_Menu_Items[i]
+                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(XluaUtils_Menu_ID,XluaUtils_Menu_Items[i],ffi.cast("void *",XluaUtils_Menu_Pointer),1)
             else
-                XPLM.XPLMAppendMenuSeparator(Menu_ID)
+                XPLM.XPLMAppendMenuSeparator(XluaUtils_Menu_ID)
             end
         end
-        for i=2,#intable do
-            if intable[i] ~= "[Separator]" then
-                MenuWatchdog(intable,i)
+        for i=2,#XluaUtils_Menu_Items do
+            if XluaUtils_Menu_Items[i] ~= "[Separator]" then
+                XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,i)
             end
         end
-        LogOutput(intable[1].." menu initialized!")
+        LogOutput(XluaUtils_Menu_Items[1].." menu initialized!")
     end
 end
---[[ Menu cleanup upon script reload or session exit ]]
-function Menu_CleanUp()
-   XPLM.XPLMClearAllMenuItems(XPLM.XPLMFindPluginsMenu())
-   --XPLM.XPLMDestroyMenu(Menu_ID)
-end
---[[
 
-MENU MANIPULATION WRAPPERS
-
-]]
---[[ Menu item name change ]]
-function Menu_ChangeItemPrefix(intable,index,prefix)
-    XPLM.XPLMSetMenuItemName(Menu_ID,index-2,prefix.." "..intable[index],1)
-end
---[[ Menu item check status change ]]
-function Menu_CheckItem(index,state)
-    index = index - 2
-    local out = ffi.new("XPLMMenuCheck[1]")
-    XPLM.XPLMCheckMenuItemState(Menu_ID,index-1,ffi.cast("XPLMMenuCheck *",out))
-    if tonumber(out[0]) == 0 then XPLM.XPLMCheckMenuItem(Menu_ID,index,1) end
-    if state == "Activate" and tonumber(out[0]) ~= 2 then XPLM.XPLMCheckMenuItem(Menu_ID,index,2)
-    elseif state == "Deactivate" and tonumber(out[0]) ~= 1 then XPLM.XPLMCheckMenuItem(Menu_ID,index,1)
-    end
-end
 --PrintToConsole("Successful parse of xlua_utils_menu.lua")
