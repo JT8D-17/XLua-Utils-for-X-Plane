@@ -14,7 +14,7 @@ XLUA MENU
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local XluaUtils_Menu_Items = {
 "XLua Utils",
-"Persistence Config File",
+"Persistence Files",
 }
 --[[ Menu variables for FFI ]]
 --local XluaUtils_Menu_ID = nil
@@ -28,10 +28,15 @@ function XluaUtils_Menu_Callbacks(itemref)
             if i == 2 then
                 if XluaPersist_HasConfig == 0 then
                     Persistence_Config_Write(Xlua_Utils_Path.."persistence.cfg")
+                    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
+                    Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+                    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
                     Persistence_Menu_Init(XluaUtils_Menu_ID)
-                    XluaPersist_HasConfig = 1
                 elseif XluaPersist_HasConfig == 1 then
                     Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+                    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
+                    Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
+                    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
                 end
             end
             if i == 3 then
@@ -44,7 +49,7 @@ end
 --[[ Menu watchdog that is used to check an item or change its prefix ]]
 function XluaUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if XluaPersist_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Generate",intable)
+        if XluaPersist_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize",intable)
         elseif XluaPersist_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload",intable) end
     end
     --if index == 3 then

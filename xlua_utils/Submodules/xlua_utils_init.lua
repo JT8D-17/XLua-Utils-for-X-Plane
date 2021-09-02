@@ -41,10 +41,19 @@ void XPLMCheckMenuItem(XPLMMenuID inMenu,int index,XPLMMenuCheck inCheck);
 void XPLMCheckMenuItemState(XPLMMenuID inMenu,int index,XPLMMenuCheck *outCheck);
 void XPLMEnableMenuItem(XPLMMenuID inMenu,int index,int enabled);      
 void XPLMRemoveMenuItem(XPLMMenuID inMenu,int inIndex);
-/* XPLMDataAccess - inop because they're dumb cunts and can not be accessed */
-/* typedef void *XPLMDataRef;
+/* XPLMDataAccess */
+typedef void *XPLMDataRef;
+typedef int XPLMDataTypeID;
+XPLMDataRef XPLMFindDataRef(const char *inDataRefName);
+XPLMDataTypeID XPLMGetDataRefTypes(XPLMDataRef inDataRef);
+int XPLMCanWriteDataRef(XPLMDataRef inDataRef);
+int XPLMGetDatai(XPLMDataRef inDataRef);
+float XPLMGetDataf(XPLMDataRef inDataRef);
+double XPLMGetDatad(XPLMDataRef inDataRef);
+int XPLMGetDatavi(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
+int XPLMGetDatavf(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
 int XPLMGetDatab(XPLMDataRef inDataRef,void *outValue,int inOffset,int inMaxBytes);
-void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength); */
+/* void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength); */
 /* XPLMPlanes */
 void XPLMGetNthAircraftModel(int inIndex,char *outFileName,char *outPath);
 /* XPLMDefs */
@@ -134,6 +143,10 @@ function SplitString(input,delim)
 	for i in string.gmatch(input,delim) do table.insert(output,i) end
 	--PrintToConsole("Line splitting out: "..table.concat(output,",",1,#output))
 	return output
+end
+--[[ Trims whitespace from the end of a string - credit: https://snippets.bentasker.co.uk/page-1705231409-Trim-whitespace-from-end-of-string-LUA.html ]]
+function TrimEndWhitespace(s)
+  return s:match'^(.*%S)%s*$'
 end
 --[[
 

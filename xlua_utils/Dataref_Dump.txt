@@ -1,0 +1,6 @@
+sim/cockpit/electrical/battery_array_on
+my/fake/dataref
+sim/aircraft/view/acf_livery_path
+sim/flightmodel/controls/ail1_def
+enhanced_cloudscapes/cloud_map_scale
+enhanced_cloudscapes/cirrus/detail_noise_ratios 
