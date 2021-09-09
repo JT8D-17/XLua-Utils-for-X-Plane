@@ -48,10 +48,15 @@ XPLMDataRef XPLMFindDataRef(const char *inDataRefName);
 XPLMDataTypeID XPLMGetDataRefTypes(XPLMDataRef inDataRef);
 int XPLMCanWriteDataRef(XPLMDataRef inDataRef);
 int XPLMGetDatai(XPLMDataRef inDataRef);
+void XPLMSetDatai(XPLMDataRef inDataRef,int inValue);
 float XPLMGetDataf(XPLMDataRef inDataRef);
+void XPLMSetDataf(XPLMDataRef inDataRef,float inValue);
 double XPLMGetDatad(XPLMDataRef inDataRef);
+void XPLMSetDatad(XPLMDataRef inDataRef,double inValue);
 int XPLMGetDatavi(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
+void XPLMSetDatavi(XPLMDataRef inDataRef,int *inValues,int inoffset,int inCount);
 int XPLMGetDatavf(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
+void XPLMSetDatavf(XPLMDataRef inDataRef,float *inValues,int inoffset,int inCount);
 int XPLMGetDatab(XPLMDataRef inDataRef,void *outValue,int inOffset,int inMaxBytes);
 /* void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength); */
 /* XPLMPlanes */

@@ -9,6 +9,8 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 VARIABLES
 
 ]]
+--[[ ]]
+Persistence_SaveFile = Xlua_Utils_Path.."persistence_save.txt"
 --[[ Table that contains the configuration Variables for the persistence module ]]
 Persistence_Config_Vars = {
 {"CONFIG"},
@@ -88,7 +90,6 @@ function Persistence_DrefFile_Read(inputfile)
         local temptable = { }
         local i=0
         for line in file:lines() do
-            -- Find lines matching first subtable of output table
             if string.match(line,"^[^#]") then
                 local splitline = SplitString(line,"([^:]+)")
                 splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
@@ -126,8 +127,10 @@ function Persistence_DrefFile_Read(inputfile)
                                 for i = 0,(size-1) do
                                    Persistence_Datarefs[#Persistence_Datarefs][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
                                 end                                 
-                            end                           
-                            PrintToConsole(Persistence_Datarefs[#Persistence_Datarefs][1].."; type "..Persistence_Datarefs[#Persistence_Datarefs][2].."; values: "..table.concat(Persistence_Datarefs[#Persistence_Datarefs][3],","))
+                            end
+                            Persistence_Datarefs[#Persistence_Datarefs][4] = dataref -- Store handle for faster access
+                            i=i+1
+                            --PrintToConsole("Found "..Persistence_Datarefs[#Persistence_Datarefs][1].." (Type: "..Persistence_Datarefs[#Persistence_Datarefs][2].."; Values: "..table.concat(Persistence_Datarefs[#Persistence_Datarefs][3],",").."; Handle "..tostring(Persistence_Datarefs[#Persistence_Datarefs][4])..")")
                         end
                     end
                 end
@@ -150,6 +153,37 @@ function Persistence_DrefFile_Read(inputfile)
         LogOutput("FILE NOT FOUND: Persistence Dataref File")
     end
 end
+--[[ Persistence dataref save file read ]]
+function Persistence_SaveFile_Read(inputfile,outputtable)
+    local file = io.open(inputfile, "r") -- Check if file exists
+    local i=0
+    if file then
+        LogOutput("FILE READ START: Persistence Save File")
+        for line in file:lines() do
+            if string.match(line,"^[^#]") then
+                local splitline = SplitString(line,"([^:]+)")
+                --splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
+                for j=2,#outputtable do
+                    if splitline[1] == outputtable[j][1] then
+                        local splitvalues = SplitString(splitline[2],"([^,]+)")
+                        PrintToConsole(table.concat(splitvalues,","))
+                        for k=1,#splitvalues do
+                            outputtable[j][3][k] = tonumber(splitvalues[k])
+                            PrintToConsole(type(outputtable[j][3][k]))
+                        end
+                        --PrintToConsole(table.concat(outputtable[j][3],","))
+                        i=i+1
+                    end
+                end
+                
+            end
+        end
+        file:close()
+        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+    else
+        LogOutput("FILE NOT FOUND: Persistence Save File")
+    end    
+end
 --[[ Persistence dataref file write ]]
 function Persistence_DrefFile_Write(outputfile)
     LogOutput("FILE WRITE START: Persistence Dataref File")
@@ -169,6 +203,20 @@ function Persistence_DrefFile_Write(outputfile)
     file:write("#\n")
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Dataref File") else LogOutput("FILE WRITE ERROR: Persistence Dataref File") end
 	file:close()
+end
+--[[ Persistence dataref save file write ]]
+function Persistence_SaveFile_Write(outputfile,inputtable)
+    LogOutput("FILE WRITE START: Persistence Save File")
+    local file = io.open(outputfile, "w")    
+    file:write("# Xlua Persistence save file generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
+    file:write("#\n")
+    file:write("# This file stores the values of datarefs that are tracked by the persistence module.\n")
+    file:write("#\n")
+    for i=2,#inputtable do
+        file:write(inputtable[i][1]..":"..table.concat(inputtable[i][3],",").."\n")
+    end
+    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
+	file:close()    
 end
 --[[ Accessor: Get value from a subtable ]]
 function Persistence_ValGet(item)
@@ -209,6 +257,14 @@ Persistence_Menu_Pointer = ffi.new("const char")
 function Persistence_Menu_Callbacks(itemref)
     for i=2,#Persistence_Menu_Items do
         if itemref == Persistence_Menu_Items[i] then
+            if i == 2 then
+                Dataref_Read("All")
+                Persistence_SaveFile_Write(Xlua_Utils_Path.."persistence_save.txt",Persistence_Datarefs)
+            end
+            if i == 3 then
+                Persistence_SaveFile_Read(Xlua_Utils_Path.."persistence_save.txt",Persistence_Datarefs)
+                Dataref_Write("All")
+            end
             if i == 5 then
                 if Persistence_ValGet("Autosave") == 0 then Persistence_ValSet("Autosave",1) else Persistence_ValSet("Autosave",0) end
                 Persistence_Config_Write(Xlua_Utils_Path.."persistence.cfg")
@@ -258,7 +314,7 @@ function Persistence_Menu_Watchdog(intable,index)
     end
     if index == 12 then
         if XluaPersist_HasDrefFile == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Generate Dataref File Template",intable)
-        elseif XluaPersist_HasDrefFile == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Drefs Handled",intable) end
+        elseif XluaPersist_HasDrefFile == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Monitored Datarefs: "..(#Persistence_Datarefs-1),intable) end
     end
 end
 

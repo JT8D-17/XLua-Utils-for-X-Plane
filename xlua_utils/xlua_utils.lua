@@ -18,7 +18,7 @@ ACF_Filename = "" -- KEEP EMPTY
 Xlua_Utils_Path = "" -- KEEP EMPTY
 
 XluaPersist_HasConfig = 0
-
+XluaPersist_HasDrefFile = 0
 
 --[[
 
@@ -28,6 +28,7 @@ SUBMODULES
 ffi = require ("ffi") -- LuaJIT FFI module
 dofile("Submodules/xlua_utils_init.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
 --dofile("Submodules/Persistence_Menu.lua")  -- DO NOT CHANGE ORDER
 
@@ -56,8 +57,10 @@ function flight_start()
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
     Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
     XluaUtils_Menu_Init()
     if XluaPersist_HasConfig == 1 then Persistence_Menu_Init(XluaUtils_Menu_ID) end
+    Dataref_Read("All")
 end
 -- 3: Flight crash
 --[[function flight_crash() 
