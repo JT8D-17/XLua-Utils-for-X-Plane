@@ -16,6 +16,7 @@ LogFileName = "z_xlua_utils_log.txt"
 ACF_Folder = "" -- KEEP EMPTY
 ACF_Filename = "" -- KEEP EMPTY
 Xlua_Utils_Path = "" -- KEEP EMPTY
+Xlua_Utils_PrefsFile = "" -- KEEP EMPTY 
 
 XluaPersist_HasConfig = 0
 XluaPersist_HasDrefFile = 0
@@ -27,6 +28,7 @@ SUBMODULES
 ]]
 ffi = require ("ffi") -- LuaJIT FFI module
 dofile("Submodules/xlua_utils_init.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_preferences.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
@@ -52,11 +54,12 @@ end
 function flight_start()
     ACF_Folder, ACF_Filename = GetAircraftFolder() -- ALWAYS THE FIRST ITEM!
     Xlua_Utils_Path = ACF_Folder.."plugins/xlua/scripts/xlua_utils/"
+    Xlua_Utils_PrefsFile = Xlua_Utils_Path.."preferences.cfg"
     DeleteLogFile()
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
-    Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
     XluaUtils_Menu_Init()
     if XluaPersist_HasConfig == 1 then Persistence_Menu_Init(XluaUtils_Menu_ID) end

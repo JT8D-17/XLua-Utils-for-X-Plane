@@ -14,7 +14,7 @@ XLUA MENU
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local XluaUtils_Menu_Items = {
 "XLua Utils",
-"Persistence Files",
+"Configuration Files",
 }
 --[[ Menu variables for FFI ]]
 --local XluaUtils_Menu_ID = nil
@@ -27,13 +27,13 @@ function XluaUtils_Menu_Callbacks(itemref)
         if itemref == XluaUtils_Menu_Items[i] then
             if i == 2 then
                 if XluaPersist_HasConfig == 0 then
-                    Persistence_Config_Write(Xlua_Utils_Path.."persistence.cfg")
+                    Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
                     Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
-                    Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+                    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
                     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
                     Persistence_Menu_Init(XluaUtils_Menu_ID)
                 elseif XluaPersist_HasConfig == 1 then
-                    Persistence_Config_Read(Xlua_Utils_Path.."persistence.cfg")
+                    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
                     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
                     Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
                     Persistence_Menu_Watchdog(Persistence_Menu_Items,12)

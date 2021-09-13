@@ -153,6 +153,15 @@ end
 function TrimEndWhitespace(s)
   return s:match'^(.*%S)%s*$'
 end
+--[[ Merges subtables for printing ]]
+function TableMergeAndPrint(intable)
+    local tmp = {}
+    for i=1,#intable do
+        if type(intable[i]) ~= "table" then tmp[i] = tostring(intable[i]) end
+        if type(intable[i]) == "table" then tmp[i] = tostring("{"..table.concat(intable[i],",").."}") end
+    end
+    return tostring(table.concat(tmp,","))
+end
 --[[
 
 GLOBAL MENU FUNCTIONS
