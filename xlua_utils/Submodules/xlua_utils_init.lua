@@ -58,7 +58,7 @@ void XPLMSetDatavi(XPLMDataRef inDataRef,int *inValues,int inoffset,int inCount)
 int XPLMGetDatavf(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
 void XPLMSetDatavf(XPLMDataRef inDataRef,float *inValues,int inoffset,int inCount);
 int XPLMGetDatab(XPLMDataRef inDataRef,void *outValue,int inOffset,int inMaxBytes);
-/* void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength); */
+void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength);
 /* XPLMPlanes */
 void XPLMGetNthAircraftModel(int inIndex,char *outFileName,char *outPath);
 /* XPLMDefs */

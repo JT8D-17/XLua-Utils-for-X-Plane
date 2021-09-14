@@ -21,21 +21,30 @@ Persistence_Config_Vars = {
 }
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{value(s) as specified by dataref length}} ]]
 Persistence_Datarefs = { 
-{"DATAREF"}
+{"DATAREF"},    
 }
--- sim/aircraft/view/acf_livery_path
 --[[
 
 FUNCTIONS
 
 ]]
+--[[ Prepares an empty dataref container table ]]
+local function RegenerateDrefTable(inputtable,outputtable)
+    for i=2,#outputtable do
+        outputtable[i] = nil
+    end
+    for i=1,#inputtable do
+        outputtable[i+1] = inputtable[i]
+    end
+    --PrintToConsole(#outputtable-1)
+end
 --[[ Persistence dataref file read ]]
 function Persistence_DrefFile_Read(inputfile)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
         XluaPersist_HasDrefFile = 1
         LogOutput("FILE READ START: Persistence Datarefs")
-        local temptable = { }
+        local temptable = {}
         local i=0
         for line in file:lines() do
             if string.match(line,"^[^#]") then
@@ -49,54 +58,45 @@ function Persistence_DrefFile_Read(inputfile)
                         LogOutput("Dataref "..splitline[1].." is not writable and is discarded.")
                     else
                         -- Types: 1 - Integer, 2 - Float, 4 - Double, 8 - Float array, 16 - Integer array, 32 - Data array
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 32 then
-                            LogOutput("Dataref "..splitline[1].." is of an unsupported type ("..XPLM.XPLMGetDataRefTypes(dataref)..") and is discarded.")
-                        else
-                            -- Create subtable for dataref
-                            Persistence_Datarefs[#Persistence_Datarefs+1] = {0,0,{}}
-                            Persistence_Datarefs[#Persistence_Datarefs][1] = splitline[1]
-                            Persistence_Datarefs[#Persistence_Datarefs][2] = XPLM.XPLMGetDataRefTypes(dataref)
-                            -- Write initial dataref values to subtable
-                            if XPLM.XPLMGetDataRefTypes(dataref) == 1 then Persistence_Datarefs[#Persistence_Datarefs][3][1] = XPLM.XPLMGetDatai(dataref) end
-                            if XPLM.XPLMGetDataRefTypes(dataref) == 2 then Persistence_Datarefs[#Persistence_Datarefs][3][1] = XPLM.XPLMGetDataf(dataref) end
-                            if XPLM.XPLMGetDataRefTypes(dataref) == 4 then Persistence_Datarefs[#Persistence_Datarefs][3][1] = XPLM.XPLMGetDatad(dataref) end
-                            if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
-                                local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
-                                local value = ffi.new("float["..size.."]") -- Define float array
-                                XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
-                                for i = 0,(size-1) do
-                                   Persistence_Datarefs[#Persistence_Datarefs][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                                end
+                        -- Create subtable for dataref
+                        temptable[#temptable+1] = {0,0,{}}
+                        temptable[#temptable][1] = splitline[1]
+                        temptable[#temptable][2] = XPLM.XPLMGetDataRefTypes(dataref)
+                        -- Write initial dataref values to subtable
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 1 then temptable[#temptable][3][1] = XPLM.XPLMGetDatai(dataref) end
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 2 then temptable[#temptable][3][1] = XPLM.XPLMGetDataf(dataref) end
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 4 then temptable[#temptable][3][1] = XPLM.XPLMGetDatad(dataref) end
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
+                            local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
+                            local value = ffi.new("float["..size.."]") -- Define float array
+                            XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
+                            for i = 0,(size-1) do
+                                temptable[#temptable][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
                             end
-                            if XPLM.XPLMGetDataRefTypes(dataref) == 16 then 
-                                local size = XPLM.XPLMGetDatavi(dataref,nil,0,0) -- Get size of dataref
-                                local value = ffi.new("int["..size.."]") -- Define integer array
-                                XPLM.XPLMGetDatavi(dataref,ffi.cast("int *",value),0,size) -- Get integer array values from dataref
-                                for i = 0,(size-1) do
-                                   Persistence_Datarefs[#Persistence_Datarefs][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                                end                                 
-                            end
-                            Persistence_Datarefs[#Persistence_Datarefs][4] = dataref -- Store handle for faster access
-                            i=i+1
-                            --PrintToConsole("Found "..Persistence_Datarefs[#Persistence_Datarefs][1].." (Type: "..Persistence_Datarefs[#Persistence_Datarefs][2].."; Values: "..table.concat(Persistence_Datarefs[#Persistence_Datarefs][3],",").."; Handle "..tostring(Persistence_Datarefs[#Persistence_Datarefs][4])..")")
                         end
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 16 then 
+                            local size = XPLM.XPLMGetDatavi(dataref,nil,0,0) -- Get size of dataref
+                            local value = ffi.new("int["..size.."]") -- Define integer array
+                            XPLM.XPLMGetDatavi(dataref,ffi.cast("int *",value),0,size) -- Get integer array values from dataref
+                            for i = 0,(size-1) do
+                                temptable[#temptable][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
+                            end                                 
+                        end
+                        if XPLM.XPLMGetDataRefTypes(dataref) == 32 then 
+                            local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
+                            local value = ffi.new("char["..size.."]") -- Define character array
+                            XPLM.XPLMGetDatab(dataref,ffi.cast("void *",value),0,size) -- Get byte array values from dataref
+                            temptable[#temptable][3][1] = ffi.string(value)-- Write dataref value to value subtable for dataref 
+                        end                            
+                        temptable[#temptable][4] = dataref -- Store handle for faster access
+                        i=i+1
+                        --PrintToConsole("Found "..temptable[#temptable][1].." (Type: "..temptable[#temptable][2].."; Values: "..table.concat(temptable[#temptable][3],",").."; Handle "..tostring(temptable[#temptable][4])..")")
                     end
                 end
-                --local temptable = {}
-                --local splitline = SplitString(line,"([^:]+)")
-                --local substringline = SplitString(splitline[2],"([^=]+)")
-                --for j=2,#Persistence_Config_Vars do
-                --    if Persistence_Config_Vars[j][1] == substringline[1] then
-                --        Persistence_Config_Vars[j][2] = tonumber(substringline[2])
-                        --PrintToConsole(Persistence_Config_Vars[j][1].." set to "..Persistence_Config_Vars[j][2])
-                        --LogOutput("Persistence: "..Persistence_Config_Vars[j][1].." set to "..Persistence_Config_Vars[j][2])
-                        --i=i+1
-                    --end
-                --end
             end
         end
         file:close()
-        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) RegenerateDrefTable(temptable,Persistence_Datarefs) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: Persistence Dataref File")
     end
@@ -113,11 +113,12 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
                 --splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
                 for j=2,#outputtable do
                     if splitline[1] == outputtable[j][1] then
-                        local splitvalues = SplitString(splitline[2],"([^,]+)")
-                        PrintToConsole(table.concat(splitvalues,","))
+                        local splitvalues = SplitString(splitline[3],"([^,]+)")
+                        --PrintToConsole(table.concat(splitvalues,","))
                         for k=1,#splitvalues do
-                            outputtable[j][3][k] = tonumber(splitvalues[k])
-                            PrintToConsole(type(outputtable[j][3][k]))
+                            if splitline[2] == "string" then outputtable[j][3][k] = tostring(splitvalues[k]) end
+                            if splitline[2] == "number" then outputtable[j][3][k] = tonumber(splitvalues[k]) end
+                            --PrintToConsole(type(outputtable[j][3][k]))
                         end
                         --PrintToConsole(table.concat(outputtable[j][3],","))
                         i=i+1
@@ -161,7 +162,7 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
     file:write("# This file stores the values of datarefs that are tracked by the persistence module.\n")
     file:write("#\n")
     for i=2,#inputtable do
-        file:write(inputtable[i][1]..":"..table.concat(inputtable[i][3],",").."\n")
+        file:write(inputtable[i][1]..":"..type(inputtable[i][3][1])..":"..table.concat(inputtable[i][3],",").."\n")
     end
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
 	file:close()    

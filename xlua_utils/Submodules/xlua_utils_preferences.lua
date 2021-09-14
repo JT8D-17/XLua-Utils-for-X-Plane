@@ -84,7 +84,7 @@ function Preferences_Write(inputtable,outputfile)
         for line in io.lines(outputfile) do
             if not string.match(line,"^"..inputtable[1][1]..",") then
                 temptable[(#temptable+1)] = line
-                PrintToConsole(temptable[#temptable])
+                --PrintToConsole(temptable[#temptable])
             end
         end
     end

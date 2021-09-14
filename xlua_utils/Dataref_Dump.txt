@@ -1,6 +1,6 @@
 sim/cockpit/electrical/battery_array_on
 my/fake/dataref
-sim/aircraft/view/acf_livery_path
+sim/aircraft/view/acf_tailnum
 dmax/blackshape/magnetos
 sim/cockpit2/engine/actuators/throttle_ratio
 sim/cockpit2/controls/parking_brake_ratio
