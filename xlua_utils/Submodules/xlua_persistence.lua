@@ -10,14 +10,15 @@ VARIABLES
 
 ]]
 --[[ ]]
-Persistence_SaveFile = Xlua_Utils_Path.."persistence_save.txt"
+Persistence_SaveFile = "persistence_save.txt"
 --[[ Table that contains the configuration Variables for the persistence module ]]
 Persistence_Config_Vars = {
 {"PERSISTENCE"},
 {"Autoload",0},
 {"Autosave",0},
 {"AutosaveInterval",30},
-{"AutosaveIntervalDelta",30},
+{"AutosaveIntervalDelta",15},
+{"AutosaveDelay",10},
 }
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{value(s) as specified by dataref length}} ]]
 Persistence_Datarefs = { 
@@ -169,6 +170,68 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
 end
 --[[
 
+INITIALIZATION
+
+]]
+--[[ First start of the persistence module ]]
+function Persistence_FirstRun()
+    Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
+    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
+    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
+    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
+    Persistence_Menu_Init(XluaUtils_Menu_ID)
+end
+--[[ Initializes persistence at every startup ]]
+function Persistence_Init()
+    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
+    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
+    Dataref_Read("All")
+end
+--[[ Reloads the Persistence configuration ]]
+function Persistence_Reload()
+    Persistence_Init()
+    Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
+    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
+end
+--[[ Autoloads the saved persistence values ]]
+function Persistence_Load()
+    Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
+    Dataref_Write("All")
+    LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
+end
+--[[ Autosaves the curent persistence values ]]
+function Persistence_Save()
+    Dataref_Read("All")
+    Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
+    LogOutput("Saved Persistence Data at "..os.date("%X").." h")
+end
+--[[ Starts an autosave timer ]]
+function Persistence_TimerStart()
+    run_timer(Persistence_Save,Preferences_ValGet("AutosaveDelay"),Preferences_ValGet("AutosaveInterval"))
+    LogOutput("Autosave Timer started (Delay: "..Preferences_ValGet("AutosaveDelay").." s; Interval: "..Preferences_ValGet("AutosaveInterval").." s.)")
+end
+--[[ Stops an autosave timer ]]
+function Persistence_TimerStop()
+    stop_timer(Persistence_Save)
+    LogOutput("Autosave Timer stopped.")
+end
+--[[ Controller for timed autosaving of the current persistence values ]]
+function Persistence_AutosaveTimerCtrl()
+    if Preferences_ValGet("Autosave") == 1 and Preferences_ValGet("AutosaveInterval") > 0 then
+        if is_timer_scheduled(Persistence_Save) then
+            Persistence_TimerStop()
+            Persistence_TimerStart()
+        else
+            Persistence_TimerStart()
+        end
+    else -- Autosave disabled or interval at zero
+        if is_timer_scheduled(Persistence_Save) then
+            Persistence_TimerStop()
+        end    
+    end
+end
+--[[
+
 MENU
 
 ]]
@@ -195,17 +258,16 @@ function Persistence_Menu_Callbacks(itemref)
     for i=2,#Persistence_Menu_Items do
         if itemref == Persistence_Menu_Items[i] then
             if i == 2 then
-                Dataref_Read("All")
-                Persistence_SaveFile_Write(Xlua_Utils_Path.."persistence_save.txt",Persistence_Datarefs)
+                Persistence_Save()
             end
             if i == 3 then
-                Persistence_SaveFile_Read(Xlua_Utils_Path.."persistence_save.txt",Persistence_Datarefs)
-                Dataref_Write("All")
+                Persistence_Load()
             end
             if i == 5 then
                 if Preferences_ValGet("Autosave") == 0 then Preferences_ValSet("Autosave",1) else Preferences_ValSet("Autosave",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
                 LogOutput("Set Persistence Autosave State to "..Preferences_ValGet("Autosave"))
+                Persistence_AutosaveTimerCtrl()
             end
             if i == 6 then
                 if Preferences_ValGet("Autoload") == 0 then Preferences_ValSet("Autoload",1) else Preferences_ValSet("Autoload",0) end
@@ -215,18 +277,23 @@ function Persistence_Menu_Callbacks(itemref)
             if i == 8 then
                 Preferences_ValSet("AutosaveInterval",Preferences_ValGet("AutosaveInterval") + Preferences_ValGet("AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval"))
+                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
+                Persistence_AutosaveTimerCtrl()
             end
             if i == 10 then
                 Preferences_ValSet("AutosaveInterval",Preferences_ValGet("AutosaveInterval") - Preferences_ValGet("AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval"))
+                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
+                Persistence_AutosaveTimerCtrl()
             end
             if i == 12 then
                 if XluaPersist_HasDrefFile == 0 then 
                     Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
                     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
                     Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
+                end
+                if XluaPersist_HasDrefFile == 1 then 
+                    Persistence_Reload()
                 end
             end           
             Persistence_Menu_Watchdog(Persistence_Menu_Items,i)
@@ -251,7 +318,7 @@ function Persistence_Menu_Watchdog(intable,index)
     end
     if index == 12 then
         if XluaPersist_HasDrefFile == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Generate Dataref File Template",intable)
-        elseif XluaPersist_HasDrefFile == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Monitored Datarefs: "..(#Persistence_Datarefs-1),intable) end
+        elseif XluaPersist_HasDrefFile == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Reload Config & Dataref File (Drefs: "..(#Persistence_Datarefs-1)..")",intable) end
     end
 end
 

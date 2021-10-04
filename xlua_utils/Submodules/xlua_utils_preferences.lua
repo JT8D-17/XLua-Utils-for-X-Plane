@@ -16,11 +16,11 @@ function Preferences_ValSet(item,newvalue)
        if Persistence_Config_Vars[i][1] == item then Persistence_Config_Vars[i][2] = newvalue break end
     end
 end
---[[ Persistence config file read ]]
+--[[ Preferences config file read ]]
 function Preferences_Read(inputfile,outputtable)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
-        XluaPersist_HasConfig = 1
+        XluaUtils_HasConfig = 1
         LogOutput("FILE READ START: Xlua Utils Preferences")
         local i=0
         for line in file:lines() do
@@ -74,7 +74,7 @@ function Preferences_Read(inputfile,outputtable)
         LogOutput("FILE NOT FOUND: Xlua Utils Preferences")
     end
 end
---[[ Persistence config file write ]]
+--[[ Preferences config file write ]]
 function Preferences_Write(inputtable,outputfile)
     local temptable = { }
     LogOutput("FILE WRITE START: Xlua Utils Preferences")

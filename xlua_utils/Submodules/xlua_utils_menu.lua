@@ -14,7 +14,7 @@ XLUA MENU
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local XluaUtils_Menu_Items = {
 "XLua Utils",
-"Configuration Files",
+"",
 }
 --[[ Menu variables for FFI ]]
 --local XluaUtils_Menu_ID = nil
@@ -26,17 +26,10 @@ function XluaUtils_Menu_Callbacks(itemref)
     for i=2,#XluaUtils_Menu_Items do
         if itemref == XluaUtils_Menu_Items[i] then
             if i == 2 then
-                if XluaPersist_HasConfig == 0 then
-                    Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
-                    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
-                    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-                    Persistence_Menu_Init(XluaUtils_Menu_ID)
-                elseif XluaPersist_HasConfig == 1 then
-                    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
-                    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-                    Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
-                    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
+                if XluaUtils_HasConfig == 0 then
+                    Persistence_FirstRun() -- Generates config files for the persistence module
+                elseif XluaUtils_HasConfig == 1 then
+                    Persistence_Reload() -- Reloads the persistence module
                 end
             end
             if i == 3 then
@@ -49,8 +42,8 @@ end
 --[[ Menu watchdog that is used to check an item or change its prefix ]]
 function XluaUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if XluaPersist_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize",intable)
-        elseif XluaPersist_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload",intable) end
+        if XluaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize Xlua",intable)
+        elseif XluaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload Xlua Preferences",intable) end
     end
     --if index == 3 then
     --    if MenuVarTest[2] == false then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
@@ -80,5 +73,3 @@ function XluaUtils_Menu_Init()
         LogOutput(XluaUtils_Menu_Items[1].." menu initialized!")
     end
 end
-
---PrintToConsole("Successful parse of xlua_utils_menu.lua")

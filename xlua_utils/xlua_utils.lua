@@ -18,8 +18,10 @@ ACF_Filename = "" -- KEEP EMPTY
 Xlua_Utils_Path = "" -- KEEP EMPTY
 Xlua_Utils_PrefsFile = "" -- KEEP EMPTY 
 
-XluaPersist_HasConfig = 0
+XluaUtils_HasConfig = 0
 XluaPersist_HasDrefFile = 0
+
+Deferred_Init = 2 -- Run stuff after this time after script initialization
 
 --[[
 
@@ -33,11 +35,19 @@ dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
 --dofile("Submodules/Persistence_Menu.lua")  -- DO NOT CHANGE ORDER
+--[[
 
-local function timer_test()
-     LogOutput(os.clock())
+TIMERS
+
+]]
+local function Main_Timer()
+   --PrintToConsole(os.date("%X"))
 end
---run_timer(timer_test,10,5)
+--run_after_time(Startup_Timer_Once,2) --Runs func once after delay seconds, then timer stops. 
+--run_at_interval(func, interval) -- Runs func every interval seconds, starting interval seconds from the call.
+--run_timer(func,10,5) -- Runs func after delay seconds, then every interval seconds after that.
+--stop_timer(func) -- This ensures that func does not run again until you re­schedule it; any scheduled runs from previous calls are canceled.
+--is_timer_scheduled(func) -- This returns true if the timer function will run at any time in the future. It returns false if the timer isn’t scheduled or if func has never been used as a timer. 
 --[[ 
 
 X-PLANE WRAPPERS
@@ -59,11 +69,14 @@ function flight_start()
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
-    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
-    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    XluaUtils_Menu_Init()
-    if XluaPersist_HasConfig == 1 then Persistence_Menu_Init(XluaUtils_Menu_ID) end
-    Dataref_Read("All")
+    Persistence_Init()
+    XluaUtils_Menu_Init()   -- Xlua Menu
+    if XluaUtils_HasConfig == 1 then 
+        Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
+        if Preferences_ValGet("Autoload") == 1 then Persistence_Load() end -- Check persistence automation status and load if necessary
+        Persistence_AutosaveTimerCtrl()
+    end
+    --run_at_interval(Main_Timer,1)
 end
 -- 3: Flight crash
 --[[function flight_crash() 
