@@ -199,7 +199,7 @@ function Persistence_Load()
     Dataref_Write("All")
     LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
 end
---[[ Autosaves the curent persistence values ]]
+--[[ Autosaves the current persistence values ]]
 function Persistence_Save()
     Dataref_Read("All")
     Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
@@ -283,7 +283,7 @@ function Persistence_Menu_Callbacks(itemref)
             if i == 10 then
                 Preferences_ValSet("AutosaveInterval",Preferences_ValGet("AutosaveInterval") - Preferences_ValGet("AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
+                LogOutput("Decreased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 12 then
