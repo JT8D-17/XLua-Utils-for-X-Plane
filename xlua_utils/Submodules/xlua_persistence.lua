@@ -20,7 +20,7 @@ Persistence_Config_Vars = {
 {"AutosaveIntervalDelta",15},
 {"AutosaveDelay",10},
 }
---[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{value(s) as specified by dataref length}} ]]
+--[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 Persistence_Datarefs = { 
 {"DATAREF"},    
 }
@@ -29,16 +29,6 @@ Persistence_Datarefs = {
 FUNCTIONS
 
 ]]
---[[ Prepares an empty dataref container table ]]
-local function RegenerateDrefTable(inputtable,outputtable)
-    for i=2,#outputtable do
-        outputtable[i] = nil
-    end
-    for i=1,#inputtable do
-        outputtable[i+1] = inputtable[i]
-    end
-    --PrintToConsole(#outputtable-1)
-end
 --[[ Persistence dataref file read ]]
 function Persistence_DrefFile_Read(inputfile)
     local file = io.open(inputfile, "r") -- Check if file exists
@@ -46,58 +36,15 @@ function Persistence_DrefFile_Read(inputfile)
         XluaPersist_HasDrefFile = 1
         LogOutput("FILE READ START: Persistence Datarefs")
         local temptable = {}
-        local i=0
         for line in file:lines() do
             if string.match(line,"^[^#]") then
                 local splitline = SplitString(line,"([^:]+)")
                 splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
-                local dataref = XPLM.XPLMFindDataRef(splitline[1])
-                if dataref == nil then -- Check if dataref exists
-                    LogOutput("Dataref "..splitline[1].." could not be found and is discarded.")
-                else
-                    if XPLM.XPLMCanWriteDataRef(dataref) == 0 then -- Check if dataref is writable
-                        LogOutput("Dataref "..splitline[1].." is not writable and is discarded.")
-                    else
-                        -- Types: 1 - Integer, 2 - Float, 4 - Double, 8 - Float array, 16 - Integer array, 32 - Data array
-                        -- Create subtable for dataref
-                        temptable[#temptable+1] = {0,0,{}}
-                        temptable[#temptable][1] = splitline[1]
-                        temptable[#temptable][2] = XPLM.XPLMGetDataRefTypes(dataref)
-                        -- Write initial dataref values to subtable
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 1 then temptable[#temptable][3][1] = XPLM.XPLMGetDatai(dataref) end
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 2 then temptable[#temptable][3][1] = XPLM.XPLMGetDataf(dataref) end
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 4 then temptable[#temptable][3][1] = XPLM.XPLMGetDatad(dataref) end
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
-                            local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
-                            local value = ffi.new("float["..size.."]") -- Define float array
-                            XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
-                            for i = 0,(size-1) do
-                                temptable[#temptable][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                            end
-                        end
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 16 then 
-                            local size = XPLM.XPLMGetDatavi(dataref,nil,0,0) -- Get size of dataref
-                            local value = ffi.new("int["..size.."]") -- Define integer array
-                            XPLM.XPLMGetDatavi(dataref,ffi.cast("int *",value),0,size) -- Get integer array values from dataref
-                            for i = 0,(size-1) do
-                                temptable[#temptable][3][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                            end                                 
-                        end
-                        if XPLM.XPLMGetDataRefTypes(dataref) == 32 then 
-                            local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
-                            local value = ffi.new("char["..size.."]") -- Define character array
-                            XPLM.XPLMGetDatab(dataref,ffi.cast("void *",value),0,size) -- Get byte array values from dataref
-                            temptable[#temptable][3][1] = ffi.string(value)-- Write dataref value to value subtable for dataref 
-                        end                            
-                        temptable[#temptable][4] = dataref -- Store handle for faster access
-                        i=i+1
-                        --PrintToConsole("Found "..temptable[#temptable][1].." (Type: "..temptable[#temptable][2].."; Values: "..table.concat(temptable[#temptable][3],",").."; Handle "..tostring(temptable[#temptable][4])..")")
-                    end
-                end
+                Dataref_InitContainer(splitline[1],temptable)
             end
         end
         file:close()
-        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) RegenerateDrefTable(temptable,Persistence_Datarefs) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if #temptable > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) RegenerateDrefTable(temptable,Persistence_Datarefs) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: Persistence Dataref File")
     end
@@ -185,7 +132,7 @@ end
 function Persistence_Init()
     Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    Dataref_Read("All")
+    Dataref_Read(Persistence_Datarefs,Persistence_Datarefs,3,"All")
 end
 --[[ Reloads the Persistence configuration ]]
 function Persistence_Reload()
@@ -196,19 +143,19 @@ end
 --[[ Autoloads the saved persistence values ]]
 function Persistence_Load()
     Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    Dataref_Write("All")
+    Dataref_Write(Persistence_Datarefs,3,"All")
     LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
 end
 --[[ Autosaves the current persistence values ]]
 function Persistence_Save()
-    Dataref_Read("All")
+    Dataref_Read(Persistence_Datarefs,3,"All")
     Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
     LogOutput("Saved Persistence Data at "..os.date("%X").." h")
 end
 --[[ Starts an autosave timer ]]
 function Persistence_TimerStart()
-    run_timer(Persistence_Save,Preferences_ValGet("AutosaveDelay"),Preferences_ValGet("AutosaveInterval"))
-    LogOutput("Autosave Timer started (Delay: "..Preferences_ValGet("AutosaveDelay").." s; Interval: "..Preferences_ValGet("AutosaveInterval").." s.)")
+    run_timer(Persistence_Save,Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay"),Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval"))
+    LogOutput("Autosave Timer started (Delay: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay").." s; Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.)")
 end
 --[[ Stops an autosave timer ]]
 function Persistence_TimerStop()
@@ -217,7 +164,7 @@ function Persistence_TimerStop()
 end
 --[[ Controller for timed autosaving of the current persistence values ]]
 function Persistence_AutosaveTimerCtrl()
-    if Preferences_ValGet("Autosave") == 1 and Preferences_ValGet("AutosaveInterval") > 0 then
+    if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 and Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") > 0 then
         if is_timer_scheduled(Persistence_Save) then
             Persistence_TimerStop()
             Persistence_TimerStart()
@@ -244,9 +191,9 @@ Persistence_Menu_Items = {
 "Cockpit State Autosave",   -- Item index: 5
 "Cockpit State Autoload",   -- Item index: 6
 "[Separator]",              -- Item index: 7
-"Increment Autosave Interval (+ "..Preferences_ValGet("AutosaveIntervalDelta").." s)",   -- Item index: 8
-"Autosave Interval: "..Preferences_ValGet("AutosaveInterval").." s",                    -- Item index: 9
-"Decrement Autosave Interval (- "..Preferences_ValGet("AutosaveIntervalDelta").." s)",   -- Item index: 10
+"Increment Autosave Interval (+ "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 8
+"Autosave Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s",                    -- Item index: 9
+"Decrement Autosave Interval (- "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 10
 "[Separator]",              -- Item index: 11
 "",                         -- Item index: 12
 }
@@ -264,26 +211,26 @@ function Persistence_Menu_Callbacks(itemref)
                 Persistence_Load()
             end
             if i == 5 then
-                if Preferences_ValGet("Autosave") == 0 then Preferences_ValSet("Autosave",1) else Preferences_ValSet("Autosave",0) end
+                if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 0 then Preferences_ValSet(Persistence_Config_Vars,"Autosave",1) else Preferences_ValSet(Persistence_Config_Vars,"Autosave",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Set Persistence Autosave State to "..Preferences_ValGet("Autosave"))
+                LogOutput("Set Persistence Autosave State to "..Preferences_ValGet(Persistence_Config_Vars,"Autosave"))
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 6 then
-                if Preferences_ValGet("Autoload") == 0 then Preferences_ValSet("Autoload",1) else Preferences_ValSet("Autoload",0) end
+                if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 0 then Preferences_ValSet(Persistence_Config_Vars,"Autoload",1) else Preferences_ValSet(Persistence_Config_Vars,"Autoload",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Set Persistence Autoload State to "..Preferences_ValGet("Autoload"))
+                LogOutput("Set Persistence Autoload State to "..Preferences_ValGet(Persistence_Config_Vars,"Autoload"))
             end
             if i == 8 then
-                Preferences_ValSet("AutosaveInterval",Preferences_ValGet("AutosaveInterval") + Preferences_ValGet("AutosaveIntervalDelta"))
+                Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") + Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
+                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 10 then
-                Preferences_ValSet("AutosaveInterval",Preferences_ValGet("AutosaveInterval") - Preferences_ValGet("AutosaveIntervalDelta"))
+                Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") - Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Decreased Persistence Autosave Interval to "..Preferences_ValGet("AutosaveInterval").." s.")
+                LogOutput("Decreased Persistence Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 12 then
@@ -303,18 +250,18 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function Persistence_Menu_Watchdog(intable,index)
     if index == 5 then
-        if Preferences_ValGet("Autosave") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
-        elseif Preferences_ValGet("Autosave") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
+        if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
+        elseif Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
     end
     if index == 6 then
-        if Preferences_ValGet("Autoload") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
-        elseif Preferences_ValGet("Autoload") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
+        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
+        elseif Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
     end
     if index == 8 or index == 10 then
-        if Preferences_ValGet("AutosaveInterval") < 0 then Preferences_ValSet("AutosaveInterval",0) end       
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,6,"Increment Autosave Interval (+ "..Preferences_ValGet("AutosaveIntervalDelta").." s)",1)
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,7,"Autosave Interval: "..Preferences_ValGet("AutosaveInterval").." s",1)
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,8,"Decrement Autosave Interval (- "..Preferences_ValGet("AutosaveIntervalDelta").." s)",1)
+        if Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") < 0 then Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",0) end       
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,6,"Increment Autosave Interval (+ "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",1)
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,7,"Autosave Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s",1)
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,8,"Decrement Autosave Interval (- "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",1)
     end
     if index == 12 then
         if XluaPersist_HasDrefFile == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Generate Dataref File Template",intable)

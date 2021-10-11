@@ -5,15 +5,15 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
 --[[ Accessor: Get value from a subtable ]]
-function Preferences_ValGet(item)
-    for i=1,#Persistence_Config_Vars do
-       if Persistence_Config_Vars[i][1] == item then return Persistence_Config_Vars[i][2] end
+function Preferences_ValGet(inputtable,item)
+    for i=1,#inputtable do
+       if inputtable[i][1] == item then return inputtable[i][2] end
     end
 end
 --[[ Accessor: Set value from a subtable ]]
-function Preferences_ValSet(item,newvalue)
-    for i=1,#Persistence_Config_Vars do
-       if Persistence_Config_Vars[i][1] == item then Persistence_Config_Vars[i][2] = newvalue break end
+function Preferences_ValSet(inputtable,item,newvalue)
+    for i=1,#inputtable do
+       if inputtable[i][1] == item then inputtable[i][2] = newvalue break end
     end
 end
 --[[ Preferences config file read ]]

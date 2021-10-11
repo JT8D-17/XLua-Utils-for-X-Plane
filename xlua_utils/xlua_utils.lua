@@ -34,6 +34,7 @@ dofile("Submodules/xlua_utils_preferences.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_ncheadset.lua")  -- DO NOT CHANGE ORDER
 --dofile("Submodules/Persistence_Menu.lua")  -- DO NOT CHANGE ORDER
 --[[
 
@@ -73,8 +74,9 @@ function flight_start()
     XluaUtils_Menu_Init()   -- Xlua Menu
     if XluaUtils_HasConfig == 1 then 
         Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
-        if Preferences_ValGet("Autoload") == 1 then Persistence_Load() end -- Check persistence automation status and load if necessary
+        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then Persistence_Load() end -- Check persistence automation status and load if necessary
         Persistence_AutosaveTimerCtrl()
+        NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end
     --run_at_interval(Main_Timer,1)
 end
