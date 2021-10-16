@@ -58,6 +58,7 @@ X-PLANE WRAPPERS
 --[[function aircraft_load()
 end]]
 function aircraft_unload()
+    if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Persistence_Save() end -- Check persistence save on exit status and load if necessary
     PrintToConsole("Status: UNLOADING")
     Menu_CleanUp()
 end
@@ -74,7 +75,7 @@ function flight_start()
     XluaUtils_Menu_Init()   -- Xlua Menu
     if XluaUtils_HasConfig == 1 then 
         Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
-        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then Persistence_Load() end -- Check persistence automation status and load if necessary
+        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then run_after_time(Persistence_Load,Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay")) end -- Check persistence automation status and load if necessary
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end
@@ -87,9 +88,9 @@ end]]
 --[[function before_physics() 
 end]]
 -- 5: After physics
-function after_physics()
+--[[function after_physics()
     --XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,2)
-end
+end]]
 
 
-PrintToConsole("Successful parse of xlua_utils.lua")
+-- PrintToConsole("Successful parse of xlua_utils.lua")
