@@ -11,6 +11,7 @@ VARIABLES
 ]]
 --[[ ]]
 Persistence_SaveFile = "persistence_save.txt"
+local Has_SaveFile = 0
 --[[ Table that contains the configuration Variables for the persistence module ]]
 Persistence_Config_Vars = {
 {"PERSISTENCE"},
@@ -56,6 +57,7 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
     local file = io.open(inputfile, "r") -- Check if file exists
     local i=0
     if file then
+        Has_SaveFile = 1
         LogOutput("FILE READ START: Persistence Save File")
         for line in file:lines() do
             if string.match(line,"^[^#]") then
@@ -81,6 +83,7 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
         if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: Persistence Save File")
+        Has_SaveFile = 0
     end    
 end
 --[[ Persistence dataref file write ]]
@@ -129,40 +132,42 @@ function Persistence_FirstRun()
     Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
     Persistence_Menu_Init(XluaUtils_Menu_ID)
+    LogOutput(Persistence_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes persistence at every startup ]]
 function Persistence_Init()
     Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    Dataref_Read(Persistence_Datarefs,Persistence_Datarefs,3,"All")
+    Dataref_Read(Persistence_Datarefs,3,"All")
+    LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Reloads the Persistence configuration ]]
 function Persistence_Reload()
     Persistence_Init()
     Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
     Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
+    LogOutput(Persistence_Config_Vars[1][1]..": Reloaded!")
 end
 --[[ Autoloads the saved persistence values ]]
 function Persistence_Load()
     Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    Dataref_Write(Persistence_Datarefs,3,"All")
-    LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
+    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") end
 end
 --[[ Autosaves the current persistence values ]]
 function Persistence_Save()
     Dataref_Read(Persistence_Datarefs,3,"All")
     Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    LogOutput("Saved Persistence Data at "..os.date("%X").." h")
+    LogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
 end
 --[[ Starts an autosave timer ]]
 function Persistence_TimerStart()
     run_timer(Persistence_Save,Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay"),Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval"))
-    LogOutput("Autosave Timer started (Delay: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay").." s; Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.)")
+    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer started (Delay: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay").." s; Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.)")
 end
 --[[ Stops an autosave timer ]]
 function Persistence_TimerStop()
     stop_timer(Persistence_Save)
-    LogOutput("Autosave Timer stopped.")
+    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer stopped.")
 end
 --[[ Controller for timed autosaving of the current persistence values ]]
 function Persistence_AutosaveTimerCtrl()
@@ -216,29 +221,29 @@ function Persistence_Menu_Callbacks(itemref)
             if i == 5 then
                 if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 0 then Preferences_ValSet(Persistence_Config_Vars,"Autosave",1) else Preferences_ValSet(Persistence_Config_Vars,"Autosave",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Set Persistence Autosave State to "..Preferences_ValGet(Persistence_Config_Vars,"Autosave"))
+                DebugLogOutput(Persistence_Config_Vars[1][1]..": Set Autosave State to "..Preferences_ValGet(Persistence_Config_Vars,"Autosave"))
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 6 then
                 if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 0 then Preferences_ValSet(Persistence_Config_Vars,"Autoload",1) else Preferences_ValSet(Persistence_Config_Vars,"Autoload",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Set Persistence Autoload State to "..Preferences_ValGet(Persistence_Config_Vars,"Autoload"))
+                DebugLogOutput(Persistence_Config_Vars[1][1]..": Set Autoload State to "..Preferences_ValGet(Persistence_Config_Vars,"Autoload"))
             end
             if i == 7 then
                 if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 0 then Preferences_ValSet(Persistence_Config_Vars,"SaveOnExit",1) else Preferences_ValSet(Persistence_Config_Vars,"SaveOnExit",0) end
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Set Persistence Save on Exit State to "..Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit"))
+                DebugLogOutput(Persistence_Config_Vars[1][1]..": Set Save on Exit State to "..Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit"))
             end
             if i == 9 then
                 Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") + Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Increased Persistence Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
+                DebugLogOutput(Persistence_Config_Vars[1][1]..": Increased Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 11 then
                 Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") - Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta"))
                 Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-                LogOutput("Decreased Persistence Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
+                DebugLogOutput(Persistence_Config_Vars[1][1]..": Decreased Autosave Interval to "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.")
                 Persistence_AutosaveTimerCtrl()
             end
             if i == 13 then
@@ -258,16 +263,16 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function Persistence_Menu_Watchdog(intable,index)
     if index == 5 then
-        if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
-        elseif Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
+        if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off]",intable)
+        elseif Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] ",intable) end
     end
     if index == 6 then
-        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
-        elseif Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
+        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off]",intable)
+        elseif Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] ",intable) end
     end
     if index == 7 then
-        if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off] Enable",intable)
-        elseif Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] Disable",intable) end
+        if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 0 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[Off]",intable)
+        elseif Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"[On] ",intable) end
     end
     if index == 9 or index == 11 then
         if Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") < 0 then Preferences_ValSet(Persistence_Config_Vars,"AutosaveInterval",0) end       
@@ -302,8 +307,6 @@ function Persistence_Menu_Init(ParentMenuID)
                 Persistence_Menu_Watchdog(Persistence_Menu_Items,i)
             end
         end
-        LogOutput(Persistence_Menu_Items[1].." menu initialized!")
+        LogOutput(Persistence_Config_Vars[1][1]..": Menu initialized!")
     end
 end
-
-LogOutput("Persistence initialized")

@@ -131,11 +131,21 @@ end
 function DeleteLogFile()
     os.remove(Xlua_Utils_Path..LogFileName)
 end
+
 --[[ Logging wrapper ]]
 function LogOutput(inputstring)
     PrintToConsole(inputstring)
     WriteToLogFile(inputstring)
 end
+
+--[[ Debug logging wrapper ]]
+function DebugLogOutput(inputstring)
+    if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 1 then
+        PrintToConsole(inputstring)
+        WriteToLogFile(inputstring)
+    end
+end
+
 --[[
 
 UTILITY FUNCTIONS

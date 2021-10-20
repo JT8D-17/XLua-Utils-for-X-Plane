@@ -4,8 +4,6 @@ XLua Module, required by xlua_utils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
---[[ Test variable table for the menu items ]]
-local MenuVarTest = {0,false}
 --[[
 
 XLUA MENU
@@ -15,9 +13,9 @@ XLUA MENU
 local XluaUtils_Menu_Items = {
 "XLua Utils",
 "",
+"Debug Output",
 }
 --[[ Menu variables for FFI ]]
---local XluaUtils_Menu_ID = nil
 XluaUtils_Menu_ID = nil     -- GLOBAL!
 XluaUtils_Menu_Index = nil  --  GLOBAL!
 local XluaUtils_Menu_Pointer = ffi.new("const char")
@@ -28,12 +26,16 @@ function XluaUtils_Menu_Callbacks(itemref)
             if i == 2 then
                 if XluaUtils_HasConfig == 0 then
                     Persistence_FirstRun() -- Generates config files for the persistence module
+                    NCHeadset_FirstRun()   -- Generates/appends config file for the ncheadset module
                 elseif XluaUtils_HasConfig == 1 then
                     Persistence_Reload() -- Reloads the persistence module
+                    NCHeadset_Reload()  -- Reloads the ncheadset module
                 end
             end
             if i == 3 then
-                if MenuVarTest[2] == false then MenuVarTest[2] = true else MenuVarTest[2] = false end
+                if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 0 then Preferences_ValSet(XluaUtils_Config_Vars,"DebugOutput",1) else Preferences_ValSet(XluaUtils_Config_Vars,"DebugOutput",0) end
+                Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
+                DebugLogOutput("Set Xlua Utils Debug Output to "..Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput"))
             end
             XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,i)
         end
@@ -45,10 +47,10 @@ function XluaUtils_Menu_Watchdog(intable,index)
         if XluaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize Xlua",intable)
         elseif XluaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload Xlua Preferences",intable) end
     end
-    --if index == 3 then
-    --    if MenuVarTest[2] == false then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
-    --    elseif MenuVarTest[2] == true then Menu_CheckItem(XluaUtils_Menu_ID,index,"Activate") end
-    --end
+    if index == 3 then
+        if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 0 then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
+        elseif Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 1 then Menu_CheckItem(XluaUtils_Menu_ID,index,"Activate") end
+    end
 end
 --[[ Menu initialization routine ]]
 function XluaUtils_Menu_Init()
