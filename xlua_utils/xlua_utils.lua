@@ -32,6 +32,7 @@ dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_ncheadset.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_window.lua")  -- DO NOT CHANGE ORDER
 --[[
 
 VARIABLES
@@ -87,6 +88,7 @@ function flight_start()
         NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end
     --run_at_interval(Main_Timer,1)
+    Start_Window()
 end
 -- 3: Flight crash
 --[[function flight_crash() 
