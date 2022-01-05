@@ -33,6 +33,7 @@ dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_ncheadset.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_window.lua")  -- DO NOT CHANGE ORDER
+--dofile("VSL_C47_Enhancements.lua")  -- DO NOT CHANGE ORDER
 --[[
 
 VARIABLES
@@ -42,6 +43,8 @@ VARIABLES
 XluaUtils_Config_Vars = {
 {"XLUAUTILS"},
 {"DebugOutput",0},
+{"DebugWindow",0},
+{"DebugWindowPos",200,600,600,200}, -- left, top, right, bottom
 }
 --[[
 
@@ -65,6 +68,8 @@ function aircraft_unload()
     if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Persistence_Save() end -- Check persistence save on exit status and load if necessary
     NCHeadset_Off()
     LogOutput("AIRCRAFT UNLOAD")
+    Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
+    DebugWindow_Destroy()
     Menu_CleanUp()
 end
 -- 2: Flight start
@@ -78,8 +83,10 @@ function flight_start()
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
+    DebugWindow_Init()
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
+    C47_Init() -- Initialize C-47 module
     XluaUtils_Menu_Init()   -- Xlua Menu
     if XluaUtils_HasConfig == 1 then 
         Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
@@ -87,8 +94,8 @@ function flight_start()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end
+    C47_Menu_Init(XluaUtils_Menu_ID)
     --run_at_interval(Main_Timer,1)
-    Start_Window()
 end
 -- 3: Flight crash
 --[[function flight_crash() 

@@ -10,10 +10,11 @@ XLUA MENU
 
 ]]
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
-local XluaUtils_Menu_Items = {
+XluaUtils_Menu_Items = {
 "XLua Utils",
 "",
 "Debug Output",
+"Debug Window",
 }
 --[[ Menu variables for FFI ]]
 XluaUtils_Menu_ID = nil     -- GLOBAL!
@@ -30,12 +31,19 @@ function XluaUtils_Menu_Callbacks(itemref)
                 elseif XluaUtils_HasConfig == 1 then
                     Persistence_Reload() -- Reloads the persistence module
                     NCHeadset_Reload()  -- Reloads the ncheadset module
+                    DebugWindow_Reload() -- Reloads the debug window module
                 end
             end
             if i == 3 then
                 if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 0 then Preferences_ValSet(XluaUtils_Config_Vars,"DebugOutput",1) else Preferences_ValSet(XluaUtils_Config_Vars,"DebugOutput",0) end
                 Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
                 DebugLogOutput("Set Xlua Utils Debug Output to "..Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput"))
+            end
+            if i == 4 then
+                if Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow") == 0 then Preferences_ValSet(XluaUtils_Config_Vars,"DebugWindow",1) else Preferences_ValSet(XluaUtils_Config_Vars,"DebugWindow",0) end
+                DebugWindow_Toggle()
+                Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
+                DebugLogOutput("Set Xlua Utils Debug Window state to "..Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow"))
             end
             XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,i)
         end
@@ -50,6 +58,10 @@ function XluaUtils_Menu_Watchdog(intable,index)
     if index == 3 then
         if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 0 then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
         elseif Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 1 then Menu_CheckItem(XluaUtils_Menu_ID,index,"Activate") end
+    end
+    if index == 4 then
+        if Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow") == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Open",intable)
+        elseif Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow") == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Close",intable) end
     end
 end
 --[[ Menu initialization routine ]]

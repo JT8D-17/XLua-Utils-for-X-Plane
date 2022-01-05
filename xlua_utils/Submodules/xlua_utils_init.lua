@@ -94,6 +94,10 @@ typedef struct {
 XPLMWindowID XPLMCreateWindowEx(XPLMCreateWindow_t *inParams);
 void XPLMDestroyWindow(XPLMWindowID inWindowID);
 void XPLMGetWindowGeometry(XPLMWindowID inWindowID,int *outLeft,int *outTop,int *outRight,int *outBottom);
+void XPLMSetWindowGeometry(XPLMWindowID inWindowID,int inLeft,int inTop,int inRight,int inBottom);
+int  XPLMGetWindowIsVisible(XPLMWindowID inWindowID);
+void XPLMSetWindowIsVisible(XPLMWindowID inWindowID,int inIsVisible);
+void XPLMSetWindowTitle(XPLMWindowID inWindowID, const char *inWindowTitle); 
 /* XPLMGraphics */
 typedef int XPLMFontID;
 void XPLMDrawString(float *inColorRGB,int inXOffset,int inYOffset, char *inChar,int *inWordWrapWidth,XPLMFontID inFontID);

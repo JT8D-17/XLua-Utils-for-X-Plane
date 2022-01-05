@@ -5,15 +5,19 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
 --[[ Accessor: Get value from a subtable ]]
-function Preferences_ValGet(inputtable,item)
+function Preferences_ValGet(inputtable,item,subitem)
     for i=1,#inputtable do
-       if inputtable[i][1] == item then return inputtable[i][2] end
+       if inputtable[i][1] == item then 
+           if subitem == nil then return inputtable[i][2] else return inputtable[i][subitem] end
+       end
     end
 end
 --[[ Accessor: Set value from a subtable ]]
-function Preferences_ValSet(inputtable,item,newvalue)
+function Preferences_ValSet(inputtable,item,newvalue,subitem)
     for i=1,#inputtable do
-       if inputtable[i][1] == item then inputtable[i][2] = newvalue break end
+       if inputtable[i][1] == item then 
+           if subitem == nil then inputtable[i][2] = newvalue break else inputtable[i][subitem] = newvalue break end
+       end
     end
 end
 --[[ Preferences config file read ]]
