@@ -20,6 +20,9 @@ Xlua_Utils_PrefsFile = "" -- KEEP EMPTY
 
 XluaUtils_HasConfig = 0     -- Used by this script
 XluaPersist_HasDrefFile = 0 -- Used by xlua_persistence.lua
+
+XluaUtils_DebugWinID = nil -- ID of the debug window
+XluaUtils_NotifyWinID = nil -- ID of the notification window
 --[[
 
 SUBMODULES
@@ -30,10 +33,11 @@ dofile("Submodules/xlua_utils_init.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_preferences.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_notifications.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_ncheadset.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_window.lua")  -- DO NOT CHANGE ORDER
---dofile("VSL_C47_Enhancements.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_debugwindow.lua")  -- DO NOT CHANGE ORDER
+dofile("VSL_C47_Enhancements.lua")  -- Airplane-specific script
 --[[
 
 VARIABLES
@@ -45,6 +49,7 @@ XluaUtils_Config_Vars = {
 {"DebugOutput",0},
 {"DebugWindow",0},
 {"DebugWindowPos",200,600,600,200}, -- left, top, right, bottom
+{"DebugWindowRefreshRate",1},
 }
 --[[
 
@@ -69,7 +74,8 @@ function aircraft_unload()
     NCHeadset_Off()
     LogOutput("AIRCRAFT UNLOAD")
     Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
-    DebugWindow_Destroy()
+    Window_Destroy(XluaUtils_DebugWinID)
+    Window_Destroy(XluaUtils_NotifyWinID)
     Menu_CleanUp()
 end
 -- 2: Flight start
@@ -83,6 +89,7 @@ function flight_start()
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
+    NotificationWindow_Init()
     DebugWindow_Init()
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
@@ -90,7 +97,7 @@ function flight_start()
     XluaUtils_Menu_Init()   -- Xlua Menu
     if XluaUtils_HasConfig == 1 then 
         Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
-        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then run_after_time(Persistence_Load,Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay")) end -- Check persistence automation status and load if necessary
+        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then run_after_time(Persistence_Load,Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay")) DisplayNotification("Waiting "..Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay").." seconds before loading persistence data..","Caution",-99) end -- Check persistence automation status and load if necessary
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end

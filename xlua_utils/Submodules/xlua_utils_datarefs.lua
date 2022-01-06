@@ -23,7 +23,7 @@ function Dataref_InitContainer(inputdref,outputtable)
         if XPLM.XPLMCanWriteDataRef(dataref) == 0 then -- Check if dataref is writable
             LogOutput("Dataref "..inputdref.." discarded: Not writable.")
         else
-            -- Types: 1 - Integer, 2 - Float, 4 - Double, 8 - Float array, 16 - Integer array, 32 - Data array
+            -- Types: 1 - Integer, 2 - Float, 4 - Double, 7 - Unspecified numerical, 8 - Float array, 16 - Integer array, 32 - Data array
             -- Create subtable for dataref
             outputtable[#outputtable+1] = {0,0,{},{}}
             outputtable[#outputtable][1] = inputdref
@@ -32,6 +32,7 @@ function Dataref_InitContainer(inputdref,outputtable)
             if XPLM.XPLMGetDataRefTypes(dataref) == 1 then outputtable[#outputtable][3][1] = XPLM.XPLMGetDatai(dataref) end
             if XPLM.XPLMGetDataRefTypes(dataref) == 2 then outputtable[#outputtable][3][1] = XPLM.XPLMGetDataf(dataref) end
             if XPLM.XPLMGetDataRefTypes(dataref) == 4 then outputtable[#outputtable][3][1] = XPLM.XPLMGetDatad(dataref) end
+            if XPLM.XPLMGetDataRefTypes(dataref) == 7 then outputtable[#outputtable][3][1] = XPLM.XPLMGetDataf(dataref) end -- Custom datarefs with unspecified numerical type (can be int and float and double)
             if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
                 local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
                 local value = ffi.new("float["..size.."]") -- Define float array
@@ -73,6 +74,7 @@ local function Dataref_Access_Read(intable,index,subtable)
     if intable[index][2] == 1 then intable[index][subtable][1] = XPLM.XPLMGetDatai(intable[index][5]) end
     if intable[index][2] == 2 then intable[index][subtable][1] = XPLM.XPLMGetDataf(intable[index][5]) end
     if intable[index][2] == 4 then intable[index][subtable][1] = XPLM.XPLMGetDatad(intable[index][5]) end
+    if intable[index][2] == 7 then intable[index][subtable][1] = XPLM.XPLMGetDataf(intable[index][5]) end -- Custom datarefs with unspecified numerical type (can be int and float and double)
     if intable[index][2] == 8 then
         local size = XPLM.XPLMGetDatavf(intable[index][5],nil,0,0) -- Get size of dataref
         local value = ffi.new("float["..size.."]") -- Define float array
@@ -103,6 +105,7 @@ local function Dataref_Access_Write(intable,index,subtable)
     if intable[index][2] == 1 then XPLM.XPLMSetDatai(intable[index][5],intable[index][subtable][1]) end
     if intable[index][2] == 2 then XPLM.XPLMSetDataf(intable[index][5],intable[index][subtable][1]) end
     if intable[index][2] == 4 then XPLM.XPLMSetDatad(intable[index][5],intable[index][subtable][1]) end
+    if intable[index][2] == 7 then XPLM.XPLMSetDataf(intable[index][5],intable[index][subtable][1]) end -- Custom datarefs with unspecified numerical type (can be int and float and double)
     if intable[index][2] == 8 then
         local size = XPLM.XPLMGetDatavf(intable[index][5],nil,0,0) -- Get size of dataref
         local value = ffi.new("float["..size.."]") -- Define float array

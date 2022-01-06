@@ -41,7 +41,7 @@ function XluaUtils_Menu_Callbacks(itemref)
             end
             if i == 4 then
                 if Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow") == 0 then Preferences_ValSet(XluaUtils_Config_Vars,"DebugWindow",1) else Preferences_ValSet(XluaUtils_Config_Vars,"DebugWindow",0) end
-                DebugWindow_Toggle()
+                Window_Visibility_Toggle(XluaUtils_DebugWinID)
                 Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
                 DebugLogOutput("Set Xlua Utils Debug Window state to "..Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow"))
             end

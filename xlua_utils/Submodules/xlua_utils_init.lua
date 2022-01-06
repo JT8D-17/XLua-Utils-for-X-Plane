@@ -93,6 +93,7 @@ typedef struct {
 } XPLMCreateWindow_t;
 XPLMWindowID XPLMCreateWindowEx(XPLMCreateWindow_t *inParams);
 void XPLMDestroyWindow(XPLMWindowID inWindowID);
+void XPLMGetScreenBoundsGlobal(int *outLeft,int *outTop,int *outRight,int *outBottom);
 void XPLMGetWindowGeometry(XPLMWindowID inWindowID,int *outLeft,int *outTop,int *outRight,int *outBottom);
 void XPLMSetWindowGeometry(XPLMWindowID inWindowID,int inLeft,int inTop,int inRight,int inBottom);
 int  XPLMGetWindowIsVisible(XPLMWindowID inWindowID);
@@ -207,4 +208,42 @@ function Menu_CheckItem(menu_id,index,state)
     if state == "Activate" and tonumber(out[0]) ~= 2 then XPLM.XPLMCheckMenuItem(menu_id,index,2)
     elseif state == "Deactivate" and tonumber(out[0]) ~= 1 then XPLM.XPLMCheckMenuItem(menu_id,index,1)
     end
+end
+--[[
+
+GLOBAL WINDOW FUNCTIONS
+
+]]
+--[[ Obtains X-Plane's window coordinates ]]
+function Window_XP_Coords_Get(outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetScreenBoundsGlobal(ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3]),ffi.cast("int *",out[4])) -- Window ID, left, top, right, bottom
+    for i=1,4 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("X-Plane window geometry: "..table.concat(outtable,","))
+end
+--[[ Obtains a window's coordinates ]]
+function Window_Coords_Get(inwindowid,outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetWindowGeometry(inwindowid,ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3]),ffi.cast("int *",out[4])) -- Window ID, left, top, right, bottom
+    for i=1,4 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("Window geometry: "..table.concat(outtable,","))
+end
+--[[ Sets a window's coordinates ]]
+function Window_Coords_Set(inwindowid,intable)
+    XPLM.XPLMSetWindowGeometry(inwindowid,intable[1],intable[2],intable[3],intable[4])
+end
+--[[ Toggles a window's visibility ]]
+function Window_Visibility_Toggle(inwindowid)
+    XPLM.XPLMSetWindowIsVisible(inwindowid,Preferences_ValGet(XluaUtils_Config_Vars,"DebugWindow"))
+end
+--[[ Destroys a window ]]
+function Window_Destroy(inwindowid)
+   if inwindowid ~= nil then XPLM.XPLMDestroyWindow(inwindowid) inwindowid = nil end
+end
+--[[ Obtains information about the window font ]]
+function Window_Font_Info(fontid,outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetFontDimensions(fontid,ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3])) -- font ID, char width, char height, digits only
+    for i=1,3 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("Font info: "..table.concat(outtable,","))
 end
