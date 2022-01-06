@@ -12,7 +12,7 @@ It implements wrappers for
 1. [Requirements](#1.0)
 2. [Installation](#2.0)
 3. [Uninstallation](#3.0)
-04. [Capabilities](#4.0)    
+4. [Development Reference](#4.0)    
 4.1 [Limitations](#4.1)   
 4.2 [Paths](#4.2)   
 4.3 [Logging](#4.3)   
@@ -20,8 +20,9 @@ It implements wrappers for
 4.5 [Menus](#4.5)   
 4.6 [Notifications](#4.6)   
 4.7 [Paths](#4.7)   
+4.8 [Dataref Handlers](#4.7)   
 5. [End-User Utilities](#5.0)   
-5.1[Initialization](#5.1)   
+5.1 [Initialization](#5.1)   
 5.2 [Persistence](#5.2)   
 5.3 [Noise-Cancelling Headset](#5.3)   
 6. [License](#6.0)
@@ -83,7 +84,7 @@ Delete the _"xlua_utils"_ folder from _"[Aircraft's main folder]/plugins/xlua/sc
 &nbsp;
 
 <a name="4.0"></a>
-## 4 - Core Functionality
+## 4 - Development Reference
 
 XLua Utils provides a range of useful functions to help debug code. This chapter states the core functionalities.
 
@@ -147,7 +148,7 @@ Removes a notification from the stack by its ID
 - `UpdateNotification(inputstring,colorkey,inID)`   
 Will remove a notification from and then re-add it to the stack. Use this to refresh a notification with input string that contains a variable.
 
-See also `xlua_notifications.lua`.
+Reference: `xlua_utils/Submodules/xlua_utils_notifications.lua`
 
 &nbsp;
 
@@ -156,9 +157,18 @@ See also `xlua_notifications.lua`.
 
 ...
 
+Reference: `xlua_utils/Submodules/xlua_utils_debugwindow.lua`
+
 &nbsp;
 
+<a name="4.8"></a>
+### 4.8 Dataref Handlers
 
+...
+
+Reference: `xlua_utils/Submodules/xlua_utils_datarefs.lua`
+
+&nbsp;
 
 [Back to table of contents](#toc)
 

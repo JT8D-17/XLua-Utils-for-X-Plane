@@ -33,10 +33,10 @@ dofile("Submodules/xlua_utils_init.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_preferences.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
 dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_notifications.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_persistence.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_ncheadset.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_debugwindow.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_notifications.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_debugwindow.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/util_persistence.lua")  -- DO NOT CHANGE ORDER
+dofile("Submodules/util_ncheadset.lua")  -- DO NOT CHANGE ORDER
 dofile("VSL_C47_Enhancements.lua")  -- Airplane-specific script
 --[[
 
