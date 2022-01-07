@@ -25,6 +25,7 @@ It implements wrappers for
 5.1 [Initialization](#5.1)   
 5.2 [Persistence](#5.2)   
 5.3 [Noise-Cancelling Headset](#5.3)   
+5.4 [Miscellaneous Utilities](#5.4)   
 6. [License](#6.0)
 
 
@@ -195,6 +196,14 @@ Reference: `xlua_utils/Submodules/xlua_utils_datarefs.lua`
 ### 5.3 Noise-Cancelling Headset
 
 ...
+
+&nbsp;
+
+<a name="5.4"></a>
+### 5.4 Miscellaneous Utilities
+
+- _"Repair All Damage"_ resets all 500+ of X-Plane's failure datarefs to a value of zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this.
+- _"Synchronize Baros"_, when enabled, will synchronize the pilot, co-pilot and standby barometers when either of these are adjusted.
 
 &nbsp;
 

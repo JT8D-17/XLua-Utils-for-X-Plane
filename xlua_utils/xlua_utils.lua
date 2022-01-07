@@ -29,15 +29,16 @@ SUBMODULES
 
 ]]
 ffi = require ("ffi") -- LuaJIT FFI module
-dofile("Submodules/xlua_utils_init.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_preferences.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_menu.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_datarefs.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_notifications.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_debugwindow.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/util_persistence.lua")  -- DO NOT CHANGE ORDER
-dofile("Submodules/util_ncheadset.lua")  -- DO NOT CHANGE ORDER
-dofile("VSL_C47_Enhancements.lua")  -- Airplane-specific script
+dofile("Submodules/xlua_utils_init.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_preferences.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_menu.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xlua_utils_debugwindow.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/util_persistence.lua")  -- UTILITY
+dofile("Submodules/util_ncheadset.lua")  -- UTILITY
+dofile("Submodules/util_misc.lua")  -- UTILITY
+--dofile("VSL_C47_Enhancements.lua")  -- Airplane-specific script
 --[[
 
 VARIABLES
@@ -93,7 +94,7 @@ function flight_start()
     DebugWindow_Init()
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
-    C47_Init() -- Initialize C-47 module
+    MiscUtils_Init() -- Initialize repair module
     XluaUtils_Menu_Init()   -- Xlua Menu
     if XluaUtils_HasConfig == 1 then 
         Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
@@ -101,7 +102,7 @@ function flight_start()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Init(XluaUtils_Menu_ID)
     end
-    C47_Menu_Init(XluaUtils_Menu_ID)
+    MiscUtils_Menu_Init(XluaUtils_Menu_ID)
     --run_at_interval(Main_Timer,1)
 end
 -- 3: Flight crash

@@ -151,7 +151,8 @@ end
 --[[ Autoloads the saved persistence values ]]
 function Persistence_Load()
     Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") RemoveNotification(-99) DisplayNotification("Persistence data loaded!","Success",3) end
+    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
+    RemoveNotification(-99)
 end
 --[[ Autosaves the current persistence values ]]
 function Persistence_Save()
