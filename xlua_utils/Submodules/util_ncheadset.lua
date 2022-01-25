@@ -17,6 +17,7 @@ NCHeadset_Config_Vars = {
 {"NoiseCancelLevel",0.5},
 {"NoiseCancelLevelDelta",0.1},
 {"MainTimerInterval",1},
+{"FModCompliant",1},
 }
 --[[ List of Datarefs used by this module ]]
 local Dref_List = {
@@ -30,7 +31,8 @@ local Dref_List = {
 "sim/operation/sound/weather_volume_ratio",
 }
 --[[ Fixed datarefs that need constant monitoring ]]
-IsInside = find_dataref("sim/operation/sound/inside_any")
+IsInside_fmod = find_dataref("sim/operation/sound/inside_any")
+IsInside_old = find_dataref("sim/graphics/view/view_is_external")
 IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel")
 NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines")
 HeadSetStatus_Old = 0
@@ -38,6 +40,7 @@ HeadSetStatus_Old = 0
 NCHeadset_Datarefs = {
 "DATAREF",
 }
+
 --[[
 
 FUNCTIONS
@@ -65,6 +68,8 @@ function NCHeadset_Off()
 end
 --[[ ]]
 function NCHeadset_MainTimer()
+    -- Picks the dataref feeding the IsInside variable based on fmod compliance as determined by the user
+    if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
     -- Headset automation control - Puts on headset when all engines are started
     if (Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 and AllEnginesRunning() == 1) and IsInside == 1 then Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",1) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
     if (Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 and AllEnginesRunning() == 0) or IsInside == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",0) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
@@ -105,7 +110,7 @@ end
 --[[ Reloads the Persistence configuration ]]
 function NCHeadset_Reload()
     Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
-    NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
+    --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
     LogOutput(NCHeadset_Config_Vars[1][1]..": Reloaded!")
 end
 --[[
@@ -122,6 +127,8 @@ NCHeadset_Menu_Items = {
 "Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 5
 "Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",       -- Item index: 6
 "Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+"[Separator]",              -- Item index: 8
+"Use FMod Sound Space",     -- Item index: 9
 }
 --[[ Menu variables for FFI ]]
 NCHeadset_Menu_ID = nil
@@ -142,15 +149,21 @@ function NCHeadset_Menu_Callbacks(itemref)
             if i == 5 then
                 Preferences_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") + Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta"))
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                NCHeadset_On()
+                if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then NCHeadset_On() end
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Increased Noise Level to "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %.")
             end
             if i == 7 then
                 Preferences_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") - Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta"))
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                NCHeadset_On()
+                if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then NCHeadset_On() end
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Decreased Noise Level to "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %.")
-            end        
+            end
+            if i == 9 then
+                if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"FModCompliant",1)
+                elseif Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then Preferences_ValSet(NCHeadset_Config_Vars,"FModCompliant",0) end
+                Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Soundscape Triggering set to "..Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant"))
+            end
             NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
         end
     end
@@ -170,6 +183,10 @@ function NCHeadset_Menu_Watchdog(intable,index)
         XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,3,"Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",1)
         XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,4,"Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",1)
         XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,5,"Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",1)
+    end
+    if index == 9 then
+        if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
+        elseif Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
 end
 

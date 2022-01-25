@@ -21,7 +21,7 @@ Persistence_Config_Vars = {
 {"AutosaveInterval",30},
 {"AutosaveIntervalDelta",15},
 {"AutosaveDelay",10},
-{"SaveOnExit",1},
+{"SaveOnExit",0},
 }
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 Persistence_Datarefs = { 

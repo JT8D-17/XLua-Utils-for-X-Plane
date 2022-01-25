@@ -19,10 +19,10 @@ It implements wrappers for
 4.4 [Preferences](#4.4)   
 4.5 [Menus](#4.5)   
 4.6 [Notifications](#4.6)   
-4.7 [Paths](#4.7)   
+4.7 [Debug Window](#4.7)   
 4.8 [Dataref Handlers](#4.7)   
 5. [End-User Utilities](#5.0)   
-5.1 [Initialization](#5.1)   
+5.1 [Initialization/Main Menu](#5.1)   
 5.2 [Persistence](#5.2)   
 5.3 [Noise-Cancelling Headset](#5.3)   
 5.4 [Miscellaneous Utilities](#5.4)   
@@ -95,9 +95,9 @@ XLua Utils provides a range of useful functions to help debug code. This chapter
 ### 4.1 Limitations
 
 - As XLua namespaces are completely local, reading variables from other scripts is not possible.   
-If you want to use any of XLuaUtils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xlua_utils.lua`.
+If you want to use any of XLua Utils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xlua_utils.lua`.
 
-- As of now, XLuaUtils' capabilities do not encompass the full extent of X-Plane's API.
+- As of now, XLua Utils' capabilities do not encompass the full extent of X-Plane's API.
 
 &nbsp;
 
@@ -133,7 +133,7 @@ Combined printing to the developer console and writing to the log file at the sa
 
 #### 4.3.3 Debug-Level Logging
 
-Infdrmation that is not necessary for day-to-day usage can be printed to the developer console and logged in XLua Util's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLua Utils"_ menu or the preferences file. 
+Information that is not necessary for day-to-day usage can be printed to the developer console and logged in XLua Util's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLua Utils"_ menu or the preferences file. 
 
 &nbsp;
 
@@ -230,27 +230,166 @@ Reference: `xlua_utils/Submodules/xlua_utils_datarefs.lua`
 ## 5 - End-User Utilities
 
 <a name="5.1"></a>
-### 5.1 Initialization
+### 5.1 Initialization/Main Menu
 
-After a successful installation, the main X-Plane menu bar contains a menu with the aircraft's name. This menu has a submenu named _"XLua Utils"_.
+After a successful installation, the main X-Plane menu bar contains a menu with the aircraft's name with a _"XLua Utils"_ submenu.
 
+> ![XLua Utils Main Menu](ReadMe_Images/XLuaUtils_Menu.jpg  "XLua Utils Main Menu")
 
+- _"Initialize XLua Utils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLua Utils' initialization and preferences system (see chapter [4.4](#4.4)). Note that some XLua Utils elements or submodules do not initially save their state and will require changing their settings before they will do so.
+
+- _"Reload XLua Utils Preferences"_ will replace _"Initialize XLua Utils"_ as a menu entry if a _"preferences.cfg"_ file after initialization or if the file has been detected at startup. It will read the current values from _"preferences.cfg"_.   
+Use this function to reload preferences values that have been altered via manual edit of the file.
+
+- _"Debug Output"_ toggles debug-level output for any XLua Utils module that has been specifically configured for it (see chapter [4.3.3](#4.3)).
+
+- _"Open/Close Debug Window"_ will open or close the debug window (see chapter [4.7](#4.7)).
+
+- The _"Miscellaneous"_ menu is a container for [miscellaneous built-in utilities](#5.4) that are always available.
 
 &nbsp;
 
 <a name="5.2"></a>
 ### 5.2 Persistence
 
-The _"Persistence"_ submenu is available when there is a _"
+XLua Utils' persistence module parses a list of datarefs at startup, whose values are either manually or automatically written to a persistence state file. This state file is then parsed at X-Plane session initialization and the values are written back to these datarefs. The module only works for the aircraft running XLua Utils (i.e. the currently active user aircraft).
 
-...
+Relevant files to this module are stored in _"xlua_utils"_ and are _"preferences.cfg"_, storing configuration data, _"datarefs.cfg"_, a manually populated list of datarefs and _"persistence_save.txt"_, the save file containing the dataref values.
+
+#### 5.2.1 Populating _"Datarefs.cfg"_
+
+An empty _"Datarefs.cfg"_ is generated at XLua Utils initialization (see chapter [5.1](#5.1) if none is present.   
+
+- _"Datarefs.cfg"_ is a regular text file and can be opened with any text editor like Notepad (apps like MS Word are not recommended though).
+- The header section of _"datarefs.cfg"_ contains information on how to find datarefs used by the current aircraft.
+- The best techniques for finding datarefs used by the aircraft are using [DataRefTool](https://github.com/leecbaker/datareftool) to filter datarefs that recently changed due to user input, analyzing cockpit related _.obj_ files in the _"objects"_ folder of the aircraft and finding relevant datarefs in the _"...cockpit.obj"_ file in the aircraft's root folder by searching for a switch's tooltip.
+- Custom datarefs created by third party add-ons are supported.
+- Invalid datarefs that can not be found in X-Plane are discarded during the initial parsing of _"dataref.cfg"_ and will not be used, so there is minimal risk of crashing X-Plane.
+- Only the name of the dataref is required, even if it is an array.
+- Commands are not supported. This should be kept in mind when analyzing _"...cockpit.obj"_ files.
+- There is no limit to the number of datarefs in _"datarefs.cfg"_.
+- Comments are denoted with a hash sign ("#") at the beginning of a line.
+- Dataref order may matter if the aircraft's systems logic dictates one.
+
+Example _"datarefs.cfg"_ files for some add-on aircraft are contained in _"xlua_utils/PersistenceDatabase"_. These may be used as a starting point or template. Contributions are welcome.
+
+#### 5.2.2 Caveats/Known Issues
+
+The persistence system comes with the following caveats:
+
+- Engine-related datarefs are hard to initialize, so it's best to disregard in-flight situations as initialization with running engines will most likely not work. The persistence module was made primarily ground-based state saving between X-Plane sessions.
+- Custom datarefs created by third party aircraft must be writable in order to be used by the persistence module. If a third-party aircraft uses Xlua or SASL to drive its systems, it may be that its custom datarefs are not initialized with a handler which would make them writable (if a custom datarfef can be edited with DataRefTool, it is writable).   
+For Xlua, _"xlua_utils/PersistenceDatabase/OliXSim L-18 1.1"_ provides a workaround in form of a modified _"init.lua"_ file for XLua, in which the "create_dataref" function will initialize **any** custom dataref as writable.   
+There is no such thing for SASL driven aircraft, so users may be out of luck in the worst case.
+- Despite all the care taken in finding the correct datarefs and putting them into a sensible order, it may be that some third party aircraft may simply not react too well toward third party tools trying to write to their datarefs. One of these candidates is Carenado's Saab 340 which, during testing exhibited a less than perfect cockpit control state restoration quota.   
+In general, the simpler the addon, the higher the chance of success for a 100% correct initialization.
+- FMS and GPS flight plans and configurations are not supported unless they are stored within datarefs.
+- There is no way to restore dataref values from the start of the X-Plane session prior to persistence file reading, so the only solution to a messed up persistence save file is deleting *"persistence_save.txt"*, disabling persistence autoloading and restarting X-Plane or changing to another aircraft and back and start over.
+
+#### 5.2.3 Menu/Functionality
+
+The _"Persistence"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
+
+> ![XLua Persistence Menu](ReadMe_Images/XLuaUtils_Persistence.jpg  "XLua Persistence Menu")
+
+- _"Save Cockpit State Now"_   
+Saves the tracked datarefs' values to _"xlua_utils/persistence_save.txt"_
+- _"Load Cockpit State Now"_   
+Loads the tracked datarefs' values from _"xlua_utils/persistence_save.txt"_
+- _"[On/Off] Cockpit State Autosave"_   
+Toggles the timed autosave feature on/off.   
+The first autosave is performed after a certain delay to avoid conflicts with other XLua Utils file access functions.   
+After the first autosave, a timer is started that will save the persistence state in a specific interval.   
+See below for adjustment of the initial autosave delay and autosave interval.
+- _"[On/Off] Cockpit State Autoload"_   
+Toggles the autoload feature on/off.   
+Autoloading of persistence data from *"persistence_save.txt"* is started during X-Plane's "flight_start" event during aircraft initialization.   
+To avoid conflicts with custom systems logic from other scripts or plugins, autoload is performed after a certain delay, which may be configured in _"preferences.cfg"_ (see below).
+- _"[On/Off] Save On Exit"_   
+Triggers a persistence save operation during X-Plane's "aircraft_unload" event, e.g. when shutting down X-Plane or changing aircraft.
+- _"Increment Autosave Interval (+ n s)"_   
+Increments the autosave interval by a certain amount of time which may be adjusted in _"preferences.cfg"_ (see below).
+- _"Autosave Interval: n s"_   
+This only displays the current autosave interval and does not constitute an interactive element.
+- _"Decrement Autosave Interval (- n s)"_   
+Decrements the autosave interval by a certain amount of time which can be adjusted in _"preferences.cfg"_ (see below).
+- _"Reload Config & Dataref File (Drefs: n)"_    
+Reads persistence module related data from_"preferences.cfg"_, parses _"datarefs.cfg"_ and then reads the current values of all tracked datarefs. The menu entry will display the amount of currently tracked datarefs.
+
+
+#### 5.2.4 Configuration via Preferences.cfg
+
+These are the persistence module parameters which are stored in lines prefixed with "PERSISTENCE" in _"preferences.cfg"_:
+
+- `Autoload:string,0:number`   
+Autoload disabled/enabled (0/1; default: 0)
+- `AutoloadDelay:string,5:number`   
+Autoload delay (in seconds; default: 5)
+- `Autosave:string,0:number`   
+Autosave disabled/enabled (0/1; default: 0)
+- `AutosaveInterval:string,30:number`   
+Autosave interval (in seconds; default: 30)
+- `AutosaveIntervalDelta:string,15:number`   
+Increment/decrement for the autosave interval adjustment (in seconds; default: 15)
+- `AutosaveDelay:string,10:number`   
+Delay before first autosave (in seconds; default: 10)
+- `SaveOnExit:string,0:number`   
+Save on aircraft unload disabled/enabled (0/1; default: 0)
+
+When altering these parameters, only adjust the numbers and nothing else.   
+Changes to _"preferences.txt"_ can be applied immediately with the _"Reload Config & Dataref File"_ function from the _"Persistence"_ menu or the _"Reload XLua Utils Preferences"_ from the _"XLua Utils"_ menu.
 
 &nbsp;
 
 <a name="5.3"></a>
 ### 5.3 Noise-Cancelling Headset
 
-...
+#### 5.2.1 Features
+
+XLua Util's noise-cancelling headset module provides a customizable one-size-fits all solution to loud engines. It decreases engine, environment, exterior, fan, ground, interior, prop, warning and weather volume levels, while retaining the sound level of the co-pilot, master slider, radio and ui. The headset will only affect volume levels when inside a sound space (properly set up fmod soundsets) or in an interior view (fallback mode).
+
+It can be toggled from the menu or automated. When automated, the headset is only active when all engines are running.
+
+Volume levels from the beginning of the X-Plane session are stored during module initialization for later restoration. These volume levels are restored during X-Plane's "aircraft_unload" event, e.g. when changing aircraft or shutting down X-Plane.
+
+#### 5.3.2 Menu/Functionality
+
+The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
+
+> ![XLua NCHeadset Menu](ReadMe_Images/XLuaUtils_NCHeadset.jpg  "XLua NCHeadset Menu")
+
+- _"[On/Off] Headset"_   
+Immediately puts on the headset, decreasing all non-ATC noise levels to the set level (see below). When set to off, it will also turn off headset automation.
+- _"[On/Off] Automation"_   
+When enabled, will automatically put on the headset once all engines are started.
+- _"Increment Noise Level (+ n %)"_   
+Increments the headset noise level by a certain percentage which may be adjusted in _"preferences.cfg"_ (see below).
+- _"Noise Level: n %"_   
+Only displays the current headset noise level and does not constitute an interactive element.
+- _"Decrement Noise Level (- n %)"_   
+Decrements the  headset noise level by a certain percentage which may be adjusted in _"preferences.cfg"_ (see below).
+- _"[On/Off] Use FMod Sound Space"_   
+When on, the dataref *"sim/operation/sound/inside_any"* is used to determine whether the user is inside the aircraft or not. When off, *"sim/graphics/view/view_is_external"* is used.
+
+#### 5.3.x Configuration via Preferences.cfg
+
+These are the persistence module parameters which are stored in lines prefixed with "NCHEADSET" in _"preferences.cfg"_:
+
+- `Automation:string,0:number`   
+Automated headset usage disabled/enabled (0/1; default: 0)
+- `HeadsetOn:string,0:number`   
+Headset usage disabled/enabled (0/1; default: 0)
+- `NoiseCancelLevel:string,0.5:number`   
+Volume level of outside noise (0 to 1; default 0.5)
+- `NoiseCancelLevelDelta:string,0.1:number`   
+Increment/Decrement of volume level adjustment (0<>1; default: 0.1)
+- `MainTimerInterval:string,1:number`   
+Timer interval for headset automation checks (in seconds; default: 1)
+- `FModCompliant:string,1:number`   
+Use Fmod soundscape to determine if user is inside the aircraft disabled/enabled  (0/1; default: 1)
+
+When altering these parameters, only adjust the numbers and nothing else.   
+Changes to _"preferences.txt"_ can be applied immediately with the _"Reload XLua Utils Preferences"_ from the _"XLua Utils"_ menu.
 
 &nbsp;
 

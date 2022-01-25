@@ -38,7 +38,7 @@ dofile("Submodules/xlua_utils_debugwindow.lua")  -- CORE COMPONENT; DO NOT CHANG
 dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
---dofile("VSL_C47_Enhancements.lua")  -- Airplane-specific script
+--dofile("aircraft_specific/config.lua")  -- Airplane-specific script
 --[[
 
 VARIABLES

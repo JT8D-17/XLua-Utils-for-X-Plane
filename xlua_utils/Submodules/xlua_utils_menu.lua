@@ -52,8 +52,8 @@ end
 --[[ Menu watchdog that is used to check an item or change its prefix ]]
 function XluaUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if XluaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize Xlua",intable)
-        elseif XluaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload Xlua Preferences",intable) end
+        if XluaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Initialize XLua Utils",intable)
+        elseif XluaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XluaUtils_Menu_ID,index,"Reload XLua Utils Preferences",intable) end
     end
     if index == 3 then
         if Preferences_ValGet(XluaUtils_Config_Vars,"DebugOutput") == 0 then Menu_CheckItem(XluaUtils_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
