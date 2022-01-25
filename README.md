@@ -1,9 +1,11 @@
 # XLuaUtils for X-Plane 11
 
-This is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a cohesive companion utility. XLuaUtils extend XLua's capabiltities to demonstrate interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
+This is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a cohesive companion utility. XLua Utils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
 It can be installed and used in any X-Plane 11 aircraft
 
-It implements wrappers for 
+It also implements wrappers for some paths, logging, notifications, dataref interaction and debug information, which can help aircraft developers during development of XLua scripts.
+
+The persistence and noise-cancelling headset modules, as well as some minor ones, are aimed at end users who seek to get more out of an aircraft.
 
 &nbsp;
 
@@ -49,22 +51,22 @@ It implements wrappers for
 <a name="2.0"></a>
 ## 2 - Installation
 
-###2.1 Aircraft without an xlua plugin
+### 2.1 Aircraft without an xlua plugin
 
 - Copy the *"xlua"* folder from, e.g. _"X-Plane 11/Aircraft/Laminar Research/Cessna 172SP/plugins"_ into the _"plugins"_ folder of the aircraft that you wish to use XLuaUtils with.
 - Delete all subfolders from the _"[Aircraft's main folder]/plugins/xlua/scripts"_ folder.
 - Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
-###2.2 Aircraft with an xlua plugin
+### 2.2 Aircraft with an xlua plugin
 
 - Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
-###2.3 Post-Installation
+### 2.3 Post-Installation
 
-XLuaUtils is working correctly if X-Plane's main menu bar contains a menu with the aircraft's name and an _"XLua Utils"_ submenu.
+XLua Utils is working correctly if X-Plane's main menu bar contains a menu with the aircraft's name and an _"XLua Utils"_ submenu (see chapter [5.1](#5.1)).
 
-If you have no intention of using XLuaUtils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
-A quick read of [chapter 4](#4.0) is recommended nonetheless as a few bits of information may come in handy at some point.
+If you have no intention of using XLua Utils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
+A quick read of [chapter 4](#4.0) is recommended regardless, because some information there may come in handy at some point.
 
 
 &nbsp;
@@ -97,7 +99,7 @@ XLua Utils provides a range of useful functions to help debug code. This chapter
 - As XLua namespaces are completely local, reading variables from other scripts is not possible.   
 If you want to use any of XLua Utils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xlua_utils.lua`.
 
-- As of now, XLua Utils' capabilities do not encompass the full extent of X-Plane's API.
+- XLua Utils' capabilities do not encompass the full extent of X-Plane's API (yet?).
 
 &nbsp;
 
@@ -106,10 +108,14 @@ If you want to use any of XLua Utils' functions in airplane related scripts, add
 
 XLua Utils will populate the following variables at script startup:
 
-- `ACF_Folder`: Complete path of the folder that the .acf file of the user aircraft is located in.
-- `ACF_Filename`: Name of the user aircraft's .acf file.
-- `Xlua_Utils_Path`: Complete path of the XLua Utils root folder.
-- `Xlua_Utils_PrefsFile`: Complete path to the XLua Utils preferences file, including filename.
+- `ACF_Folder`   
+Complete path of the folder that the .acf file of the user aircraft is located in.
+- `ACF_Filename`   
+Name of the user aircraft's .acf file.
+- `Xlua_Utils_Path`   
+Complete path of the XLua Utils root folder.
+- `Xlua_Utils_PrefsFile`   
+Complete path to the XLua Utils preferences file, including filename.
 
 These variables are available in all of XLua Utils' submodules.
 
@@ -371,7 +377,7 @@ Decrements the  headset noise level by a certain percentage which may be adjuste
 - _"[On/Off] Use FMod Sound Space"_   
 When on, the dataref *"sim/operation/sound/inside_any"* is used to determine whether the user is inside the aircraft or not. When off, *"sim/graphics/view/view_is_external"* is used.
 
-#### 5.3.x Configuration via Preferences.cfg
+#### 5.3.3 Configuration via Preferences.cfg
 
 These are the persistence module parameters which are stored in lines prefixed with "NCHEADSET" in _"preferences.cfg"_:
 
