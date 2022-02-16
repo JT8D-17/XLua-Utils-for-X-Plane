@@ -91,15 +91,15 @@ local function Dataref_Access_Read(intable,index,subtable)
             intable[index][subtable][i+1] = value[i] -- Write dataref values to value subtable for dataref
         end
     end
-    if XPLM.XPLMGetDataRefTypes(dataref) == 32 then
-        local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
+    if intable[index][2] == 32 then
+        local size = XPLM.XPLMGetDatab(intable[index][5],nil,0,0) -- Get size of dataref
         local value = ffi.new("char["..size.."]") -- Define character array
-        XPLM.XPLMGetDatab(dataref,ffi.cast("void *",value),0,size) -- Get byte array values from dataref
+        XPLM.XPLMGetDatab(intable[index][5],ffi.cast("void *",value),0,size) -- Get byte array values from dataref
         intable[#intable][subtable][1] = ffi.string(value) -- Write dataref value to value subtable for dataref
     end
     DebugLogOutput("Reading "..intable[index][1].." (Type: "..intable[index][2].."; Values: "..table.concat(intable[index][subtable],",")..")")
 end
---[[ Access a dataref ]]
+--[[ Write a dataref ]]
 local function Dataref_Access_Write(intable,index,subtable)
     --local intable[index][5] = XPLM.XPLMFindDataRef(intable[index][1])
     if intable[index][2] == 1 then XPLM.XPLMSetDatai(intable[index][5],intable[index][subtable][1]) end
@@ -136,7 +136,7 @@ end
 --[[ Reads all or a single dataref in a table ]]
 function Dataref_Read(intable,subtable,filter)
     for j=2,#intable do
-        if filter == "All" then -- Loop through all datatrefs
+        if filter == "All" then -- Loop through all datarefs
             Dataref_Access_Read(intable,j,subtable)
         end 
         if filter == intable[j][1] then -- Update a single dataref
@@ -147,7 +147,7 @@ end
 --[[ Writes all or a single dataref in a table ]]
 function Dataref_Write(intable,subtable,filter)
     for j=2,#intable do
-        if filter == "All" then -- Loop through all datatrefs
+        if filter == "All" then -- Loop through all datarefs
             Dataref_Access_Write(intable,j,subtable)
         end 
         if filter == intable[j][1] then -- Update a single dataref
