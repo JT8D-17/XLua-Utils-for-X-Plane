@@ -39,6 +39,7 @@ dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 --dofile("aircraft_specific/config.lua")  -- Airplane-specific script
+dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
 --[[
 
 VARIABLES
@@ -50,7 +51,6 @@ XluaUtils_Config_Vars = {
 {"DebugOutput",0},
 {"DebugWindow",0},
 {"DebugWindowPos",200,600,600,200}, -- left, top, right, bottom
-{"DebugWindowRefreshRate",1},
 }
 --[[
 
