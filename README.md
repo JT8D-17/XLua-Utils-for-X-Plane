@@ -1,11 +1,11 @@
-# XLuaUtils for X-Plane 11
+# XLuaUtils for X-Plane 11+
 
 This is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a cohesive companion utility. XLua Utils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
-It can be installed and used in any X-Plane 11 aircraft
+It can be installed and used in any X-Plane 11+ aircraft
 
 It also implements wrappers for some paths, logging, notifications, dataref interaction and debug information, which can help aircraft developers during development of XLua scripts.
 
-The persistence and noise-cancelling headset modules, as well as some minor ones, are aimed at end users who seek to get more out of an aircraft.
+The persistence and noise-cancelling headset modules, as well as some miscellaneous utilities are aimed at end users who seek to get more out of an aircraft.
 
 &nbsp;
 
@@ -30,17 +30,13 @@ The persistence and noise-cancelling headset modules, as well as some minor ones
 5.4 [Miscellaneous Utilities](#5.4)   
 6. [License](#6.0)
 
-
-
-
 &nbsp;
 
 <a name="1.0"></a>
 ## 1 - Requirements
 
-- [X-Plane 11](https://www.x-plane.com/) (version 11 or higher)
-- [XLua](https://github.com/X-Plane/XLua) (only works locally on aircraftl)
-
+- [X-Plane](https://www.x-plane.com/)  (11 or higher)
+- [XLua](https://github.com/X-Plane/XLua) (1.0 or higher; only works locally on aircraft)
 
 &nbsp;
 
