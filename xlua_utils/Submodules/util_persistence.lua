@@ -9,11 +9,11 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 VARIABLES
 
 ]]
---[[ ]]
-Persistence_SaveFile = "persistence_save.txt"
+--[[ Persistence save file name ]]
+local Persistence_SaveFile = "persistence_save.txt"
 local Has_SaveFile = 0
 --[[ Table that contains the configuration Variables for the persistence module ]]
-Persistence_Config_Vars = {
+local Persistence_Config_Vars = {
 {"PERSISTENCE"},
 {"Autoload",0},
 {"AutoloadDelay",5},
@@ -24,9 +24,28 @@ Persistence_Config_Vars = {
 {"SaveOnExit",0},
 }
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
-Persistence_Datarefs = { 
+local Persistence_Datarefs = {
 {"DATAREF"},    
 }
+--[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
+local Persistence_Menu_Items = {
+"Persistence",              -- Menu title, index 1
+"Save Cockpit State Now",   -- Item index: 2
+"Load Cockpit State Now",   -- Item index: 3
+"[Separator]",              -- Item index: 4
+"Cockpit State Autosave",   -- Item index: 5
+"Cockpit State Autoload",   -- Item index: 6
+"Save On Exit",             -- Item index: 7
+"[Separator]",              -- Item index: 8
+"Increment Autosave Interval (+ "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 9
+"Autosave Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s",                    -- Item index: 10
+"Decrement Autosave Interval (- "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 11
+"[Separator]",              -- Item index: 12
+"",                         -- Item index: 13
+}
+--[[ Menu variables for FFI ]]
+local Persistence_Menu_ID = nil
+local Persistence_Menu_Pointer = ffi.new("const char")
 --[[
 
 FUNCTIONS
@@ -122,93 +141,9 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
 end
 --[[
 
-INITIALIZATION
-
-]]
---[[ First start of the persistence module ]]
-function Persistence_FirstRun()
-    Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
-    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
-    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    Persistence_Menu_Init(XluaUtils_Menu_ID)
-    LogOutput(Persistence_Config_Vars[1][1]..": First Run!")
-end
---[[ Initializes persistence at every startup ]]
-function Persistence_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
-    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    Dataref_Read(Persistence_Datarefs,3,"All")
-    LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
-end
---[[ Reloads the Persistence configuration ]]
-function Persistence_Reload()
-    Persistence_Init()
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
-    LogOutput(Persistence_Config_Vars[1][1]..": Reloaded!")
-end
---[[ Autoloads the saved persistence values ]]
-function Persistence_Load()
-    Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
-    RemoveNotification(-99)
-end
---[[ Autosaves the current persistence values ]]
-function Persistence_Save()
-    Dataref_Read(Persistence_Datarefs,3,"All")
-    Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    LogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
-end
---[[ Starts an autosave timer ]]
-function Persistence_TimerStart()
-    run_timer(Persistence_Save,Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay"),Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval"))
-    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer started (Delay: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay").." s; Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.)")
-end
---[[ Stops an autosave timer ]]
-function Persistence_TimerStop()
-    stop_timer(Persistence_Save)
-    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer stopped.")
-end
---[[ Controller for timed autosaving of the current persistence values ]]
-function Persistence_AutosaveTimerCtrl()
-    if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 and Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") > 0 then
-        if is_timer_scheduled(Persistence_Save) then
-            Persistence_TimerStop()
-            Persistence_TimerStart()
-        else
-            Persistence_TimerStart()
-        end
-    else -- Autosave disabled or interval at zero
-        if is_timer_scheduled(Persistence_Save) then
-            Persistence_TimerStop()
-        end    
-    end
-end
---[[
-
 MENU
 
 ]]
---[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
-Persistence_Menu_Items = {
-"Persistence",              -- Menu title, index 1
-"Save Cockpit State Now",   -- Item index: 2
-"Load Cockpit State Now",   -- Item index: 3
-"[Separator]",              -- Item index: 4
-"Cockpit State Autosave",   -- Item index: 5
-"Cockpit State Autoload",   -- Item index: 6
-"Save On Exit",             -- Item index: 7
-"[Separator]",              -- Item index: 8
-"Increment Autosave Interval (+ "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 9
-"Autosave Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s",                    -- Item index: 10
-"Decrement Autosave Interval (- "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta").." s)",   -- Item index: 11
-"[Separator]",              -- Item index: 12
-"",                         -- Item index: 13
-}
---[[ Menu variables for FFI ]]
-Persistence_Menu_ID = nil
-Persistence_Menu_Pointer = ffi.new("const char")
 --[[ Menu callbacks. The functions to run or actions to do when picking any non-title and nonseparator item from the table above ]]
 function Persistence_Menu_Callbacks(itemref)
     for i=2,#Persistence_Menu_Items do
@@ -286,9 +221,8 @@ function Persistence_Menu_Watchdog(intable,index)
         elseif XluaPersist_HasDrefFile == 1 then Menu_ChangeItemPrefix(Persistence_Menu_ID,index,"Reload Config & Dataref File (Drefs: "..(#Persistence_Datarefs-1)..")",intable) end
     end
 end
-
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function Persistence_Menu_Init(ParentMenuID)
+function Persistence_Menu_Build(ParentMenuID)
     local Menu_Indices = {}
     for i=2,#Persistence_Menu_Items do Menu_Indices[i] = 0 end
     if XPLM ~= nil then
@@ -310,4 +244,80 @@ function Persistence_Menu_Init(ParentMenuID)
         end
         LogOutput(Persistence_Config_Vars[1][1]..": Menu initialized!")
     end
+end
+--[[
+
+INITIALIZATION
+
+]]
+--[[ First start of the persistence module ]]
+function Persistence_FirstRun()
+    Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
+    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
+    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
+    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
+    Persistence_Menu_Build(XluaUtils_Menu_ID)
+    LogOutput(Persistence_Config_Vars[1][1]..": First Run!")
+end
+--[[ Initializes persistence at every startup ]]
+function Persistence_Init()
+    Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
+    Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
+    Dataref_Read(Persistence_Datarefs,3,"All")
+    LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
+end
+--[[ Reloads the Persistence configuration ]]
+function Persistence_Reload()
+    Persistence_Init()
+    Persistence_Menu_Watchdog(Persistence_Menu_Items,8)
+    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
+    LogOutput(Persistence_Config_Vars[1][1]..": Reloaded!")
+end
+--[[ Checks if persistence data should be loaded at statup and starts a delay timer ]]
+function Persistence_Autoload()
+    -- Check persistence automation status and load if necessary
+    if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then
+        run_after_time(Persistence_Load,Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay")) DisplayNotification("Waiting "..Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay").." seconds before loading persistence data..","Caution",-99)
+    end
+end
+--[[ Autoloads the saved persistence values ]]
+function Persistence_Load()
+    Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
+    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
+    RemoveNotification(-99)
+end
+--[[ Autosaves the current persistence values ]]
+function Persistence_Save()
+    Dataref_Read(Persistence_Datarefs,3,"All")
+    Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
+    LogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
+end
+--[[ Starts an autosave timer ]]
+function Persistence_TimerStart()
+    run_timer(Persistence_Save,Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay"),Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval"))
+    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer started (Delay: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveDelay").." s; Interval: "..Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval").." s.)")
+end
+--[[ Stops an autosave timer ]]
+function Persistence_TimerStop()
+    stop_timer(Persistence_Save)
+    LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer stopped.")
+end
+--[[ Controller for timed autosaving of the current persistence values ]]
+function Persistence_AutosaveTimerCtrl()
+    if Preferences_ValGet(Persistence_Config_Vars,"Autosave") == 1 and Preferences_ValGet(Persistence_Config_Vars,"AutosaveInterval") > 0 then
+        if is_timer_scheduled(Persistence_Save) then
+            Persistence_TimerStop()
+            Persistence_TimerStart()
+        else
+            Persistence_TimerStart()
+        end
+    else -- Autosave disabled or interval at zero
+        if is_timer_scheduled(Persistence_Save) then
+            Persistence_TimerStop()
+        end
+    end
+end
+--[[ Unload logic for the persistence module ]]
+function Persistence_Unload()
+    if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Persistence_Save() end -- Check persistence save on exit status and load if necessary
 end

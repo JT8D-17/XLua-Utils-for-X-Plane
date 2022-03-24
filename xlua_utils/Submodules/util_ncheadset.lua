@@ -10,7 +10,7 @@ VARIABLES
 
 ]]
 --[[ Table that contains the configuration Variables for the NC Headset module ]]
-NCHeadset_Config_Vars = {
+local NCHeadset_Config_Vars = {
 {"NCHEADSET"},
 {"Automation",0},
 {"HeadsetOn",0},
@@ -35,12 +35,26 @@ IsInside_fmod = find_dataref("sim/operation/sound/inside_any")
 IsInside_old = find_dataref("sim/graphics/view/view_is_external")
 IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel")
 NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines")
-HeadSetStatus_Old = 0
+local HeadSetStatus_Old = 0
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
-NCHeadset_Datarefs = {
+local NCHeadset_Datarefs = {
 "DATAREF",
 }
-
+--[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
+local NCHeadset_Menu_Items = {
+"Headset",                  -- Menu title, index 1
+"Headset",                  -- Item index: 2
+"Automation",               -- Item index: 3
+"[Separator]",              -- Item index: 4
+"Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 5
+"Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",       -- Item index: 6
+"Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+"[Separator]",              -- Item index: 8
+"Use FMod Sound Space",     -- Item index: 9
+}
+--[[ Menu variables for FFI ]]
+local NCHeadset_Menu_ID = nil
+local NCHeadset_Menu_Pointer = ffi.new("const char")
 --[[
 
 FUNCTIONS
@@ -66,7 +80,7 @@ function NCHeadset_Off()
         Dataref_Write(NCHeadset_Datarefs,4,"All")
     end
 end
---[[ ]]
+--[[ Main timer for the NC headset logic ]]
 function NCHeadset_MainTimer()
     -- Picks the dataref feeding the IsInside variable based on fmod compliance as determined by the user
     if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
@@ -87,52 +101,9 @@ function NCHeadset_MainTimer()
 end
 --[[
 
-INITIALIZATION
-
-]]
---[[ First start of the NCHeadset module ]]
-function NCHeadset_FirstRun()
-    Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
-    DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    NCHeadset_Menu_Init(XluaUtils_Menu_ID)
-    LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")
-end
---[[ Initializes NCHeadset at every startup ]]
-function NCHeadset_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
-    DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values as defaults
-    Dataref_Read(NCHeadset_Datarefs,3,"All") -- Populate dataref container with currrent values
-    run_at_interval(NCHeadset_MainTimer,Preferences_ValGet(NCHeadset_Config_Vars,"MainTimerInterval"))
-    LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
-end
---[[ Reloads the Persistence configuration ]]
-function NCHeadset_Reload()
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
-    --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
-    LogOutput(NCHeadset_Config_Vars[1][1]..": Reloaded!")
-end
---[[
-
 MENU
 
 ]]
---[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
-NCHeadset_Menu_Items = {
-"Headset",                  -- Menu title, index 1
-"Headset",                  -- Item index: 2
-"Automation",               -- Item index: 3
-"[Separator]",              -- Item index: 4
-"Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 5
-"Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",       -- Item index: 6
-"Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
-"[Separator]",              -- Item index: 8
-"Use FMod Sound Space",     -- Item index: 9
-}
---[[ Menu variables for FFI ]]
-NCHeadset_Menu_ID = nil
-NCHeadset_Menu_Pointer = ffi.new("const char")
 --[[ Menu callbacks. The functions to run or actions to do when picking any non-title and nonseparator item from the table above ]]
 function NCHeadset_Menu_Callbacks(itemref)
     for i=2,#NCHeadset_Menu_Items do
@@ -189,9 +160,8 @@ function NCHeadset_Menu_Watchdog(intable,index)
         elseif Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
 end
-
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function NCHeadset_Menu_Init(ParentMenuID)
+function NCHeadset_Menu_Build(ParentMenuID)
     local Menu_Indices = {}
     for i=2,#NCHeadset_Menu_Items do Menu_Indices[i] = 0 end
     if XPLM ~= nil then
@@ -213,4 +183,32 @@ function NCHeadset_Menu_Init(ParentMenuID)
         end
         LogOutput(NCHeadset_Config_Vars[1][1].." Menu initialized!")
     end
+end
+--[[
+
+INITIALIZATION
+
+]]
+--[[ First start of the NCHeadset module ]]
+function NCHeadset_FirstRun()
+    Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    DrefTable_Read(Dref_List,NCHeadset_Datarefs)
+    NCHeadset_Menu_Build(XluaUtils_Menu_ID)
+    LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")
+end
+--[[ Initializes NCHeadset at every startup ]]
+function NCHeadset_Init()
+    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    DrefTable_Read(Dref_List,NCHeadset_Datarefs)
+    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values as defaults
+    Dataref_Read(NCHeadset_Datarefs,3,"All") -- Populate dataref container with currrent values
+    run_at_interval(NCHeadset_MainTimer,Preferences_ValGet(NCHeadset_Config_Vars,"MainTimerInterval"))
+    LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
+end
+--[[ Reloads the Persistence configuration ]]
+function NCHeadset_Reload()
+    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
+    LogOutput(NCHeadset_Config_Vars[1][1]..": Reloaded!")
 end

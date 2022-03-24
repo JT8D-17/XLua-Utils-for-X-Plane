@@ -4,10 +4,50 @@ XLua Module, required by xlua_utils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
+--[[
+
+COMMON FUNCTIONS
+
+]]
+--[[ Returns the aircraft ACF file and path ]]
+function GetAircraftFolder()
+    local fileName = ffi.new("char[256]")
+    local filePath = ffi.new("char[512]")
+    XPLM.XPLMGetNthAircraftModel(0,fileName,filePath);
+    fileName = ffi.string(fileName)
+    filePath = ffi.string(filePath):match("(.*[/\\])") -- Cut filename from path
+    return filePath,fileName
+end
+--[[ Splits a line at the designated delimiter, returns a table ]]
+function SplitString(input,delim)
+    local output = {}
+    --PrintToConsole("Line splitting in: "..input)
+    for i in string.gmatch(input,delim) do table.insert(output,i) end
+    --PrintToConsole("Line splitting out: "..table.concat(output,",",1,#output))
+    return output
+end
+--[[ Trims whitespace from the end of a string - credit: https://snippets.bentasker.co.uk/page-1705231409-Trim-whitespace-from-end-of-string-LUA.html ]]
+function TrimEndWhitespace(s)
+  return s:match'^(.*%S)%s*$'
+end
+--[[ Merges subtables for printing ]]
+function TableMergeAndPrint(intable)
+    local tmp = {}
+    for i=1,#intable do
+        if type(intable[i]) ~= "table" then tmp[i] = tostring(intable[i]) end
+        if type(intable[i]) == "table" then tmp[i] = tostring("{"..table.concat(intable[i],",").."}") end
+    end
+    return tostring(table.concat(tmp,","))
+end
+--[[
+
+PREFERENCE FILE I/O FUNCTIONS
+
+]]
 --[[ Accessor: Get value from a subtable ]]
 function Preferences_ValGet(inputtable,item,subitem)
     for i=1,#inputtable do
-       if inputtable[i][1] == item then 
+       if inputtable[i][1] == item then
            if subitem == nil then return inputtable[i][2] else return inputtable[i][subitem] end
        end
     end
@@ -15,7 +55,7 @@ end
 --[[ Accessor: Set value from a subtable ]]
 function Preferences_ValSet(inputtable,item,newvalue,subitem)
     for i=1,#inputtable do
-       if inputtable[i][1] == item then 
+       if inputtable[i][1] == item then
            if subitem == nil then inputtable[i][2] = newvalue break else inputtable[i][subitem] = newvalue break end
        end
     end
@@ -31,7 +71,7 @@ function Preferences_Read(inputfile,outputtable)
             -- Find lines matching first subtable of output table
             if string.match(line,"^"..outputtable[1][1]..",") then
                 local temptable = {}
-                local splitline = SplitString(line,"([^,]+)")                
+                local splitline = SplitString(line,"([^,]+)")
                 for j=2,#splitline do
                    if string.match(splitline[j],"{") then -- Handle tables
                        local tempsubtable = {}
@@ -70,7 +110,7 @@ function Preferences_Read(inputfile,outputtable)
                     end
                 end
             end
-            i = i+1            
+            i = i+1
         end
         file:close()
         if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
@@ -115,5 +155,64 @@ function Preferences_Write(inputtable,outputfile)
         end
     end
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Xlua Utils Preferences") else LogOutput("FILE WRITE ERROR: Xlua Utils Preferences") end
-	file:close()
+    file:close()
+end
+--[[
+
+COMMON MENU FUNCTIONS
+
+]]
+--[[ Menu cleanup upon script reload or session exit ]]
+function Menu_CleanUp(menu_id,menu_index)
+   if menu_id ~= nil then XPLM.XPLMClearAllMenuItems(menu_id) XPLM.XPLMDestroyMenu(menu_id) end
+   if menu_index ~= nil then XPLM.XPLMRemoveMenuItem(XPLM.XPLMFindAircraftMenu(),XluaUtils_Menu_Index) end
+end
+--[[ Menu item name change ]]
+function Menu_ChangeItemPrefix(menu_id,index,prefix,intable)
+    --LogOutput("Plopp: "..","..index..","..prefix..","..table.concat(intable,":"))
+    XPLM.XPLMSetMenuItemName(menu_id,index-2,prefix.." "..intable[index],1)
+end
+--[[ Menu item check status change ]]
+function Menu_CheckItem(menu_id,index,state)
+    index = index - 2
+    local out = ffi.new("XPLMMenuCheck[1]")
+    XPLM.XPLMCheckMenuItemState(menu_id,index-1,ffi.cast("XPLMMenuCheck *",out))
+    if tonumber(out[0]) == 0 then XPLM.XPLMCheckMenuItem(menu_id,index,1) end
+    if state == "Activate" and tonumber(out[0]) ~= 2 then XPLM.XPLMCheckMenuItem(menu_id,index,2)
+    elseif state == "Deactivate" and tonumber(out[0]) ~= 1 then XPLM.XPLMCheckMenuItem(menu_id,index,1)
+    end
+end
+--[[
+
+COMMON WINDOW FUNCTIONS
+
+]]
+--[[ Obtains X-Plane's window coordinates ]]
+function Window_XP_Coords_Get(outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetScreenBoundsGlobal(ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3]),ffi.cast("int *",out[4])) -- Window ID, left, top, right, bottom
+    for i=1,4 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("X-Plane window geometry: "..table.concat(outtable,","))
+end
+--[[ Obtains a window's coordinates ]]
+function Window_Coords_Get(inwindowid,outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetWindowGeometry(inwindowid,ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3]),ffi.cast("int *",out[4])) -- Window ID, left, top, right, bottom
+    for i=1,4 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("Window geometry: "..table.concat(outtable,","))
+end
+--[[ Sets a window's coordinates ]]
+function Window_Coords_Set(inwindowid,intable)
+    XPLM.XPLMSetWindowGeometry(inwindowid,intable[1],intable[2],intable[3],intable[4])
+end
+--[[ Destroys a window ]]
+function Window_Destroy(inwindowid)
+   if inwindowid ~= nil then XPLM.XPLMDestroyWindow(inwindowid) inwindowid = nil end
+end
+--[[ Obtains information about the window font ]]
+function Window_Font_Info(fontid,outtable)
+    local out = {ffi.new("int[1]"),ffi.new("int[1]"),ffi.new("int[1]")}
+    XPLM.XPLMGetFontDimensions(fontid,ffi.cast("int *",out[1]),ffi.cast("int *",out[2]),ffi.cast("int *",out[3])) -- font ID, char width, char height, digits only
+    for i=1,3 do outtable[i] = tonumber(out[i][0]) end
+    --PrintToConsole("Font info: "..table.concat(outtable,","))
 end

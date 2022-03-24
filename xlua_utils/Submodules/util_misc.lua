@@ -5,7 +5,7 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
 --[[ Table that contains the configuration Variables for the misc utils module ]]
-MiscUtils_Config_Vars = {
+local MiscUtils_Config_Vars = {
 {"MISC_UTILS"},
 {"MainTimerInterval",1},
 {"SyncBaros",0},
@@ -572,23 +572,33 @@ local Baro_Pilot_Old = Baro_Pilot
 local Baro_CoPilot_Old = Baro_CoPilot
 local Baro_Stby_Old = Baro_Stby
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
-MiscUtils_Datarefs = {
+local MiscUtils_Datarefs = {
 "DATAREF",
 }
+--[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
+local MiscUtils_Menu_Items = {
+"Miscellaneous",  -- Menu title, index 1
+" ",        -- Item index: 2
+"Synchronize Baros",
+-- "Decrement Noise Level (- "..(Preferences_ValGet(MiscUtils_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+}
+--[[ Menu variables for FFI ]]
+local MiscUtils_Menu_ID = nil
+local MiscUtils_Menu_Pointer = ffi.new("const char")
 --[[
 
 FUNCTIONS
 
 ]]
 --[[ Determine number of engines running ]]
-local function AllEnginesRunning()
+function AllEnginesRunning()
     local j=0
     for i=0,(NumEngines-1) do if IsBurningFuel[i] == 1 then j = j + 1 end end
     if j == NumEngines then return 1 end
     if j < NumEngines then return 0 end
 end
 --[[ Synchronize baros ]]
-local function Sync_Baros()
+function Sync_Baros()
     if Baro_Pilot ~= Baro_Pilot_Old then
         Baro_CoPilot = Baro_Pilot
         Baro_CoPilot_Old = Baro_CoPilot
@@ -618,42 +628,9 @@ function MiscUtils_MainTimer()
 end
 --[[
 
-INITIALIZATION
-
-]]
---[[ First start of the misc utils module ]]
-function MiscUtils_FirstRun()
-    Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
-    Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
-    DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    MiscUtils_Menu_Init(XluaUtils_Menu_ID)
-    LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")
-end
---[[ Initializes the misc utils module at every startup ]]
-function MiscUtils_Init()
-    --Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
-    DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    --Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values as defaults
-    Dataref_Read(MiscUtils_Datarefs,3,"All") -- Populate dataref container with current values
-    for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][3][1] = 0 end -- Zero all datarefs
-    run_at_interval(MiscUtils_MainTimer,Preferences_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
-    LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
-end
---[[
-
 MENU
 
 ]]
---[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
-MiscUtils_Menu_Items = {
-"Miscellaneous",  -- Menu title, index 1
-" ",        -- Item index: 2
-"Synchronize Baros",
--- "Decrement Noise Level (- "..(Preferences_ValGet(MiscUtils_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
-}
---[[ Menu variables for FFI ]]
-MiscUtils_Menu_ID = nil
-MiscUtils_Menu_Pointer = ffi.new("const char")
 --[[ Menu callbacks. The functions to run or actions to do when picking any non-title and nonseparator item from the table above ]]
 function MiscUtils_Menu_Callbacks(itemref)
     for i=2,#MiscUtils_Menu_Items do
@@ -665,7 +642,7 @@ function MiscUtils_Menu_Callbacks(itemref)
                 if Preferences_ValGet(MiscUtils_Config_Vars,"SyncBaros") == 0 then
                     Preferences_ValSet(MiscUtils_Config_Vars,"SyncBaros",1) Sync_Baros() DebugLogOutput("Barometer synchronization: On") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
                 else
-                    Preferences_ValSet(MiscUtils_Config_Vars,"SyncBaros",0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
+                    Preferences_ValSet(MiscUtils_Config_Vars,"SyncBaros",0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
                 end
                 Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
             end
@@ -685,7 +662,7 @@ function MiscUtils_Menu_Watchdog(intable,index)
     end
 end
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function MiscUtils_Menu_Init(ParentMenuID)
+function MiscUtils_Menu_Build(ParentMenuID)
     local Menu_Indices = {}
     for i=2,#MiscUtils_Menu_Items do Menu_Indices[i] = 0 end
     if XPLM ~= nil then
@@ -707,4 +684,27 @@ function MiscUtils_Menu_Init(ParentMenuID)
         end
         LogOutput(MiscUtils_Config_Vars[1][1].." Menu initialized!")
     end
+end
+--[[
+
+INITIALIZATION
+
+]]
+--[[ First start of the misc utils module ]]
+function MiscUtils_FirstRun()
+    Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
+    Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
+    DrefTable_Read(Dref_List,MiscUtils_Datarefs)
+    MiscUtils_Menu_Init(XluaUtils_Menu_ID)
+    LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")
+end
+--[[ Initializes the misc utils module at every startup ]]
+function MiscUtils_Init()
+    Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
+    DrefTable_Read(Dref_List,MiscUtils_Datarefs)
+    --Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values as defaults
+    Dataref_Read(MiscUtils_Datarefs,3,"All") -- Populate dataref container with current values
+    for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][3][1] = 0 end -- Zero all datarefs
+    run_at_interval(MiscUtils_MainTimer,Preferences_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
+    LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
 end

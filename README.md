@@ -65,6 +65,8 @@ The persistence and noise-cancelling headset modules, as well as some minor ones
 
 XLua Utils is working correctly if X-Plane's main menu bar contains a menu with the aircraft's name and an _"XLua Utils"_ submenu (see chapter [5.1](#5.1)).
 
+![XLua Utils Main Menu Entry](ReadMe_Images/XLuaUtils_MenuEntry.jpg  "XLua Utils Main Menu Entry")
+
 If you have no intention of using XLua Utils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
 A quick read of [chapter 4](#4.0) is recommended regardless, because some information there may come in handy at some point.
 
@@ -98,7 +100,7 @@ XLua Utils provides a range of useful functions to help debug code. This chapter
 
 - As XLua namespaces are completely local, reading variables from other scripts is not possible.   
 If you want to use any of XLua Utils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xlua_utils.lua`.
-
+- Any XLua limitations apply, especially regarding table scope in XLua 1.1 or newer. Any table must be - and is being - treated as local.
 - XLua Utils' capabilities do not encompass the full extent of X-Plane's API (yet?).
 
 &nbsp;
@@ -139,7 +141,9 @@ Combined printing to the developer console and writing to the log file at the sa
 
 #### 4.3.3 Debug-Level Logging
 
-Information that is not necessary for day-to-day usage can be printed to the developer console and logged in XLua Util's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLua Utils"_ menu or the preferences file. 
+Information that is not necessary for day-to-day usage can be printed to the developer console and logged in XLua Util's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLua Utils/Debug"_ menu or the preferences file. 
+
+ ![XLua Utils Debug Menu](ReadMe_Images/XLuaUtils_DebugMenu.jpg  "XLua Utils Debug Menu")
 
 &nbsp;
 
@@ -151,9 +155,10 @@ Configuring a module to use the preferences handling system and interacting with
 
 #### 4.4.1 Preferences Table Format
 
-Preferences information for XLua Utils or any of its submodules is stored in specifically structured Lua tables. Any submodule wishing to use the preferences system must use a table configured as per the following example:
+Preferences information for XLua Utils or any of its submodules is stored in specifically structured Lua tables. Any submodule wishing to use the preferences system must use a table configured as per the following example.   
+Note that, as of XLua 1.1 (or higher), a preference table has to be defined as local and are contrained to the XLua Utils submodule in which they are declared.
 
-	MyConfigTable = {
+	local MyConfigTable = {
 	{"EXAMPLE"}, -- A unique identifier string indicating the owner of values stored in the perferences file.
 	{"MyParameter",12}, -- A subtable with a setting parameter. The first value of this table must always be a unique string identifying the parameter.
 	{"MyOtherParameter",50,20,"Yes"}, -- Parameter subtables support numbers and strings, but no further subtables.
@@ -177,54 +182,142 @@ Using the example table above,  `Preferences_ValGet(MyConfigTable,"MyOtherParame
 Writing a value to a preferences table is done with `Preferences_ValSet(inputtable,item,newvalue,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a subtable, _"newvalue"_ is the value to be written and _"subitem"_ is the index of a value in the subtable.   
 Using the example table above,  `Preferences_ValSet(MyConfigTable,"MyOtherParameter","No",4)` would set the  `"Yes"` at index 4 to `"No"`.
 
+Reference: `xlua_utils/Submodules/xluautils_core_common.lua`   
+
 &nbsp;
 
 <a name="4.5"></a>
 ### 4.5 Menus
 
-...
+XLua Utils provides multiple examples for implementing menus via X-Plane API calls through LuaJIT's foreign function interface (FFI).
+
+**Note that menus are very volatile and prone to crash X-Plane when encountering syntax or logic errors.**
+
+The basic concept behind menus in XLua Utils is the following:
+
+- Menu items are read from an initial table, in which the fist element provides the string for the menu's name, which is not used in the menu build, watchdog or callback functions.   
+All other menu items may be stated as strings from table element 2. **Index 2 is the start index for all callback or watchdog entries.**   
+Separators (horizontal lines) may be defined with a table element containing the `"[Separator]"` string.
+- The main _"_Build"_ function for the menu creates an entry in a parent menu (either X-Plane's aircraft menu or XLua Utils' menu).   
+The function then iterates over the table containing the menu entries to populate the menu.
+- The menu callback function controls the interaction of the menu entries with variables. Use this to interact with variables or datarefs.
+- The menu watchdog is used to alter menu element strings to reflect value changes of certain variables.   
+It is called during menu building, from the menu callback function or may be called from a timer.
+
+Reference: `xlua_utils/Submodules/xluautils_core_mainmenu.lua`   
+Reference: `xlua_utils/Submodules/xluautils_core_debugging.lua`   
+Reference: `xlua_utils/Submodules/util_persistence.lua`   
+Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
+Reference: `xlua_utils/Submodules/util_misc.lua`   
 
 &nbsp;
 
 <a name="4.6"></a>
 ### 4.6 Notifications
 
-Notifications are handled by means of a message stack table. This table is refreshed regularly, and time-limited notifications are automatically purged from the message stack table. If the message stack table's length is zero, the notification window will close.   
-Use the functions below to interact with the stack.
+To provide short-time (or permanent) information, XLua Utils features a notification window.
+
+![XLua Utils Notification Window](ReadMe_Images/XLuaUtils_Notifications.jpg "XLua Utils Notification Window")
+
+Notifications are handled by means of a message stack table. This table is refreshed regularly, and time-limited notifications are automatically purged from the message stack table. If the message stack table's length is zero, the notification window will close. Use the functions below to interact with the stack.
 
 - `DisplayNotification(inputstring,colorkey,displaytime)`   
-inputstring: An input string, e.g. "Hello"   
-colorkey: Can be "Nominal" (white) or "Success" (green) or "Caution" (orange) or "Warning" (red)   
-displaytime: **Positive numbers define the amount of time in seconds that a notification will display, any negative number produces a pinned notification. Each pinned notification must have a unique, numerical ID!**
+_"inputstring"_: An input string, e.g. "Hello"   
+_"colorkey"_: Can be "Nominal" (white) or "Success" (green) or "Caution" (orange) or "Warning" (red) .  
+_"displaytime"_: **Positive numbers define the amount of time in seconds that a notification will display, any negative number produces a pinned notification. Each pinned notification must have a unique, numerical ID!**
 
 - `CheckNotification(inID)`   
-Returns "true" if a notification was found in the stack by its ID
+Returns "true" if a notification was found in the stack by its ID.
 
 - `RemoveNotification(inID)`   
-Removes a notification from the stack by its ID
+Removes a notification from the stack by its ID.
 
 - `UpdateNotification(inputstring,colorkey,inID)`   
 Will remove a notification from and then re-add it to the stack. Use this to refresh a notification with input string that contains a variable.
 
-Reference: `xlua_utils/Submodules/xlua_utils_notifications.lua`
+Reference: `xlua_utils/Submodules/xluautils_core_notifications.lua`
 
 &nbsp;
 
 <a name="4.7"></a>
 ### 4.7 Debug Window
 
-...
+The debug window is a simple window that may be used to display debug data or other information. Its size and position as well as its state (open/closed) is automatically saved and restored after a script reload or X-Plane restart.   
+Toggling the window's visibility is done with "[Open/Close] Debug Window" in the _"XLua Utils/Debug"_ menu.
 
-Reference: `xlua_utils/Submodules/xlua_utils_debugwindow.lua`
+ ![XLua Utils Debug Window](ReadMe_Images/XLuaUtils_DebugWindow.jpg  "XLua Utils Debug Window")
+ 
+ The following methods are provided for interacting with the debug window's content:
+ 
+ -  `Debug_Window_AddLine(id,string,colorkey)`    
+ Adds a line with the following parameters:
+ _"id"_: A unique ID for the line, e.g. "Greeting". **Passing an ID is mandatory!**   
+_"string"_: The string to be displayed, e.g. "Hi there"   
+_"colorkey"_: A key for the color the text is to be displayed in. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
+
+- `Debug_Window_RemoveLine(id)`   
+Removes the line by its ID.
+
+- `Debug_Window_ReplaceLine(id,string,colorkey)`   
+Replaces a line by its ID. **Use this to update a line in the debug window from a flight or timer loop.**   
+_"id"_: The unique ID of the item to be replaced.   
+_"string"_: The new string for the item.   
+ _"colorkey"_: The color of the item. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
+
+Reference: `xlua_utils/Submodules/xluautils_core_debugging.lua`   
+Reference: `xlua_utils/Examples/DebugWindow.lua`
 
 &nbsp;
 
 <a name="4.8"></a>
 ### 4.8 Dataref Handlers
 
-...
+XLua Utils enables handling datarefs from an input ttable containing a list of datarefs. A table of input datarefs can be checked for validity and transferred into a container table which holds various information about each dataref. Said container table can then be used for further manipulation or storage in a save file.
 
-Reference: `xlua_utils/Submodules/xlua_utils_datarefs.lua`
+#### 4.8.1 Dataref Tables
+
+To facilitate handling of datarefs, a simple **input table** is used in which each dataref is a string table element as in the following example. All types of X-Plane datarefs are supported.   
+Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are contrained to the XLua Utils submodule in which they are declared.
+
+	local mydreflist={
+	"sim/operation/sound/fan_volume_ratio",
+	"sim/fake/dataref",
+	"sim/operation/sound/interior_volume_ratio",
+	}
+
+A dataref container table should be declared as follows, with the fist item being a unique identifier for storage in a save file:
+
+	local mydrefcontainer = {
+	"DATAREF",
+	}
+
+Issuing  `DrefTable_Read(mydreflist,mydrefcontainer)` in a script startup routine will check if the datarefs in _"mydreflist"_ exist in X-Plane. Invalid datarefs (such as the fake one in the example) will be discarded.   
+A successfully populated container table with the input dataref examples above has the following format:
+
+	local mydrefcontainer = {
+	"DATAREF",
+	-- dataref,dataref type,{dataref value(s) storage 1},{dataref value(s) storage 2},dataref handle
+	{sim/operation/sound/fan_volume_ratio,2,{1},{},cdata<void *>: 0x08e409d0)
+	{sim/operation/sound/interior_volume_ratio,2,{1},{},cdata<void *>: 0x08e40480
+	}
+
+There are two subtables for storing dataref values at table index 3 and 4. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
+The length of these subtables corresponds to the length of the dataref and supports array type datarefs.
+
+#### 4.8.2 Reading/Writing from/to Datarefs
+
+The function `Dataref_Read(intable,subtable,filter)` reads the value of one or all datarefs in a container table from X-Plane. The parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be stored in (either index 3 or 4) and _"filter"_ may either be the name of a specific dataref in the container table or "All" to iterate over the entire container table and update each dataref from X-Plane.   
+Using the example table above, the function call to update the entire dataref table using storage position 1 at table element index 3 would be: `Dataref_Read(mydrefcontainer,3,"All")`
+
+Manipulation of the dataref values stored inside the container table is not covered here.
+
+Writing back values from the container table to X-Plane's corresponding datarefs is done with `Dataref_Write(intable,subtable,filter)`, where the parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be read from (either index 3 or 4) and _"filter"_ may either be the name of a specific dataref in the container table or "All" to iterate over the entire container table and write each dataref to X-Plane.    
+Again using the example container table above, writing to X-Plane from storage position 2 (table element index 4)  and only updating _"sim/operation/sound/interior_volume_ratio"_ would be:
+`Dataref_Read(mydrefcontainer,4,"sim/operation/sound/interior_volume_ratio")`
+
+Reference: `xlua_utils/Submodules/xluautils_core_datarefs.lua`   
+Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
+Reference: `xlua_utils/Submodules/util_misc.lua`   
 
 &nbsp;
 
@@ -240,18 +333,16 @@ Reference: `xlua_utils/Submodules/xlua_utils_datarefs.lua`
 
 After a successful installation, the main X-Plane menu bar contains a menu with the aircraft's name with a _"XLua Utils"_ submenu.
 
-> ![XLua Utils Main Menu](ReadMe_Images/XLuaUtils_Menu.jpg  "XLua Utils Main Menu")
+![XLua Utils Main Menu](ReadMe_Images/XLuaUtils_Menu.jpg  "XLua Utils Main Menu")
 
-- _"Initialize XLua Utils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLua Utils' initialization and preferences system (see chapter [4.4](#4.4)). Note that some XLua Utils elements or submodules do not initially save their state and will require changing their settings before they will do so.
-
-- _"Reload XLua Utils Preferences"_ will replace _"Initialize XLua Utils"_ as a menu entry if a _"preferences.cfg"_ file after initialization or if the file has been detected at startup. It will read the current values from _"preferences.cfg"_.   
+- _"Initialize XLua Utils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLua Utils' initialization and preferences system (see chapter [4.4](#4.4)).   
+Note that some XLua Utils elements or submodules do not initially save their state and will require changing their settings before they will do so.   
+ _"Reload XLua Utils Preferences"_ will replace _"Initialize XLua Utils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
-- _"Debug Output"_ toggles debug-level output for any XLua Utils module that has been specifically configured for it (see chapter [4.3.3](#4.3)).
+- The _"Debug"_ submenu is always visible and containscontrols for debug-level logging (chapter  [4.3.3](#4.3))  and the debug window (chapter [4.7](#4.7)).
 
-- _"Open/Close Debug Window"_ will open or close the debug window (see chapter [4.7](#4.7)).
-
-- The _"Miscellaneous"_ menu is a container for [miscellaneous built-in utilities](#5.4) that are always available.
+- The _"Miscellaneous"_ menu is a container for miscellaneous built-in utilities (see chapter [5.4](#5.4)) that are always available.
 
 &nbsp;
 
@@ -285,7 +376,7 @@ The persistence system comes with the following caveats:
 
 - Engine-related datarefs are hard to initialize, so it's best to disregard in-flight situations as initialization with running engines will most likely not work. The persistence module was made primarily ground-based state saving between X-Plane sessions.
 - Custom datarefs created by third party aircraft must be writable in order to be used by the persistence module. If a third-party aircraft uses Xlua or SASL to drive its systems, it may be that its custom datarefs are not initialized with a handler which would make them writable (if a custom datarfef can be edited with DataRefTool, it is writable).   
-For Xlua, _"xlua_utils/PersistenceDatabase/OliXSim L-18 1.1"_ provides a workaround in form of a modified _"init.lua"_ file for XLua, in which the "create_dataref" function will initialize **any** custom dataref as writable.   
+For Xlua, _"xlua_utils/PersistenceDatabase/OliXSim L-18 1.1"_ provides a workaround in form of a modified _"init.lua"_ file for XLua 1.0, in which the "create_dataref" function will initialize **any** custom dataref as writable.   
 There is no such thing for SASL driven aircraft, so users may be out of luck in the worst case.
 - Despite all the care taken in finding the correct datarefs and putting them into a sensible order, it may be that some third party aircraft may simply not react too well toward third party tools trying to write to their datarefs. One of these candidates is Carenado's Saab 340 which, during testing exhibited a less than perfect cockpit control state restoration quota.   
 In general, the simpler the addon, the higher the chance of success for a 100% correct initialization.
@@ -296,7 +387,7 @@ In general, the simpler the addon, the higher the chance of success for a 100% c
 
 The _"Persistence"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
 
-> ![XLua Persistence Menu](ReadMe_Images/XLuaUtils_Persistence.jpg  "XLua Persistence Menu")
+ ![XLua Persistence Menu](ReadMe_Images/XLuaUtils_Persistence.jpg  "XLua Persistence Menu")
 
 - _"Save Cockpit State Now"_   
 Saves the tracked datarefs' values to _"xlua_utils/persistence_save.txt"_
@@ -329,16 +420,22 @@ These are the persistence module parameters which are stored in lines prefixed w
 
 - `Autoload:string,0:number`   
 Autoload disabled/enabled (0/1; default: 0)
+
 - `AutoloadDelay:string,5:number`   
 Autoload delay (in seconds; default: 5)
+
 - `Autosave:string,0:number`   
 Autosave disabled/enabled (0/1; default: 0)
+
 - `AutosaveInterval:string,30:number`   
 Autosave interval (in seconds; default: 30)
+
 - `AutosaveIntervalDelta:string,15:number`   
 Increment/decrement for the autosave interval adjustment (in seconds; default: 15)
+
 - `AutosaveDelay:string,10:number`   
 Delay before first autosave (in seconds; default: 10)
+
 - `SaveOnExit:string,0:number`   
 Save on aircraft unload disabled/enabled (0/1; default: 0)
 
@@ -362,7 +459,7 @@ Volume levels from the beginning of the X-Plane session are stored during module
 
 The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
 
-> ![XLua NCHeadset Menu](ReadMe_Images/XLuaUtils_NCHeadset.jpg  "XLua NCHeadset Menu")
+![XLua NCHeadset Menu](ReadMe_Images/XLuaUtils_NCHeadset.jpg  "XLua NCHeadset Menu")
 
 - _"[On/Off] Headset"_   
 Immediately puts on the headset, decreasing all non-ATC noise levels to the set level (see below). When set to off, it will also turn off headset automation.
@@ -383,14 +480,19 @@ These are the persistence module parameters which are stored in lines prefixed w
 
 - `Automation:string,0:number`   
 Automated headset usage disabled/enabled (0/1; default: 0)
+
 - `HeadsetOn:string,0:number`   
 Headset usage disabled/enabled (0/1; default: 0)
+
 - `NoiseCancelLevel:string,0.5:number`   
 Volume level of outside noise (0 to 1; default 0.5)
+
 - `NoiseCancelLevelDelta:string,0.1:number`   
 Increment/Decrement of volume level adjustment (0<>1; default: 0.1)
+
 - `MainTimerInterval:string,1:number`   
 Timer interval for headset automation checks (in seconds; default: 1)
+
 - `FModCompliant:string,1:number`   
 Use Fmod soundscape to determine if user is inside the aircraft disabled/enabled  (0/1; default: 1)
 
@@ -402,18 +504,32 @@ Changes to _"preferences.txt"_ can be applied immediately with the _"Reload XLua
 <a name="5.4"></a>
 ### 5.4 Miscellaneous Utilities
 
-This menu item is always available.
+#### 5.2.1 Features
 
-- _"Repair All Damage"_ resets all 500+ of X-Plane's failure datarefs to a value of zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this.
+Various smaller utilities not warranting separate menus. This menu item is always available.
+
+#### 5.4.2 Menu/Functionality
+
+![XLua Misc Menu](ReadMe_Images/XLuaUtils_Misc.jpg  "XLua Misc Menu")
+
+- _"Repair All Damage"_ resets all 500+ of X-Plane's failure datarefs to a value of zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this. If the aircraft can not be repaired, the menu entry will read _"[Can Not Repair]"_.
 - _"Synchronize Baros"_, when enabled, will synchronize the pilot, co-pilot and standby barometers when either of these are adjusted.
+
+#### 5.4.3 Configuration via Preferences.cfg
+
+These are the persistence module parameters which are stored in lines prefixed with "MISC_UTILS" in _"preferences.cfg"_:
+
+- `MainTimerInterval:string,1:number`   
+Update interval of the main timer for the miscellaneous utilities (in seconds; default: 1)
+
+- `SyncBaros:string,0:number`
+Synchronize barometric settings between altimeters disabled/enabled  (0/1; default: 0)
 
 &nbsp;
 
 [Back to table of contents](#toc)
 
 &nbsp;
-
-
 
 <a name="6.0"></a>
 ## 6 - License

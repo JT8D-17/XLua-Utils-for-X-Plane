@@ -3,7 +3,7 @@
 Main File for xlua utils
 Licensed under the EUPL v1.2: https://eupl.eu/
 
-BK, xxyyzzzz
+BK, 2022
 ]]
 --[[
 
@@ -13,45 +13,31 @@ GLOBAL VARIABLES
 ScriptName = "Xlua Utils"
 LogFileName = "z_xlua_utils_log.txt"
 
-ACF_Folder = "" -- KEEP EMPTY
-ACF_Filename = "" -- KEEP EMPTY
-Xlua_Utils_Path = "" -- KEEP EMPTY
-Xlua_Utils_PrefsFile = "" -- KEEP EMPTY 
+ACF_Folder = "" -- KEEP EMPTY, GLOBAL
+ACF_Filename = "" -- KEEP EMPTY, GLOBAL
+Xlua_Utils_Path = "" -- KEEP EMPTY, GLOBAL
+Xlua_Utils_PrefsFile = "" -- KEEP EMPTY, GLOBAL
+Xlua_Utils_LogFile = "" -- KEEP EMPTY, GLOBAL
 
 XluaUtils_HasConfig = 0     -- Used by this script
 XluaPersist_HasDrefFile = 0 -- Used by xlua_persistence.lua
-
-XluaUtils_DebugWinID = nil -- ID of the debug window
-XluaUtils_NotifyWinID = nil -- ID of the notification window
 --[[
 
 SUBMODULES
 
 ]]
 ffi = require ("ffi") -- LuaJIT FFI module
-dofile("Submodules/xlua_utils_init.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_preferences.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_menu.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xlua_utils_debugwindow.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_ffi.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_common.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_debugging.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 --dofile("aircraft_specific/config.lua")  -- Airplane-specific script
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
---[[
-
-VARIABLES
-
-]]
---[[ Table that contains the configuration Variables for Xlua Utils ]]
-XluaUtils_Config_Vars = {
-{"XLUAUTILS"},
-{"DebugOutput",0},
-{"DebugWindow",0},
-{"DebugWindowPos",200,600,600,200}, -- left, top, right, bottom
-}
 --[[
 
 TIMERS
@@ -71,38 +57,41 @@ X-PLANE WRAPPERS
 --[[function aircraft_load()
 end]]
 function aircraft_unload()
-    if Preferences_ValGet(Persistence_Config_Vars,"SaveOnExit") == 1 then Persistence_Save() end -- Check persistence save on exit status and load if necessary
+    Persistence_Unload()
     NCHeadset_Off()
     LogOutput("AIRCRAFT UNLOAD")
-    Preferences_Write(XluaUtils_Config_Vars,Xlua_Utils_PrefsFile)
-    Window_Destroy(XluaUtils_DebugWinID)
-    Window_Destroy(XluaUtils_NotifyWinID)
-    Menu_CleanUp()
+    Debug_Unload()
+    Notify_Window_Unload()
+    Main_Menu_Unload()
 end
 -- 2: Flight start
 function flight_start()
     ACF_Folder, ACF_Filename = GetAircraftFolder() -- ALWAYS THE FIRST ITEM!
     Xlua_Utils_Path = ACF_Folder.."plugins/xlua/scripts/xlua_utils/"
     Xlua_Utils_PrefsFile = Xlua_Utils_Path.."preferences.cfg"
-    DeleteLogFile()
-    Preferences_Read(Xlua_Utils_PrefsFile,XluaUtils_Config_Vars)
+    Xlua_Utils_LogFile = Xlua_Utils_Path..LogFileName
+    DeleteLogFile(Xlua_Utils_LogFile)
+    FFI_CheckInit()
     LogOutput("FLIGHT START")
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
     LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
-    NotificationWindow_Init()
-    DebugWindow_Init()
+    Main_Menu_Build() -- Build main XLua Utils menu
+    Debug_Init() -- Initialize debug module
+    Notify_Window_Build() -- Build notification window
+    Debug_Window_Build() -- Build debug window
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
-    MiscUtils_Init() -- Initialize repair module
-    XluaUtils_Menu_Init()   -- Xlua Menu
-    if XluaUtils_HasConfig == 1 then 
-        Persistence_Menu_Init(XluaUtils_Menu_ID) -- Persistence menu
-        if Preferences_ValGet(Persistence_Config_Vars,"Autoload") == 1 then run_after_time(Persistence_Load,Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay")) DisplayNotification("Waiting "..Preferences_ValGet(Persistence_Config_Vars,"AutoloadDelay").." seconds before loading persistence data..","Caution",-99) end -- Check persistence automation status and load if necessary
+    MiscUtils_Init() -- Initialize misc utilities
+    Debug_Menu_Build(XluaUtils_Menu_ID)
+    if XluaUtils_HasConfig == 1 then
+        Main_Menu_Init() -- Only triggers the menu watchdog
+        Persistence_Menu_Build(XluaUtils_Menu_ID) -- Persistence menu
+        Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
-        NCHeadset_Menu_Init(XluaUtils_Menu_ID)
+        NCHeadset_Menu_Build(XluaUtils_Menu_ID)
     end
-    MiscUtils_Menu_Init(XluaUtils_Menu_ID)
+    MiscUtils_Menu_Build(XluaUtils_Menu_ID)
     --run_at_interval(Main_Timer,1)
 end
 -- 3: Flight crash
