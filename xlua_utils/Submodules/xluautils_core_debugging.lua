@@ -230,5 +230,5 @@ end
 --[[ Unload logic for this module ]]
 function Debug_Unload()
     if DebugWindow_ID ~= 0 then Window_Destroy(DebugWindow_ID) end
-    Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
+    if XluaUtils_HasConfig == 1 then Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile) end
 end
