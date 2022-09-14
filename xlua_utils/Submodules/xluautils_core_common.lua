@@ -39,6 +39,16 @@ function TableMergeAndPrint(intable)
     end
     return tostring(table.concat(tmp,","))
 end
+--[[ Checks if a file exists ]]
+function FileExists(file)
+    local file = io.open(file,"r") -- Try to open file
+    if file then
+        file:close()
+        return true
+    else
+        return false
+    end
+end
 --[[
 
 PREFERENCE FILE I/O FUNCTIONS

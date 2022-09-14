@@ -253,11 +253,15 @@ INITIALIZATION
 --[[ First start of the persistence module ]]
 function Persistence_FirstRun()
     Preferences_Write(Persistence_Config_Vars,Xlua_Utils_PrefsFile)
-    Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
+    if FileExists(Xlua_Utils_Path.."datarefs.cfg") then
+        LogOutput(Persistence_Config_Vars[1][1]..": Existing datarefs.cfg found, skipping creation of a new one!")
+    else
+        Persistence_DrefFile_Write(Xlua_Utils_Path.."datarefs.cfg")
+    end
     Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
     Persistence_Menu_Build(XluaUtils_Menu_ID)
-    LogOutput(Persistence_Config_Vars[1][1]..": First Run!")
+    LogOutput(Persistence_Config_Vars[1][1]..": First Initialization Completed!")
 end
 --[[ Initializes persistence at every startup ]]
 function Persistence_Init()

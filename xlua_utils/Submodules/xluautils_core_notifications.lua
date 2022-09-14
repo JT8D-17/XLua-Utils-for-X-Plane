@@ -40,7 +40,10 @@ end
 --[[ Removes a notification with a unique ID from the stack ]]
 function RemoveNotification(inID)
     for i=1,#Notification_Stack do
-        if Notification_Stack[i][3] == inID then table.remove(Notification_Stack,i) end
+        if Notification_Stack[i][3] == inID then
+            table.remove(Notification_Stack,i)
+            break
+        end
     end
 end
 --[[ Updates a notification with a unique ID ]]

@@ -1,7 +1,7 @@
-# XLuaUtils for X-Plane 11+
+# XLuaUtils for X-Plane 11/12
 
 This is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a cohesive companion utility. XLua Utils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
-It can be installed and used in any X-Plane 11+ aircraft
+It can be installed and used in any X-Plane 11/12 aircraft
 
 It also implements wrappers for some paths, logging, notifications, dataref interaction and debug information, which can help aircraft developers during development of XLua scripts.
 
@@ -35,7 +35,7 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 <a name="1.0"></a>
 ## 1 - Requirements
 
-- [X-Plane](https://www.x-plane.com/)  (11 or higher)
+- [X-Plane](https://www.x-plane.com/)  (11 or 12)
 - [XLua](https://github.com/X-Plane/XLua) (1.0 or higher; only works locally on aircraft)
 
 &nbsp;
@@ -49,7 +49,7 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 
 ### 2.1 Aircraft without an xlua plugin
 
-- Copy the *"xlua"* folder from, e.g. _"X-Plane 11/Aircraft/Laminar Research/Cessna 172SP/plugins"_ into the _"plugins"_ folder of the aircraft that you wish to use XLuaUtils with.
+- Copy the *"xlua"* folder from, e.g. _"[Main X-Plane folder]/Aircraft/Laminar Research/Cessna 172SP/plugins"_ into the _"plugins"_ folder of the aircraft that you wish to use XLuaUtils with.
 - Delete all subfolders from the _"[Aircraft's main folder]/plugins/xlua/scripts"_ folder.
 - Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
@@ -336,7 +336,7 @@ Note that some XLua Utils elements or submodules do not initially save their sta
  _"Reload XLua Utils Preferences"_ will replace _"Initialize XLua Utils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
-- The _"Debug"_ submenu is always visible and containscontrols for debug-level logging (chapter  [4.3.3](#4.3))  and the debug window (chapter [4.7](#4.7)).
+- The _"Debug"_ submenu is always visible and contains controls for debug-level logging (chapter  [4.3.3](#4.3))  and the debug window (chapter [4.7](#4.7)).
 
 - The _"Miscellaneous"_ menu is a container for miscellaneous built-in utilities (see chapter [5.4](#5.4)) that are always available.
 
@@ -370,11 +370,12 @@ Example _"datarefs.cfg"_ files for some add-on aircraft are contained in _"xlua_
 
 The persistence system comes with the following caveats:
 
+- Datarefs that are present in X-Plane 11 may not be present in X-Plane 12. As missing datarefs are discarded during persistence module initialization, they will not be saved later on.
 - Engine-related datarefs are hard to initialize, so it's best to disregard in-flight situations as initialization with running engines will most likely not work. The persistence module was made primarily ground-based state saving between X-Plane sessions.
 - Custom datarefs created by third party aircraft must be writable in order to be used by the persistence module. If a third-party aircraft uses Xlua or SASL to drive its systems, it may be that its custom datarefs are not initialized with a handler which would make them writable (if a custom datarfef can be edited with DataRefTool, it is writable).   
 For Xlua, _"xlua_utils/PersistenceDatabase/OliXSim L-18 1.1"_ provides a workaround in form of a modified _"init.lua"_ file for XLua 1.0, in which the "create_dataref" function will initialize **any** custom dataref as writable.   
 There is no such thing for SASL driven aircraft, so users may be out of luck in the worst case.
-- Despite all the care taken in finding the correct datarefs and putting them into a sensible order, it may be that some third party aircraft may simply not react too well toward third party tools trying to write to their datarefs. One of these candidates is Carenado's Saab 340 which, during testing exhibited a less than perfect cockpit control state restoration quota.   
+- Despite all the care taken in finding the correct datarefs and putting them into a sensible order, it may be that some third party aircraft simply do not react too well toward third party tools trying to write to their datarefs.   
 In general, the simpler the addon, the higher the chance of success for a 100% correct initialization.
 - FMS and GPS flight plans and configurations are not supported unless they are stored within datarefs.
 - There is no way to restore dataref values from the start of the X-Plane session prior to persistence file reading, so the only solution to a messed up persistence save file is deleting *"persistence_save.txt"*, disabling persistence autoloading and restarting X-Plane or changing to another aircraft and back and start over.

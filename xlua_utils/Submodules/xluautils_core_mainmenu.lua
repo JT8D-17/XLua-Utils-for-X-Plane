@@ -18,12 +18,16 @@ function Main_Menu_Callbacks(itemref)
         if itemref == Main_Menu_Items[i] then
             if i == 2 then
                 if XluaUtils_HasConfig == 0 then
+                    LogOutput("FIRST TIME INITIALIZATION START")
                     Persistence_FirstRun() -- Generates config files for the persistence module
                     NCHeadset_FirstRun()   -- Generates/appends config file for the ncheadset module
+                    LogOutput("FIRST TIME INITIALIZATION END")
                 elseif XluaUtils_HasConfig == 1 then
+                    LogOutput("SUBMODULE RELOAD START")
                     Persistence_Reload() -- Reloads the persistence module
                     NCHeadset_Reload()  -- Reloads the ncheadset module
                     Debug_Window_Reload() -- Reloads the debug window module
+                    LogOutput("SUBMODULE RELOAD END")
                 end
             end
             Main_Menu_Watchdog(Main_Menu_Items,i)
