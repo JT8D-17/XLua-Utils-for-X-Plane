@@ -272,13 +272,13 @@ XLua Utils enables handling datarefs from an input ttable containing a list of d
 
 #### 4.8.1 Dataref Tables
 
-To facilitate handling of datarefs, a simple **input table** is used in which each dataref is a string table element as in the following example. All types of X-Plane datarefs are supported.   
+To facilitate handling of datarefs, a simple **input table** is used in which each element consists of a subtable with an alias string (used for easier lookup in the code) followed by the dataref stated as a string. If a specific alias for a dataref is not required, "Dref[n]" can be assigned to generate an alias from the table element's index. See below for an example. All types of X-Plane datarefs are supported.   
 Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are contrained to the XLua Utils submodule in which they are declared.
 
 	local mydreflist={
-	"sim/operation/sound/fan_volume_ratio",
-	"sim/fake/dataref",
-	"sim/operation/sound/interior_volume_ratio",
+	{"Volume_Fan","sim/operation/sound/fan_volume_ratio"}, -- Actual X-Plane dataref, will be found and stored for use later on
+	{"My_fake_dref","sim/fake/dataref"}, -- Will be discarded because it does not exist
+	{"Dref[n]","sim/operation/sound/interior_volume_ratio"}, -- Receives "Dref3" as an alias; actual X-Plane dataref, will be found and stored for use later on
 	}
 
 A dataref container table should be declared as follows, with the fist item being a unique identifier for storage in a save file:
@@ -287,29 +287,29 @@ A dataref container table should be declared as follows, with the fist item bein
 	"DATAREF",
 	}
 
-Issuing  `DrefTable_Read(mydreflist,mydrefcontainer)` in a script startup routine will check if the datarefs in _"mydreflist"_ exist in X-Plane. Invalid datarefs (such as the fake one in the example) will be discarded.   
+Issuing  `DrefTable_Read(mydreflist,mydrefcontainer)` in a script startup routine will check if the datarefs in _"mydreflist"_ exist in X-Plane. Invalid datarefs (such as the fake one in the example or non-writable ones) will be discarded.   
 A successfully populated container table with the input dataref examples above has the following format:
 
 	local mydrefcontainer = {
 	"DATAREF",
-	-- dataref,dataref type,{dataref value(s) storage 1},{dataref value(s) storage 2},dataref handle
-	{sim/operation/sound/fan_volume_ratio,2,{1},{},cdata<void *>: 0x08e409d0)
-	{sim/operation/sound/interior_volume_ratio,2,{1},{},cdata<void *>: 0x08e40480
+	-- alias,dataref,dataref type,{dataref value(s) storage 1},{dataref value(s) storage 2},dataref handle
+	{"Volume_Fan","sim/operation/sound/fan_volume_ratio",2,{1},{},cdata<void *>: 0x08e409d0)
+	{"Dref3","sim/operation/sound/interior_volume_ratio",2,{1},{},cdata<void *>: 0x08e40480
 	}
 
-There are two subtables for storing dataref values at table index 3 and 4. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
+There are two subtables for storing dataref values at table index 4 and 5. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
 The length of these subtables corresponds to the length of the dataref and supports array type datarefs.
 
 #### 4.8.2 Reading/Writing from/to Datarefs
 
-The function `Dataref_Read(intable,subtable,filter)` reads the value of one or all datarefs in a container table from X-Plane. The parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be stored in (either index 3 or 4) and _"filter"_ may either be the name of a specific dataref in the container table or "All" to iterate over the entire container table and update each dataref from X-Plane.   
-Using the example table above, the function call to update the entire dataref table using storage position 1 at table element index 3 would be: `Dataref_Read(mydrefcontainer,3,"All")`
+The function `Dataref_Read(intable,subtable,filter)` reads the value of one or all datarefs in a container table from X-Plane. The parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be stored in (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and update each dataref from X-Plane.   
+Using the example table above, the function call to update the entire dataref table using storage position 1 at table element index 4 would be: `Dataref_Read(mydrefcontainer,4,"All")`
 
 Manipulation of the dataref values stored inside the container table is not covered here.
 
-Writing back values from the container table to X-Plane's corresponding datarefs is done with `Dataref_Write(intable,subtable,filter)`, where the parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be read from (either index 3 or 4) and _"filter"_ may either be the name of a specific dataref in the container table or "All" to iterate over the entire container table and write each dataref to X-Plane.    
-Again using the example container table above, writing to X-Plane from storage position 2 (table element index 4)  and only updating _"sim/operation/sound/interior_volume_ratio"_ would be:
-`Dataref_Read(mydrefcontainer,4,"sim/operation/sound/interior_volume_ratio")`
+Writing back values from the container table to X-Plane's corresponding datarefs is done with `Dataref_Write(intable,subtable,filter)`, where the parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be read from (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and write each dataref to X-Plane.    
+Again using the example container table above, writing to X-Plane from storage position 2 (table element index 5)  and only updating _"Dref3"_ (the alias of _"sim/operation/sound/interior_volume_ratio"_, see above) would be:
+`Dataref_Read(mydrefcontainer,5,"Dref3")`
 
 Reference: `xlua_utils/Submodules/xluautils_core_datarefs.lua`   
 Reference: `xlua_utils/Submodules/util_ncheadset.lua`   

@@ -21,14 +21,14 @@ local NCHeadset_Config_Vars = {
 }
 --[[ List of Datarefs used by this module ]]
 local Dref_List = {
-"sim/operation/sound/engine_volume_ratio",
-"sim/operation/sound/enviro_volume_ratio",
-"sim/operation/sound/exterior_volume_ratio",
-"sim/operation/sound/fan_volume_ratio",
-"sim/fake/dataref",
-"sim/operation/sound/interior_volume_ratio",
-"sim/operation/sound/warning_volume_ratio",
-"sim/operation/sound/weather_volume_ratio",
+{"Dref[n]","sim/operation/sound/engine_volume_ratio"},
+{"Dref[n]","sim/operation/sound/enviro_volume_ratio"},
+{"Dref[n]","sim/operation/sound/exterior_volume_ratio"},
+{"Dref[n]","sim/operation/sound/fan_volume_ratio"},
+{"OMG_Fake","sim/fake/dataref"},
+{"Dref[n]","sim/operation/sound/interior_volume_ratio"},
+{"Dref[n]","sim/operation/sound/warning_volume_ratio"},
+{"Dref[n]","sim/operation/sound/weather_volume_ratio"},
 }
 --[[ Fixed datarefs that need constant monitoring ]]
 IsInside_fmod = find_dataref("sim/operation/sound/inside_any")
@@ -36,7 +36,7 @@ IsInside_old = find_dataref("sim/graphics/view/view_is_external")
 IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel")
 NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines")
 local HeadSetStatus_Old = 0
---[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
+--[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local NCHeadset_Datarefs = {
 "DATAREF",
 }
@@ -70,14 +70,14 @@ end
 --[[ Apply headset muffling ]]
 function NCHeadset_On()
     for i=2,#NCHeadset_Datarefs do
-        NCHeadset_Datarefs[i][3][1] = Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * NCHeadset_Datarefs[i][4][1] -- Multiply default noise levels by noise cancellation factor
-        Dataref_Write(NCHeadset_Datarefs,3,"All")
+        NCHeadset_Datarefs[i][4][1] = Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * NCHeadset_Datarefs[i][5][1] -- Multiply default noise levels by noise cancellation factor
+        Dataref_Write(NCHeadset_Datarefs,4,"All")
     end
 end
 --[[ Remove headset muffling ]]
 function NCHeadset_Off()
     for i=2,#NCHeadset_Datarefs do
-        Dataref_Write(NCHeadset_Datarefs,4,"All")
+        Dataref_Write(NCHeadset_Datarefs,5,"All")
     end
 end
 --[[ Main timer for the NC headset logic ]]
@@ -201,8 +201,8 @@ end
 function NCHeadset_Init()
     Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values as defaults
-    Dataref_Read(NCHeadset_Datarefs,3,"All") -- Populate dataref container with currrent values
+    Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with currrent values as defaults
+    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values
     run_at_interval(NCHeadset_MainTimer,Preferences_ValGet(NCHeadset_Config_Vars,"MainTimerInterval"))
     LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end

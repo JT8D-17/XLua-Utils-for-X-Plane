@@ -23,7 +23,7 @@ local Persistence_Config_Vars = {
 {"AutosaveDelay",10},
 {"SaveOnExit",0},
 }
---[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
+--[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local Persistence_Datarefs = {
 {"DATAREF"},    
 }
@@ -57,12 +57,16 @@ function Persistence_DrefFile_Read(inputfile)
     if file then
         XluaPersist_HasDrefFile = 1
         LogOutput("FILE READ START: Persistence Datarefs")
+        local counter = 0
+        local drefline = { }
         local temptable = {}
         for line in file:lines() do
             if string.match(line,"^[^#]") then
+                counter = counter + 1
                 local splitline = SplitString(line,"([^:]+)")
                 splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
-                Dataref_InitContainer(splitline[1],temptable)
+                drefline = {"Dref"..counter,splitline[1]} -- Generic dataref identifdier for input table
+                Dataref_InitContainer(drefline,temptable)
             end
         end
         file:close()
@@ -83,15 +87,15 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
                 local splitline = SplitString(line,"([^:]+)")
                 --splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
                 for j=2,#outputtable do
-                    if splitline[1] == outputtable[j][1] then
+                    if splitline[1] == outputtable[j][2] then
                         local splitvalues = SplitString(splitline[3],"([^,]+)")
                         --PrintToConsole(table.concat(splitvalues,","))
                         for k=1,#splitvalues do
-                            if splitline[2] == "string" then outputtable[j][3][k] = tostring(splitvalues[k]) end
-                            if splitline[2] == "number" then outputtable[j][3][k] = tonumber(splitvalues[k]) end
-                            --PrintToConsole(type(outputtable[j][3][k]))
+                            if splitline[2] == "string" then outputtable[j][4][k] = tostring(splitvalues[k]) end
+                            if splitline[2] == "number" then outputtable[j][4][k] = tonumber(splitvalues[k]) end
+                            --PrintToConsole(type(outputtable[j][4][k]))
                         end
-                        --PrintToConsole(table.concat(outputtable[j][3],","))
+                        --PrintToConsole(table.concat(outputtable[j][4],","))
                         i=i+1
                     end
                 end
@@ -134,7 +138,7 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
     file:write("# This file stores the values of datarefs that are tracked by the persistence module.\n")
     file:write("#\n")
     for i=2,#inputtable do
-        file:write(inputtable[i][1]..":"..type(inputtable[i][3][1])..":"..table.concat(inputtable[i][3],",").."\n")
+        file:write(inputtable[i][2]..":"..type(inputtable[i][4][1])..":"..table.concat(inputtable[i][4],",").."\n")
     end
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
 	file:close()    
@@ -267,7 +271,7 @@ end
 function Persistence_Init()
     Preferences_Read(Xlua_Utils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(Xlua_Utils_Path.."datarefs.cfg")
-    Dataref_Read(Persistence_Datarefs,3,"All")
+    Dataref_Read(Persistence_Datarefs,4,"All")
     LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Reloads the Persistence configuration ]]
@@ -287,12 +291,12 @@ end
 --[[ Autoloads the saved persistence values ]]
 function Persistence_Load()
     Persistence_SaveFile_Read(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,3,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
+    if Has_SaveFile == 1 then Dataref_Write(Persistence_Datarefs,4,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
     RemoveNotification(-99)
 end
 --[[ Autosaves the current persistence values ]]
 function Persistence_Save()
-    Dataref_Read(Persistence_Datarefs,3,"All")
+    Dataref_Read(Persistence_Datarefs,4,"All")
     Persistence_SaveFile_Write(Xlua_Utils_Path..Persistence_SaveFile,Persistence_Datarefs)
     LogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
 end

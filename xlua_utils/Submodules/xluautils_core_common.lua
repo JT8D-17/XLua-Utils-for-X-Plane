@@ -186,7 +186,7 @@ end
 function Menu_CheckItem(menu_id,index,state)
     index = index - 2
     local out = ffi.new("XPLMMenuCheck[1]")
-    XPLM.XPLMCheckMenuItemState(menu_id,index-1,ffi.cast("XPLMMenuCheck *",out))
+    XPLM.XPLMCheckMenuItemState(menu_id,index,ffi.cast("XPLMMenuCheck *",out))
     if tonumber(out[0]) == 0 then XPLM.XPLMCheckMenuItem(menu_id,index,1) end
     if state == "Activate" and tonumber(out[0]) ~= 2 then XPLM.XPLMCheckMenuItem(menu_id,index,2)
     elseif state == "Deactivate" and tonumber(out[0]) ~= 1 then XPLM.XPLMCheckMenuItem(menu_id,index,1)
