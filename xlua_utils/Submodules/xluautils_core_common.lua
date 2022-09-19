@@ -49,27 +49,70 @@ function FileExists(file)
         return false
     end
 end
---[[
 
-PREFERENCE FILE I/O FUNCTIONS
+--[[ Accessor: Get indexed sub-table value by finding the value in first field, consider further subtables ]]
+function Table_ValGet(inputtable,target,subtabtarget,index)
+    for i=1,#inputtable do
+        if inputtable[i][1] == target then
+            if subtabtarget == nil or subtabtarget == 0 then
+                return inputtable[i][index]
+            end
+            if type(subtabtarget) == "number" and subtabtarget > 0 then
+                return inputtable[i][subtabtarget][index]
+            end
+            if type(subtabtarget) == "string" and subtabtarget ~= nil then
+                for j=2,#inputtable[i] do
+                    if inputtable[i][j][1] == subtabtarget then
+                        return inputtable[i][j][index]
+                    end
+                end
+            end
+        end
+    end
+end
 
-]]
+--[[ Accessor: Set indexed sub-table value by finding the target value in first field, consider further subtables ]]
+function Table_ValSet(outputtable,target,subtabtarget,index,newvalue)
+    for i=1,#outputtable do
+        if outputtable[i][1] == target then
+            if subtabtarget == nil or subtabtarget == 0 then
+                outputtable[i][index] = newvalue
+            end
+            if type(subtabtarget) == "number" and subtabtarget > 0 then
+                outputtable[i][subtabtarget][index] = newvalue
+            end
+            if type(subtabtarget) == "string" and subtabtarget ~= nil then
+                for j=2,#outputtable[i] do
+                    if outputtable[i][j][1] == subtabtarget then
+                        outputtable[i][j][index] = newvalue
+                    end
+                end
+            end
+        end
+    end
+end
+
 --[[ Accessor: Get value from a subtable ]]
-function Preferences_ValGet(inputtable,item,subitem)
+--[[function Preferences_ValGet(inputtable,item,subitem)
     for i=1,#inputtable do
        if inputtable[i][1] == item then
            if subitem == nil then return inputtable[i][2] else return inputtable[i][subitem] end
        end
     end
-end
+end]]
 --[[ Accessor: Set value from a subtable ]]
-function Preferences_ValSet(inputtable,item,newvalue,subitem)
+--[[function Preferences_ValSet(inputtable,item,newvalue,subitem)
     for i=1,#inputtable do
        if inputtable[i][1] == item then
            if subitem == nil then inputtable[i][2] = newvalue break else inputtable[i][subitem] = newvalue break end
        end
     end
-end
+end]]
+--[[
+
+PREFERENCE FILE I/O FUNCTIONS
+
+]]
 --[[ Preferences config file read ]]
 function Preferences_Read(inputfile,outputtable)
     local file = io.open(inputfile, "r") -- Check if file exists

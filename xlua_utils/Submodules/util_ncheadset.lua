@@ -46,9 +46,9 @@ local NCHeadset_Menu_Items = {
 "Headset",                  -- Item index: 2
 "Automation",               -- Item index: 3
 "[Separator]",              -- Item index: 4
-"Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 5
-"Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",       -- Item index: 6
-"Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+"Increment Noise Level (+ "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2) * 100).." %)",   -- Item index: 5
+"Noise Level: "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %",       -- Item index: 6
+"Decrement Noise Level (- "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2) * 100).." %)",   -- Item index: 7
 "[Separator]",              -- Item index: 8
 "Use FMod Sound Space",     -- Item index: 9
 }
@@ -70,7 +70,7 @@ end
 --[[ Apply headset muffling ]]
 function NCHeadset_On()
     for i=2,#NCHeadset_Datarefs do
-        NCHeadset_Datarefs[i][4][1] = Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * NCHeadset_Datarefs[i][5][1] -- Multiply default noise levels by noise cancellation factor
+        NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * NCHeadset_Datarefs[i][5][1] -- Multiply default noise levels by noise cancellation factor
         Dataref_Write(NCHeadset_Datarefs,4,"All")
     end
 end
@@ -83,17 +83,17 @@ end
 --[[ Main timer for the NC headset logic ]]
 function NCHeadset_MainTimer()
     -- Picks the dataref feeding the IsInside variable based on fmod compliance as determined by the user
-    if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
+    if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
     -- Headset automation control - Puts on headset when all engines are started
-    if (Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 and AllEnginesRunning() == 1) and IsInside == 1 then Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",1) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
-    if (Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 and AllEnginesRunning() == 0) or IsInside == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",0) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
+    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 1) and IsInside == 1 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,1) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
+    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 0) or IsInside == 0 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,0) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
     -- Headset On/Off handling
-    if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 and HeadSetStatus_Old == 0 then
+    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 and HeadSetStatus_Old == 0 then
         NCHeadset_On()
         HeadSetStatus_Old = 1
         DebugLogOutput(NCHeadset_Config_Vars[1][1]..": On")
     end
-    if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 0 and HeadSetStatus_Old == 1 then
+    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 and HeadSetStatus_Old == 1 then
         NCHeadset_Off()
         HeadSetStatus_Old = 0
         DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Off")
@@ -109,31 +109,31 @@ function NCHeadset_Menu_Callbacks(itemref)
     for i=2,#NCHeadset_Menu_Items do
         if itemref == NCHeadset_Menu_Items[i] then
             if i == 2 then
-                if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",1)
-                elseif Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then if Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 then Preferences_ValSet(NCHeadset_Config_Vars,"Automation",0) end Preferences_ValSet(NCHeadset_Config_Vars,"HeadsetOn",0) end
+                if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,1)
+                elseif Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) end Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,0) end
             end
             if i == 3 then
-                if Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"Automation",1) else Preferences_ValSet(NCHeadset_Config_Vars,"Automation",0) end
+                if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,1) else Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) end
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Set Automation to "..Preferences_ValGet(NCHeadset_Config_Vars,"Automation"))
+                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Set Automation to "..Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2))
             end
             if i == 5 then
-                Preferences_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") + Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta"))
+                Table_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2,Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) + Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2))
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then NCHeadset_On() end
-                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Increased Noise Level to "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %.")
+                if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then NCHeadset_On() end
+                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Increased Noise Level to "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %.")
             end
             if i == 7 then
-                Preferences_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") - Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta"))
+                Table_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2,Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) - Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2))
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then NCHeadset_On() end
-                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Decreased Noise Level to "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %.")
+                if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then NCHeadset_On() end
+                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Decreased Noise Level to "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %.")
             end
             if i == 9 then
-                if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 0 then Preferences_ValSet(NCHeadset_Config_Vars,"FModCompliant",1)
-                elseif Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then Preferences_ValSet(NCHeadset_Config_Vars,"FModCompliant",0) end
+                if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"FModCompliant",nil,2,1)
+                elseif Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then Table_ValSet(NCHeadset_Config_Vars,"FModCompliant",nil,2,0) end
                 Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Soundscape Triggering set to "..Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant"))
+                DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Soundscape Triggering set to "..Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2))
             end
             NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
         end
@@ -142,22 +142,22 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function NCHeadset_Menu_Watchdog(intable,index)
     if index == 2 then
-        if Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
-        elseif Preferences_ValGet(NCHeadset_Config_Vars,"HeadsetOn") == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
+        if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
+        elseif Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
     if index == 3 then
-        if Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
-        elseif Preferences_ValGet(NCHeadset_Config_Vars,"Automation") == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
+        if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
+        elseif Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
     if index == 5 or index == 7 then
-        if Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") < 0 then Preferences_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",0) end       
-        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,3,"Increment Noise Level (+ "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",1)
-        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,4,"Noise Level: "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel") * 100).." %",1)
-        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,5,"Decrement Noise Level (- "..(Preferences_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",1)
+        if Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) < 0 then Table_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2,0) end
+        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,3,"Increment Noise Level (+ "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2) * 100).." %)",1)
+        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,4,"Noise Level: "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %",1)
+        XPLM.XPLMSetMenuItemName(NCHeadset_Menu_ID,5,"Decrement Noise Level (- "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2) * 100).." %)",1)
     end
     if index == 9 then
-        if Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
-        elseif Preferences_ValGet(NCHeadset_Config_Vars,"FModCompliant") == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
+        if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 0 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[Off]",intable)
+        elseif Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
 end
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
@@ -203,7 +203,7 @@ function NCHeadset_Init()
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
     Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with currrent values as defaults
     Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values
-    run_at_interval(NCHeadset_MainTimer,Preferences_ValGet(NCHeadset_Config_Vars,"MainTimerInterval"))
+    run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
     LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Reloads the Persistence configuration ]]

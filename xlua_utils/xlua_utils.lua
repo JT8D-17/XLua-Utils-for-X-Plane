@@ -38,6 +38,7 @@ dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 --dofile("aircraft_specific/config.lua")  -- Airplane-specific script
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
+--dofile("Examples/Automixture.lua")  -- Example script for the debug window
 --[[
 
 TIMERS
@@ -83,6 +84,7 @@ function flight_start()
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
     MiscUtils_Init() -- Initialize misc utilities
+    --Automix_Init() -- Initialize automixture
     Debug_Menu_Build(XluaUtils_Menu_ID)
     if XluaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
@@ -90,6 +92,7 @@ function flight_start()
         Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Build(XluaUtils_Menu_ID)
+        --Automix_Menu_Build(XluaUtils_Menu_ID)
     end
     MiscUtils_Menu_Build(XluaUtils_Menu_ID)
     --run_at_interval(Main_Timer,1)

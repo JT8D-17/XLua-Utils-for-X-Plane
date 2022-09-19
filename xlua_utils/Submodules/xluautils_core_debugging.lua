@@ -66,7 +66,7 @@ function LogOutput(inputstring)
 end
 --[[ Debug logging wrapper ]]
 function DebugLogOutput(inputstring)
-    if Preferences_ValGet(Debug_Config_Vars,"DebugOutput") == 1 then
+    if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 1 then
         PrintToConsole(inputstring)
         WriteToLogFile(inputstring)
     end
@@ -80,7 +80,7 @@ DEBUG WINDOW
 function Debug_Window_AddLine(id,string,colorkey)
     if string == nil then string = "" end -- Assign placeholder string if no string was passed
     if colorkey == nil then colorkey = "Nominal" end -- Assign normal coloring if no colorkey was passed
-    if id ~= nil then DebugWindow_Text[#DebugWindow_Text+1] = {id,string,colorkey} end -- Only add a line if an ID was passed
+    if id ~= nil then DebugWindow_Text[#DebugWindow_Text+1] = {id,tostring(string),colorkey} end -- Only add a line if an ID was passed
 end
 
 --[[ Removes a line from the debug window ]]
@@ -94,41 +94,41 @@ function Debug_Window_ReplaceLine(id,string,colorkey)
     for i=1,#DebugWindow_Text do
         if string == nil then string = "" end -- Assign placeholder string if no string was passed
         if colorkey == nil then colorkey = "Nominal" end -- Assign normal coloring if no colorkey was passed
-        if id ~= nil and DebugWindow_Text[i][1] == id then DebugWindow_Text[i] = {id,string,colorkey} end -- Only add a line if an ID was passed
+        if id ~= nil and DebugWindow_Text[i][1] == id then DebugWindow_Text[i] = {id,tostring(string),colorkey} end -- Only add a line if an ID was passed
     end
 end
 --[[ Reloads a window ]]
 function Debug_Window_Reload()
     Preferences_Read(Xlua_Utils_PrefsFile,Debug_Config_Vars)
-    --run_at_interval(DebugWindow_Refresh,Preferences_ValGet(Debug_Config_Vars,"DebugWindowRefreshRate",2))
-    for i=1,4 do Window_Coords[i] = Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",(i+1)) end
+    for i=1,4 do Window_Coords[i] = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,(i+1)) end
     Window_Coords_Set(DebugWindow_ID,Window_Coords)
 end
 --[[ Toggles a window's visibility ]]
 function Debug_Window_Visibility(inwindowid)
-    XPLM.XPLMSetWindowIsVisible(inwindowid,Preferences_ValGet(Debug_Config_Vars,"DebugWindow"))
+    XPLM.XPLMSetWindowIsVisible(inwindowid,Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2))
 end
 --[[ Window main timer ]]
 function Debug_Window_MainTimer()
-    if XPLM.XPLMGetWindowIsVisible(DebugWindow_ID) == 0 and Preferences_ValGet(Debug_Config_Vars,"DebugWindow") == 1 then Preferences_ValSet(Debug_Config_Vars,"DebugWindow",0) Debug_Menu_Watchdog(Debug_Menu_Items,3) end
+    if XPLM.XPLMGetWindowIsVisible(DebugWindow_ID) == 0 and Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2) == 1 then Table_ValSet(Debug_Config_Vars,"DebugWindow",nil,2,0) Debug_Menu_Watchdog(Debug_Menu_Items,3) end
 end
 --[[ Draw callback for the debug window ]]
 function Debug_Window_Draw(inWindowID,inRefcon)
     Window_Coords_Get(DebugWindow_ID,Window_Coords)
     Window_Size[1] = Window_Coords[3] - Window_Coords[1]
     Window_Size[2] = Window_Coords[2] - Window_Coords[4]
-    for i=1,4 do Preferences_ValSet(Debug_Config_Vars,"DebugWindowPos",Window_Coords[i],(i+1)) end
-    --XPLM.XPLMDrawTranslucentDarkBox(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2),Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3),Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",4),Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",5))
+    for i=1,4 do Table_ValSet(Debug_Config_Vars,"DebugWindowPos",nil,(i+1),Window_Coords[i]) end
+    --XPLM.XPLMDrawTranslucentDarkBox(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2),Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3),Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,4),Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,5))
+    --print(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)..","..Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)..","..Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,4)..","..Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,5))
     Window_LineProps[2] = tonumber(string.format("%d",(Window_Size[1] / Window_FontProps[1]) * 1.7)) -- Maximum number of displayed characters per line
     local max_lines = 1
     if math.floor(Window_Size[2] / Window_LineProps[1]) < #DebugWindow_Text then max_lines = math.floor(Window_Size[2] / Window_LineProps[1]) else max_lines = #DebugWindow_Text end
     local buffer = ffi.new("char[1024]")
     for i = 1,max_lines do
         if string.len(DebugWindow_Text[i][2])  > Window_LineProps[2] then buffer = string.sub(DebugWindow_Text[i][2],1,Window_LineProps[2]) else buffer = DebugWindow_Text[i][2] end -- Cut off overly long strings to keep them within the window
-        if DebugWindow_Text[i][3] == "Nominal" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2)+5),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
-        if DebugWindow_Text[i][3] == "Success" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[2]),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2)+5),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
-        if DebugWindow_Text[i][3] == "Caution" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[3]),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2)+5),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
-        if DebugWindow_Text[i][3] == "Warning" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[4]),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2)+5),(Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
+        if DebugWindow_Text[i][3] == "Nominal" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)+5),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
+        if DebugWindow_Text[i][3] == "Success" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[2]),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)+5),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
+        if DebugWindow_Text[i][3] == "Caution" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[3]),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)+5),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
+        if DebugWindow_Text[i][3] == "Warning" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[4]),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)+5),(Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)-(i*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
     end
 end
 --[[ Builds the debug window ]]
@@ -136,11 +136,11 @@ function Debug_Window_Build()
     Window_Font_Info(Window_FontID,Window_FontProps)
     Window_LineProps[1] = Window_FontProps[2] * 1.5 -- Calculate line height
     XLuaUtils_Window_Props = ffi.new("XPLMCreateWindow_t")
-    XLuaUtils_Window_Props.left = Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",2)
-    XLuaUtils_Window_Props.top = Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",3)
-    XLuaUtils_Window_Props.right = Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",4)
-    XLuaUtils_Window_Props.bottom = Preferences_ValGet(Debug_Config_Vars,"DebugWindowPos",5)
-    XLuaUtils_Window_Props.visible = Preferences_ValGet(Debug_Config_Vars,"DebugWindow")
+    XLuaUtils_Window_Props.left = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,2)
+    XLuaUtils_Window_Props.top = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,3)
+    XLuaUtils_Window_Props.right = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,4)
+    XLuaUtils_Window_Props.bottom = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,5)
+    XLuaUtils_Window_Props.visible = Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2)
     XLuaUtils_Window_Props.drawWindowFunc = Debug_Window_Draw
     XLuaUtils_Window_Props.handleMouseClickFunc = function(inWindowID,x,y,inMouse,inRefcon) return 1 end
     XLuaUtils_Window_Props.handleKeyFunc = function(inWindowID,inKey,inFlags,inVirtualKey,inRefcon,losingFocus) end
@@ -168,15 +168,15 @@ function Debug_Menu_Callbacks(itemref)
     for i=2,#Debug_Menu_Items do
         if itemref == Debug_Menu_Items[i] then
             if i == 2 then
-                if Preferences_ValGet(Debug_Config_Vars,"DebugOutput") == 0 then Preferences_ValSet(Debug_Config_Vars,"DebugOutput",1) else Preferences_ValSet(Debug_Config_Vars,"DebugOutput",0) end
+                if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 0 then Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,1) else Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,0) end
                 Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput("Set Xlua Utils Debug Output to "..Preferences_ValGet(Debug_Config_Vars,"DebugOutput"))
+                DebugLogOutput("Set Xlua Utils Debug Output to "..Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2))
             end
             if i == 3 then
-                if Preferences_ValGet(Debug_Config_Vars,"DebugWindow") == 0 then Preferences_ValSet(Debug_Config_Vars,"DebugWindow",1) else Preferences_ValSet(Debug_Config_Vars,"DebugWindow",0) end
+                if Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2) == 0 then Table_ValSet(Debug_Config_Vars,"DebugWindow",nil,2,1) else Table_ValSet(Debug_Config_Vars,"DebugWindow",nil,2,0) end
                 Debug_Window_Visibility(DebugWindow_ID)
                 Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput("Set Xlua Utils Debug Window state to "..Preferences_ValGet(Debug_Config_Vars,"DebugWindow"))
+                DebugLogOutput("Set Xlua Utils Debug Window state to "..Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2))
             end
             Debug_Menu_Watchdog(Debug_Menu_Items,i)
         end
@@ -185,12 +185,12 @@ end
 --[[ Menu watchdog that is used to check an item or change its prefix ]]
 function Debug_Menu_Watchdog(intable,index)
     if index == 2 then
-        if Preferences_ValGet(Debug_Config_Vars,"DebugOutput") == 0 then Menu_CheckItem(Debug_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
-        elseif Preferences_ValGet(Debug_Config_Vars,"DebugOutput") == 1 then Menu_CheckItem(Debug_Menu_ID,index,"Activate") end
+        if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 0 then Menu_CheckItem(Debug_Menu_ID,index,"Deactivate") -- Menu_CheckItem must be "Activate" or "Deactivate"!
+        elseif Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 1 then Menu_CheckItem(Debug_Menu_ID,index,"Activate") end
     end
     if index == 3 then
-        if Preferences_ValGet(Debug_Config_Vars,"DebugWindow") == 0 then Menu_ChangeItemPrefix(Debug_Menu_ID,index,"Open",intable)
-        elseif Preferences_ValGet(Debug_Config_Vars,"DebugWindow") == 1 then Menu_ChangeItemPrefix(Debug_Menu_ID,index,"Close",intable) end
+        if Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2) == 0 then Menu_ChangeItemPrefix(Debug_Menu_ID,index,"Open",intable)
+        elseif Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2) == 1 then Menu_ChangeItemPrefix(Debug_Menu_ID,index,"Close",intable) end
     end
 end
 --[[ Menu initialization routine ]]

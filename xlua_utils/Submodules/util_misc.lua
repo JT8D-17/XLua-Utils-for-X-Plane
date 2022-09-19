@@ -580,7 +580,7 @@ local MiscUtils_Menu_Items = {
 "Miscellaneous",  -- Menu title, index 1
 " ",        -- Item index: 2
 "Synchronize Baros",
--- "Decrement Noise Level (- "..(Preferences_ValGet(MiscUtils_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+-- "Decrement Noise Level (- "..(Table_ValGet(MiscUtils_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
 }
 --[[ Menu variables for FFI ]]
 local MiscUtils_Menu_ID = nil
@@ -624,7 +624,7 @@ end
 --[[ Main timer ]]
 function MiscUtils_MainTimer()
     MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
-    if Preferences_ValGet(MiscUtils_Config_Vars,"SyncBaros") == 1 then Sync_Baros() end
+    if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
 end
 --[[
 
@@ -639,10 +639,10 @@ function MiscUtils_Menu_Callbacks(itemref)
                 if OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0 then Dataref_Write(MiscUtils_Datarefs,4,"All") DisplayNotification("All aircraft damage repaired!","Success",5) end
             end
             if i == 3 then
-                if Preferences_ValGet(MiscUtils_Config_Vars,"SyncBaros") == 0 then
-                    Preferences_ValSet(MiscUtils_Config_Vars,"SyncBaros",1) Sync_Baros() DebugLogOutput("Barometer synchronization: On") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
+                if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 0 then
+                    Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2,1) Sync_Baros() DebugLogOutput("Barometer synchronization: On") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
                 else
-                    Preferences_ValSet(MiscUtils_Config_Vars,"SyncBaros",0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
+                    Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2,0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
                 end
                 Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
             end
@@ -657,7 +657,7 @@ function MiscUtils_Menu_Watchdog(intable,index)
         else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Can Not Repair]",intable) end
     end
     if index == 3 then
-        if Preferences_ValGet(MiscUtils_Config_Vars,"SyncBaros") == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[On]",intable)
+        if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[On]",intable)
         else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Off]",intable) end
     end
 end
@@ -705,6 +705,6 @@ function MiscUtils_Init()
     Dataref_Read(MiscUtils_Datarefs,5,"All") -- Populate dataref container with current values as defaults
     Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values
     for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][4][1] = 0 end -- Zero all datarefs
-    run_at_interval(MiscUtils_MainTimer,Preferences_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
+    run_at_interval(MiscUtils_MainTimer,Table_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
     LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
 end
