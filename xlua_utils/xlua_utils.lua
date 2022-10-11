@@ -33,12 +33,13 @@ dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHAN
 dofile("Submodules/xluautils_core_debugging.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/util_persistence.lua")  -- UTILITY
-dofile("Submodules/util_ncheadset.lua")  -- UTILITY
+dofile("Submodules/util_enginedamage.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
+dofile("Submodules/util_ncheadset.lua")  -- UTILITY
+dofile("Submodules/util_persistence.lua")  -- UTILITY
 --dofile("aircraft_specific/config.lua")  -- Airplane-specific script
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
---dofile("Examples/Automixture.lua")  -- Example script for the debug window
+dofile("Examples/Automixture.lua")  -- Example script for the debug window
 --[[
 
 TIMERS
@@ -84,7 +85,8 @@ function flight_start()
     Persistence_Init() -- Initialize persistence module
     NCHeadset_Init() -- Initialize headset module
     MiscUtils_Init() -- Initialize misc utilities
-    --Automix_Init() -- Initialize automixture
+    Automix_Init() -- Initialize automixture
+    EngineDamage_Init() -- Initialize engine damage
     Debug_Menu_Build(XluaUtils_Menu_ID)
     if XluaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
@@ -92,9 +94,11 @@ function flight_start()
         Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Build(XluaUtils_Menu_ID)
-        --Automix_Menu_Build(XluaUtils_Menu_ID)
+        Automix_Menu_Build(XluaUtils_Menu_ID)
+        --EngineDamage_Menu_Build(XluaUtils_Menu_ID)
     end
     MiscUtils_Menu_Build(XluaUtils_Menu_ID)
+    EngineDamage_Menu_Build(XluaUtils_Menu_ID)
     --run_at_interval(Main_Timer,1)
 end
 -- 3: Flight crash

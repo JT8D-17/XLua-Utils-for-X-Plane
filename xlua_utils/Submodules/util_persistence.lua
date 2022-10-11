@@ -113,11 +113,11 @@ end
 function Persistence_DrefFile_Write(outputfile)
     LogOutput("FILE WRITE START: Persistence Dataref File")
     local file = io.open(outputfile, "w")
-    file:write("# Xlua Persistence dataref file generated on ",os.date("%x, %H:%M:%S"),"\n")
+    file:write("# XLua Utils persistence dataref file generated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
-    file:write("# This file contains datarefs that are tracked by the persistence module.\n")
+    file:write("# This file contains datarefs that are tracked by XLua Utils' persistence module.\n")
     file:write("#\n")
-    file:write("# Obtain these datarefs from the list in X-Plane 11/Resources/plugins/DataRefs.txt\n")
+    file:write("# Obtain these datarefs from the list in X-Plane [11/12]/Resources/plugins/DataRefs.txt\n")
     file:write("# or from DataRefTool: https://github.com/leecbaker/datareftool\n")
     file:write("# or from DataRefEditor: https://developer.x-plane.com/tools/datarefeditor\n")
     file:write("#\n")
@@ -133,7 +133,7 @@ end
 function Persistence_SaveFile_Write(outputfile,inputtable)
     LogOutput("FILE WRITE START: Persistence Save File")
     local file = io.open(outputfile, "w")
-    file:write("# Xlua Persistence save file generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
+    file:write("# XLua Utils persistence save file generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
     file:write("# This file stores the values of datarefs that are tracked by the persistence module.\n")
     file:write("#\n")
@@ -249,7 +249,6 @@ function Persistence_Menu_Build(ParentMenuID)
         LogOutput(Persistence_Config_Vars[1][1]..": Menu initialized!")
     end
 end
-print("POKE")
 --[[
 
 INITIALIZATION

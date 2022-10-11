@@ -220,10 +220,15 @@ function Menu_CleanUp(menu_id,menu_index)
    if menu_id ~= nil then XPLM.XPLMClearAllMenuItems(menu_id) XPLM.XPLMDestroyMenu(menu_id) end
    if menu_index ~= nil then XPLM.XPLMRemoveMenuItem(XPLM.XPLMFindAircraftMenu(),XluaUtils_Menu_Index) end
 end
---[[ Menu item name change ]]
+--[[ Menu item prefix name change ]]
 function Menu_ChangeItemPrefix(menu_id,index,prefix,intable)
     --LogOutput("Plopp: "..","..index..","..prefix..","..table.concat(intable,":"))
     XPLM.XPLMSetMenuItemName(menu_id,index-2,prefix.." "..intable[index],1)
+end
+--[[ Menu item suffix name change ]]
+function Menu_ChangeItemSuffix(menu_id,index,suffix,intable)
+    --LogOutput("Plopp: "..","..index..","..prefix..","..table.concat(intable,":"))
+    XPLM.XPLMSetMenuItemName(menu_id,index-2,intable[index].." "..suffix,1)
 end
 --[[ Menu item check status change ]]
 function Menu_CheckItem(menu_id,index,state)
