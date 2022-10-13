@@ -21,11 +21,13 @@ function Main_Menu_Callbacks(itemref)
                     LogOutput("FIRST TIME INITIALIZATION START")
                     Persistence_FirstRun() -- Generates config files for the persistence module
                     NCHeadset_FirstRun()   -- Generates/appends config file for the ncheadset module
+                    EngineDamage_FirstRun() -- Generates/appends config file for the engine damage module
                     LogOutput("FIRST TIME INITIALIZATION END")
                 elseif XluaUtils_HasConfig == 1 then
                     LogOutput("SUBMODULE RELOAD START")
                     Persistence_Reload() -- Reloads the persistence module
                     NCHeadset_Reload()  -- Reloads the ncheadset module
+                    EngineDamage_Reload() -- Reloads the engine damage module
                     Debug_Window_Reload() -- Reloads the debug window module
                     LogOutput("SUBMODULE RELOAD END")
                 end

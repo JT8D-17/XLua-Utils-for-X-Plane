@@ -636,7 +636,7 @@ function MiscUtils_Menu_Callbacks(itemref)
     for i=2,#MiscUtils_Menu_Items do
         if itemref == MiscUtils_Menu_Items[i] then
             if i == 2 then
-                if OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0 then Dataref_Write(MiscUtils_Datarefs,4,"All") DisplayNotification("All aircraft damage repaired!","Success",5) end
+                if (OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Dataref_Write(MiscUtils_Datarefs,4,"All") DisplayNotification("All aircraft damage repaired!","Success",5) end
             end
             if i == 3 then
                 if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 0 then
@@ -653,7 +653,7 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function MiscUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable)
+        if (OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable)
         else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Can Not Repair]",intable) end
     end
     if index == 3 then

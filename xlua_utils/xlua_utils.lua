@@ -94,10 +94,9 @@ function flight_start()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Build(XluaUtils_Menu_ID)
         Automix_Menu_Build(XluaUtils_Menu_ID)
-        --EngineDamage_Menu_Build(XluaUtils_Menu_ID)
+        EngineDamage_Menu_Build(XluaUtils_Menu_ID)
     end
     MiscUtils_Menu_Build(XluaUtils_Menu_ID)
-    EngineDamage_Menu_Build(XluaUtils_Menu_ID)
     if DebugIsEnabled() == 1 then Debug_Start() end
 end
 -- 3: Flight crash
@@ -126,7 +125,7 @@ function Debug_Stop()
     Debug_Window_ClearAll()
 end
 -- Register the items that need to be done when debugging is restarted
-function Debug_Restart()
+function Debug_Reload()
     Debug_Stop()
     Debug_Start()
 end

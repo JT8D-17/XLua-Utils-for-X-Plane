@@ -35,6 +35,7 @@ local Debug_Menu_Items = {
 "Debug",
 "Debug Output",
 "Debug Window",
+"Debug Reload",
 }
 --[[ Menu variables for FFI ]]
 local Debug_Menu_Pointer = ffi.new("const char")
@@ -187,6 +188,9 @@ function Debug_Menu_Callbacks(itemref)
                 Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
                 DebugLogOutput("Set Xlua Utils Debug Window state to "..Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2))
             end
+            if i == 4 then
+                Debug_Reload()
+            end
             Debug_Menu_Watchdog(Debug_Menu_Items,i)
         end
     end
@@ -239,5 +243,5 @@ end
 --[[ Unload logic for this module ]]
 function Debug_Unload()
     if DebugWindow_ID ~= 0 then Window_Destroy(DebugWindow_ID) end
-    if XluaUtils_HasConfig == 1 then Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile) end
+    if FileExists(Xlua_Utils_PrefsFile) then Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile) end
 end

@@ -263,6 +263,11 @@ end
 function Window_Coords_Set(inwindowid,intable)
     XPLM.XPLMSetWindowGeometry(inwindowid,intable[1],intable[2],intable[3],intable[4])
 end
+--[[ Checks if a window is open ]]
+function Window_IsOpen(id)
+    local output = XPLM.XPLMGetWindowIsVisible(id)
+    return output
+end
 --[[ Destroys a window ]]
 function Window_Destroy(inwindowid)
    if inwindowid ~= nil then XPLM.XPLMDestroyWindow(inwindowid) inwindowid = nil end
