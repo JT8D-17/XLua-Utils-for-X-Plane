@@ -32,6 +32,7 @@ local Dref_List_Cont = {
 --[[ List of one-shot updated datarefs used by this module ]]
 local Dref_List_Once = {
 {"Eng_Num","sim/aircraft/engine/acf_num_engines"}, -- Number of engines
+{"Type_Eng","sim/aircraft/prop/acf_en_type"}, -- Engine type 0 = recip carb, 1 = recip injected, 3 = electric, 5 = single spool jet, 6 = rocket, 7 = multi spool jet, 9 = free turboprop, 10 = fixed turboprop
 }
 --[[ Container table for continuously monitored datarefs, which are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local Automix_Drefs_Cont = {
@@ -93,18 +94,20 @@ DEBUG WINDOW
 ]]
 --[[ Adds things to the debug window ]]
 function Automix_DebugWindow_Init()
-    Debug_Window_AddLine("AM_Spacer"," ")
-    Debug_Window_AddLine("AM_Header","===== Automixture =====")
-    Debug_Window_AddLine("AM_MixtureMode") -- Reserving a line in the debug window only requires an ID.
-    Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Config_Vars,"Eng_Disp",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
-    Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Config_Vars,"Gas_Const",nil,2).." J / kg*K")
-    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
-        Debug_Window_AddLine("AM_E"..i.."L0","Engine "..i..":")
-        Debug_Window_AddLine("AM_E"..i.."L1")
-        Debug_Window_AddLine("AM_E"..i.."L2")
-        Debug_Window_AddLine("AM_E"..i.."L3")
-        Debug_Window_AddLine("AM_E"..i.."L4")
-        Debug_Window_AddLine("AM_E"..i.."L5")
+    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture if the engine is a reciprocating type
+        Debug_Window_AddLine("AM_Spacer"," ")
+        Debug_Window_AddLine("AM_Header","===== Automixture =====")
+        Debug_Window_AddLine("AM_MixtureMode") -- Reserving a line in the debug window only requires an ID.
+        Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Config_Vars,"Eng_Disp",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
+        Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Config_Vars,"Gas_Const",nil,2).." J / kg*K")
+        for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+            Debug_Window_AddLine("AM_E"..i.."L0","Engine "..i..":")
+            Debug_Window_AddLine("AM_E"..i.."L1")
+            Debug_Window_AddLine("AM_E"..i.."L2")
+            Debug_Window_AddLine("AM_E"..i.."L3")
+            Debug_Window_AddLine("AM_E"..i.."L4")
+            Debug_Window_AddLine("AM_E"..i.."L5")
+        end
     end
 end
 --[[ Updates the debug window ]]
@@ -340,26 +343,28 @@ function Automix_Menu_Watchdog(intable,index)
 end
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
 function Automix_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#Automix_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
-        local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
-        Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
-        for i=2,#Automix_Menu_Items do
-            if Automix_Menu_Items[i] ~= "[Separator]" then
-                Automix_Menu_Pointer = Automix_Menu_Items[i]
-                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Automix_Menu_ID,Automix_Menu_Items[i],ffi.cast("void *",Automix_Menu_Pointer),1)
-            else
-                XPLM.XPLMAppendMenuSeparator(Automix_Menu_ID)
+    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture menu if the engine is a reciprocating type
+        local Menu_Indices = {}
+        for i=2,#Automix_Menu_Items do Menu_Indices[i] = 0 end
+        if XPLM ~= nil then
+            local Menu_Index = nil
+            Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
+            Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
+            for i=2,#Automix_Menu_Items do
+                if Automix_Menu_Items[i] ~= "[Separator]" then
+                    Automix_Menu_Pointer = Automix_Menu_Items[i]
+                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Automix_Menu_ID,Automix_Menu_Items[i],ffi.cast("void *",Automix_Menu_Pointer),1)
+                else
+                    XPLM.XPLMAppendMenuSeparator(Automix_Menu_ID)
+                end
             end
-        end
-        for i=2,#Automix_Menu_Items do
-            if Automix_Menu_Items[i] ~= "[Separator]" then
-                Automix_Menu_Watchdog(Automix_Menu_Items,i)
+            for i=2,#Automix_Menu_Items do
+                if Automix_Menu_Items[i] ~= "[Separator]" then
+                    Automix_Menu_Watchdog(Automix_Menu_Items,i)
+                end
             end
+            LogOutput(Automix_Config_Vars[1][1].." Menu initialized!")
         end
-        LogOutput(Automix_Config_Vars[1][1].." Menu initialized!")
     end
 end
 --[[
@@ -372,7 +377,7 @@ function MixtureLeverDetents(lever)
 end
 --[[ Main timer for the Automixture logic ]]
 function Automix_MainTimer()
-    Automix_DebugWindow_Update()
+    if DebugIsEnabled() == 1 then Automix_DebugWindow_Update() end
     Dataref_Read(Automix_Drefs_Cont,4,"All") -- Update continuously monitored datarefs
     --[[ Disable FADEC ]]
     --
@@ -415,7 +420,7 @@ end
 INITIALIZATION
 
 ]]
---[[ First start of the NCHeadset module ]]
+--[[ First start of the automixture module ]]
 function Automix_FirstRun()
     Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile)
     Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
@@ -424,17 +429,19 @@ function Automix_FirstRun()
     Automix_Menu_Build(XluaUtils_Menu_ID)
     LogOutput(Automix_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes NCHeadset at every startup ]]
+--[[ Initializes automixture at every startup ]]
 function Automix_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
+    -- Read datarefs that are only read once
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
-    DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
-    Dataref_Read(Automix_Drefs_Once,4,"All") -- Populate dataref container with currrent values
-    Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-    Automix_Helper_Init()
-    Automix_DebugWindow_Init()
-    run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
-    LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
+    Dataref_Read(Automix_Drefs_Once,4,"All") -- Populate dataref container with current values
+    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture if the engine is a reciprocating type
+        Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
+        DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
+        Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
+        Automix_Helper_Init()
+        run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
+        LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
+    end
 end
 --[[ Reloads the Persistence configuration ]]
 function Automix_Reload()

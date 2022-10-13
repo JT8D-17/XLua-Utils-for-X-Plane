@@ -33,13 +33,12 @@ dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHAN
 dofile("Submodules/xluautils_core_debugging.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/util_automixture.lua")  -- UTILITY
 dofile("Submodules/util_enginedamage.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
---dofile("aircraft_specific/config.lua")  -- Airplane-specific script
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
-dofile("Examples/Automixture.lua")  -- Example script for the debug window
 --[[
 
 TIMERS
@@ -99,7 +98,7 @@ function flight_start()
     end
     MiscUtils_Menu_Build(XluaUtils_Menu_ID)
     EngineDamage_Menu_Build(XluaUtils_Menu_ID)
-    --run_at_interval(Main_Timer,1)
+    if DebugIsEnabled() == 1 then Debug_Start() end
 end
 -- 3: Flight crash
 --[[function flight_crash() 
@@ -111,3 +110,23 @@ end]]
 --[[function after_physics()
     --XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,2)
 end]]
+--[[
+
+DEBUGGING
+
+]]
+-- Register the items that need to be done when debugging is turned on
+function Debug_Start()
+    Example_DebugWindow_Init()
+    Automix_DebugWindow_Init()
+    EngineDamage_DebugWindow_Init()
+end
+-- Register the items that need to be done when debugging is turned off
+function Debug_Stop()
+    Debug_Window_ClearAll()
+end
+-- Register the items that need to be done when debugging is restarted
+function Debug_Restart()
+    Debug_Stop()
+    Debug_Start()
+end

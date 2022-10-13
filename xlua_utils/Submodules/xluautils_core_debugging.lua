@@ -71,6 +71,12 @@ function DebugLogOutput(inputstring)
         WriteToLogFile(inputstring)
     end
 end
+--[[ Checks if debugging is enabled ]]
+function DebugIsEnabled()
+    if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 1 then
+        return 1
+    end
+end
 --[[
 
 DEBUG WINDOW
@@ -82,12 +88,15 @@ function Debug_Window_AddLine(id,string,colorkey)
     if colorkey == nil then colorkey = "Nominal" end -- Assign normal coloring if no colorkey was passed
     if id ~= nil then DebugWindow_Text[#DebugWindow_Text+1] = {id,tostring(string),colorkey} end -- Only add a line if an ID was passed
 end
-
 --[[ Removes a line from the debug window ]]
 function Debug_Window_RemoveLine(id)
     for i=1,#DebugWindow_Text do
         if id == DebugWindow_Text[i][1] then table.remove(DebugWindow_Text,i) end
     end
+end
+--[[ Removes all lines from the debug window ]]
+function Debug_Window_ClearAll()
+    DebugWindow_Text = { }
 end
 --[[ Replaces a line in the debug window ]]
 function Debug_Window_ReplaceLine(id,string,colorkey)
@@ -168,7 +177,7 @@ function Debug_Menu_Callbacks(itemref)
     for i=2,#Debug_Menu_Items do
         if itemref == Debug_Menu_Items[i] then
             if i == 2 then
-                if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 0 then Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,1) else Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,0) end
+                if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 0 then Debug_Start() Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,1) else Debug_Stop() Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,0)  end
                 Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
                 DebugLogOutput("Set Xlua Utils Debug Output to "..Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2))
             end
