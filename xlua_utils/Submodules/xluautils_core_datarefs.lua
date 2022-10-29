@@ -22,45 +22,44 @@ function Dataref_InitContainer(inputdrefline,outputtable)
     else
         if XPLM.XPLMCanWriteDataRef(dataref) == 0 then -- Check if dataref is writable
             --print("Dataref "..inputdrefline[2].." discarded: Not writable.")
-            LogOutput("Dataref "..inputdrefline[2].." discarded: Not writable.")
-        else
-            -- Types: 1 - Integer, 2 - Float, 4 - Double, 7 - Unspecified numerical, 8 - Float array, 16 - Integer array, 32 - Data array
-            -- Create subtable for dataref
-            outputtable[#outputtable+1] = {"","",0,{},{}} -- Alias, dataref, {values 1}, {values 2}
-            outputtable[#outputtable][1] = inputdrefline[1]
-            outputtable[#outputtable][2] = inputdrefline[2]
-            outputtable[#outputtable][3] = XPLM.XPLMGetDataRefTypes(dataref)
-            -- Write initial dataref values to subtable
-            if XPLM.XPLMGetDataRefTypes(dataref) == 1 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDatai(dataref) end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 2 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 4 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDatad(dataref) end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 6 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 7 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end -- Custom datarefs with unspecified numerical type (can be int and float and double)
-            if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
-                local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
-                local value = ffi.new("float["..size.."]") -- Define float array
-                XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
-                for i = 0,(size-1) do
-                    outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                end
-            end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 16 then
-                local size = XPLM.XPLMGetDatavi(dataref,nil,0,0) -- Get size of dataref
-                local value = ffi.new("int["..size.."]") -- Define integer array
-                XPLM.XPLMGetDatavi(dataref,ffi.cast("int *",value),0,size) -- Get integer array values from dataref
-                for i = 0,(size-1) do
-                    outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
-                end
-            end
-            if XPLM.XPLMGetDataRefTypes(dataref) == 32 then
-                local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
-                local value = ffi.new("char["..size.."]") -- Define character array
-                XPLM.XPLMGetDatab(dataref,ffi.cast("void *",value),0,size) -- Get byte array values from dataref
-                outputtable[#outputtable][4][1] = ffi.string(value)-- Write dataref value to value subtable for dataref
-            end
-            outputtable[#outputtable][6] = dataref -- Store handle for faster access
-            DebugLogOutput("Found "..outputtable[#outputtable][1].." ("..outputtable[#outputtable][2].."; Type: "..outputtable[#outputtable][3].."; Values: "..table.concat(outputtable[#outputtable][4],",").."; Handle "..tostring(outputtable[#outputtable][6])..")")
+            LogOutput("WARNING: Dataref "..inputdrefline[2].." is not writable!")
         end
+        -- Types: 1 - Integer, 2 - Float, 4 - Double, 7 - Unspecified numerical, 8 - Float array, 16 - Integer array, 32 - Data array
+        -- Create subtable for dataref
+        outputtable[#outputtable+1] = {"","",0,{},{}} -- Alias, dataref, {values 1}, {values 2}
+        outputtable[#outputtable][1] = inputdrefline[1]
+        outputtable[#outputtable][2] = inputdrefline[2]
+        outputtable[#outputtable][3] = XPLM.XPLMGetDataRefTypes(dataref)
+        -- Write initial dataref values to subtable
+        if XPLM.XPLMGetDataRefTypes(dataref) == 1 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDatai(dataref) end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 2 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 4 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDatad(dataref) end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 6 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 7 then outputtable[#outputtable][4][1] = XPLM.XPLMGetDataf(dataref) end -- Custom datarefs with unspecified numerical type (can be int and float and double)
+        if XPLM.XPLMGetDataRefTypes(dataref) == 8 then
+            local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
+            local value = ffi.new("float["..size.."]") -- Define float array
+            XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
+            for i = 0,(size-1) do
+                outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
+            end
+        end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 16 then
+            local size = XPLM.XPLMGetDatavi(dataref,nil,0,0) -- Get size of dataref
+            local value = ffi.new("int["..size.."]") -- Define integer array
+            XPLM.XPLMGetDatavi(dataref,ffi.cast("int *",value),0,size) -- Get integer array values from dataref
+            for i = 0,(size-1) do
+                outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
+            end
+        end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 32 then
+            local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
+            local value = ffi.new("char["..size.."]") -- Define character array
+            XPLM.XPLMGetDatab(dataref,ffi.cast("void *",value),0,size) -- Get byte array values from dataref
+            outputtable[#outputtable][4][1] = ffi.string(value)-- Write dataref value to value subtable for dataref
+        end
+        outputtable[#outputtable][6] = dataref -- Store handle for faster access
+        DebugLogOutput("Found "..outputtable[#outputtable][1].." ("..outputtable[#outputtable][2].."; Type: "..outputtable[#outputtable][3].."; Values: "..table.concat(outputtable[#outputtable][4],",").."; Handle "..tostring(outputtable[#outputtable][6])..")")
     end
 end
 --[[ Initializes module datarefs from a table ]]
