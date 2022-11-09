@@ -38,6 +38,7 @@ dofile("Submodules/util_enginedamage.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
+dofile("Submodules/util_attachobjects.lua")  -- UTILITY
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
 --[[
 
@@ -64,6 +65,7 @@ function aircraft_unload()
     Debug_Unload()
     Notify_Window_Unload()
     Main_Menu_Unload()
+    AttachObject_Unload()
 end
 -- 2: Flight start
 function flight_start()
@@ -86,6 +88,7 @@ function flight_start()
     MiscUtils_Init() -- Initialize misc utilities
     Automix_Init() -- Initialize automixture
     EngineDamage_Init() -- Initialize engine damage
+    AttachObject_Init() -- Initialize engine damage
     Debug_Menu_Build(XluaUtils_Menu_ID)
     if XluaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
@@ -95,6 +98,7 @@ function flight_start()
         NCHeadset_Menu_Build(XluaUtils_Menu_ID)
         Automix_Menu_Build(XluaUtils_Menu_ID)
         EngineDamage_Menu_Build(XluaUtils_Menu_ID)
+        AttachObject_Menu_Build(XluaUtils_Menu_ID)
     end
     MiscUtils_Menu_Build(XluaUtils_Menu_ID)
     if DebugIsEnabled() == 1 then Debug_Start() end

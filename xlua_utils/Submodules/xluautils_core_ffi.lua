@@ -41,6 +41,18 @@ void XPLMRemoveMenuItem(XPLMMenuID inMenu,int inIndex);
 /* XPLMDataAccess */
 typedef void *XPLMDataRef;
 typedef int XPLMDataTypeID;
+typedef int (*XPLMGetDatai_f)(void *inRefcon);
+typedef void (* XPLMSetDatai_f)(void *inRefcon,int inValue);
+typedef float (* XPLMGetDataf_f)(void *inRefcon);
+typedef void (* XPLMSetDataf_f)(void *inRefcon,float inValue);
+typedef double (* XPLMGetDatad_f)(void *inRefcon);
+typedef void (* XPLMSetDatad_f)(void *inRefcon,double inValue);
+typedef int (* XPLMGetDatavi_f)(void *inRefcon,int *outValues,int inOffset,int inMax);
+typedef void (* XPLMSetDatavi_f)(void *inRefcon,int *inValues,int inOffset,int inCount);
+typedef int (* XPLMGetDatavf_f)(void *inRefcon,float *outValues,int inOffset,int inMax);
+typedef void (* XPLMSetDatavf_f)(void *inRefcon,float *inValues,int inOffset,int inCount);
+typedef int (* XPLMGetDatab_f)(void *inRefcon,void *outValue,int inOffset,int inMaxLength);
+typedef void (* XPLMSetDatab_f)(void *inRefcon,void *inValue,int inOffset,int inLength);
 XPLMDataRef XPLMFindDataRef(const char *inDataRefName);
 XPLMDataTypeID XPLMGetDataRefTypes(XPLMDataRef inDataRef);
 int XPLMCanWriteDataRef(XPLMDataRef inDataRef);
@@ -56,6 +68,7 @@ int XPLMGetDatavf(XPLMDataRef inDataRef,int *outValues,int inOffset,int inMax);
 void XPLMSetDatavf(XPLMDataRef inDataRef,float *inValues,int inoffset,int inCount);
 int XPLMGetDatab(XPLMDataRef inDataRef,void *outValue,int inOffset,int inMaxBytes);
 void XPLMSetDatab(XPLMDataRef inDataRef,void *inValue,int inOffset,int inLength);
+XPLMDataRef XPLMRegisterDataAccessor(const char *inDataName,XPLMDataTypeID inDataType,int inIsWritable,XPLMGetDatai_f inReadInt,XPLMSetDatai_f inWriteInt,XPLMGetDataf_f inReadFloat,XPLMSetDataf_f inWriteFloat,XPLMGetDatad_f inReadDouble,XPLMSetDatad_f inWriteDouble,XPLMGetDatavi_f inReadIntArray,XPLMSetDatavi_f inWriteIntArray,XPLMGetDatavf_f inReadFloatArray,XPLMSetDatavf_f inWriteFloatArray,XPLMGetDatab_f inReadData,XPLMSetDatab_f inWriteData,void *inReadRefcon,void *inWriteRefcon);
 /* XPLMPlanes */
 void XPLMGetNthAircraftModel(int inIndex,char *outFileName,char *outPath);
 /* XPLMDefs */
@@ -101,6 +114,17 @@ typedef int XPLMFontID;
 void XPLMDrawString(float *inColorRGB,int inXOffset,int inYOffset, char *inChar,int *inWordWrapWidth,XPLMFontID inFontID);
 void XPLMDrawTranslucentDarkBox(int inLeft,int inTop,int inRight,int inBottom);
 void XPLMGetFontDimensions(XPLMFontID inFontID,int *outCharWidth,int *outCharHeight,int *outDigitsOnly);
+/* XPLMScenery */
+typedef void *XPLMObjectRef;
+typedef struct {int structSize; float x; float y; float z; float pitch; float heading; float roll;} XPLMDrawInfo_t;
+typedef void (*XPLMObjectLoaded_f)(XPLMObjectRef inObject, void *inRefcon);
+void XPLMLoadObjectAsync(const char *inPath, XPLMObjectLoaded_f inCallback, void *inRefcon);
+void XPLMUnloadObject(XPLMObjectRef inObject);
+/* XPLMInstance */
+typedef void *XPLMInstanceRef;
+XPLMInstanceRef XPLMCreateInstance(XPLMObjectRef obj, const char **datarefs);
+void XPLMDestroyInstance(XPLMInstanceRef instance);
+void XPLMInstanceSetPosition(XPLMInstanceRef instance, const XPLMDrawInfo_t *new_position, const float *data);
 ]])
 --[[ Checks if the FFI has loaded correctly ]]
 function FFI_CheckInit()
