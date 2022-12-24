@@ -640,9 +640,9 @@ function MiscUtils_Menu_Callbacks(itemref)
             end
             if i == 3 then
                 if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 0 then
-                    Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2,1) Sync_Baros() DebugLogOutput("Barometer synchronization: On") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
+                    Table_ValSet(MiscUtils_Config_Vars,"SyncBaros",nil,2,1) Sync_Baros() DebugLogOutput("Barometer synchronization: On") DisplayNotification("Barometer synchronization enabled.","Nominal",5)
                 else
-                    Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2,0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
+                    Table_ValSet(MiscUtils_Config_Vars,"SyncBaros",nil,2,0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
                 end
                 Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
             end

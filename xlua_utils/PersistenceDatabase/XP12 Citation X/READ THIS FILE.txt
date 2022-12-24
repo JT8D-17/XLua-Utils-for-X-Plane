@@ -1,0 +1,4 @@
+The custom datarefs created in the xlua scripts of the XP12 Citation X are created as non-writable, preventing them being written to by the persistence module. The enclosed modified init.lua for XLua 1.0 provides a workaround.
+
+Installation:
+Make a backup of xlua/init.lua and replace it with the one from this folder!
