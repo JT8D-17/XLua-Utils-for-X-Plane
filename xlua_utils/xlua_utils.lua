@@ -20,7 +20,8 @@ Xlua_Utils_PrefsFile = "" -- KEEP EMPTY, GLOBAL
 Xlua_Utils_LogFile = "" -- KEEP EMPTY, GLOBAL
 
 XluaUtils_HasConfig = 0     -- Used by this script
-XluaPersist_HasDrefFile = 0 -- Used by xlua_persistence.lua
+XluaPersist_HasDrefFile = 0 -- Used by util_persistence.lua
+
 --[[
 
 SUBMODULES
