@@ -28,6 +28,9 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 5.2 [Persistence](#5.2)   
 5.3 [Noise-Cancelling Headset](#5.3)   
 5.4 [Miscellaneous Utilities](#5.4)   
+5.5 [Automixture Controls](#5.5)   
+5.6 [Attach Objects](#5.6)   
+5.7 [Engine Damage](#5.7)   
 6. [License](#6.0)
 
 &nbsp;
@@ -202,9 +205,12 @@ It is called during menu building, from the menu callback function or may be cal
 
 Reference: `xlua_utils/Submodules/xluautils_core_mainmenu.lua`   
 Reference: `xlua_utils/Submodules/xluautils_core_debugging.lua`   
-Reference: `xlua_utils/Submodules/util_persistence.lua`   
-Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
+Reference: `xlua_utils/Submodules/util_attachobjects.lua`   
+Reference: `xlua_utils/Submodules/util_automixture.lua`  
+Reference: `xlua_utils/Submodules/util_enginedamage.lua`    
 Reference: `xlua_utils/Submodules/util_misc.lua`   
+Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
+Reference: `xlua_utils/Submodules/util_persistence.lua`   
 
 &nbsp;
 
@@ -349,13 +355,13 @@ XLua Utils' persistence module parses a list of datarefs at startup, whose value
 
 Relevant files to this module are stored in _"xlua_utils"_ and are _"preferences.cfg"_, storing configuration data, _"datarefs.cfg"_, a manually populated list of datarefs and _"persistence_save.txt"_, the save file containing the dataref values.
 
-#### 5.2.1 Populating _"Datarefs.cfg"_
+#### 5.2.1 Populating Datarefs.cfg
 
 An empty _"Datarefs.cfg"_ is generated at XLua Utils initialization (see chapter [5.1](#5.1) if none is present.   
 
 - _"Datarefs.cfg"_ is a regular text file and can be opened with any text editor like Notepad (apps like MS Word are not recommended though).
 - The header section of _"datarefs.cfg"_ contains information on how to find datarefs used by the current aircraft.
-- The best techniques for finding datarefs used by the aircraft are using [DataRefTool](https://github.com/leecbaker/datareftool) to filter datarefs that recently changed due to user input, analyzing cockpit related _.obj_ files in the _"objects"_ folder of the aircraft and finding relevant datarefs in the _"...cockpit.obj"_ file in the aircraft's root folder by searching for a switch's tooltip.
+- The best techniques for finding datarefs used by the aircraft are using [DataRefTool](https://datareftool.com/) to filter datarefs that recently changed due to user input, analyzing cockpit related _.obj_ files in the _"objects"_ folder of the aircraft and finding relevant datarefs in the _"...cockpit.obj"_ file in the aircraft's root folder by searching for a switch's tooltip.
 - Custom datarefs created by third party add-ons are supported.
 - Invalid datarefs that can not be found in X-Plane are discarded during the initial parsing of _"dataref.cfg"_ and will not be used, so there is minimal risk of crashing X-Plane.
 - Only the name of the dataref is required, even if it is an array.
@@ -364,7 +370,7 @@ An empty _"Datarefs.cfg"_ is generated at XLua Utils initialization (see chapter
 - Comments are denoted with a hash sign ("#") at the beginning of a line.
 - Dataref order may matter if the aircraft's systems logic dictates one.
 
-Example _"datarefs.cfg"_ files for some add-on aircraft are contained in _"xlua_utils/PersistenceDatabase"_. These may be used as a starting point or template. Contributions are welcome.
+Example _"datarefs.cfg"_ files for some add-on aircraft can be found in _"xlua_utils/Config Files/Persistence"_. These may be used as a starting point or template. Contributions are welcome.
 
 #### 5.2.2 Caveats/Known Issues
 
@@ -521,6 +527,63 @@ Update interval of the main timer for the miscellaneous utilities (in seconds; d
 
 - `SyncBaros:string,0:number`
 Synchronize barometric settings between altimeters disabled/enabled  (0/1; default: 0)
+
+&nbsp;
+
+<a name="5.5"></a>
+### 5.5 Automixture Controls
+
+As of version 12.00, X-Plane does not support complex automatic mixture controllers as found, for example on [Pratt & Whitney R-1830 type engines](https://www.enginehistory.org/Piston/P&W/R-1830/r-1830.shtml) of Douglas DC-3s and C-47s. These automatic controllers, in their "Auto Lean" and "Auto Rich" modes, automatically set the fuel mixture based on altitude to attain a specific [air-fuel-ratio](https://en.wikipedia.org/wiki/Air%E2%80%93fuel_ratio), easing crew workload and ensure maximum power or fuel saving.
+
+Xlua Utils has an automixture utility modeled after the R-1830's mixture controller with the following modes:
+- Manual: Manual mixture control
+- Idle Cutoff: Turns off the engine(s)
+- Auto Lean: Lean mixture (default air-fuel-ratio: 16.5) for fuel economy during cruise
+- Auto Rich: Rich mixture (default air-fuel-ratio: 12.5) for maximum power for takeoff
+- Full Rich: Maximum fuel consumption, but the excess fuel provides cylinder head cooling for situations with maximum power demands
+
+While X-Plane (12) offers a FADEC-based automixture control for reciprocating engines, the controller only offers a "maximum power" target, i.e. "Auto Rich" mode. Therefore, I felt it was necessary to code a custom solution.
+
+To offer seamless integration into aircraft models, the utility comes with a built-in capability to modify object files, primarily in order to implement detents for mixture levers. This offers a possibility for realistic in-cockpit operations without having to resort to an external menu.
+
+#### 5.5.1 Functionality/Caveats/Known Issues
+
+The  "Auto Rich" and "Auto Lean" modes basically adjust the mixture until a given target air-fuel-ratio (AFR) is obtained. Since X-Plane does not calculate said air-fuel-ratio by default, a custom calculation method based on a [MSc. Thesis by E. Fantenberg](http://liu.diva-portal.org/smash/get/diva2:1259188/FULLTEXT01.pdf) for air mass flow estimation in combustion engines had to be implemented.
+To obtain the FAR for each of of the aircraft's engines, air mass flow is calculated from inlet pressure (MAP), displacement, RPM, the gas constant of air and air temperature and divided by fuel flow obtained from X-Plane.    
+With the current AFR continuously determined from fuel flow, X-Plane's mixture datarefs are then adjusted within a given permissible value range (to avoid accidental engine cutoff) to attempt to match the current to the target AFR.
+While this method is not the most accurate one as it is very simplified and has to work within a timer loop trying to minimize the required CPU cycles while providing an accurate result, it is efficient and was easy to code (see the "Automix_MainTimer()" function in _util_automixture.lua_).   
+
+Known Issues ...
+
+#### 5.5.2 Profile File
+
+[To be documented]
+
+Example _"automixture_profile.cfg"_ files for some add-on aircraft can be found in _"xlua_utils/Config Files/Automixture"_. These may be used as a starting point or template. Contributions are welcome.
+
+#### 5.5.3 Usage
+
+[To be documented]
+
+&nbsp;
+
+<a name="5.6"></a>
+### 5.6 Attach Objects
+
+[Utility not finished]   
+[To be documented]
+
+&nbsp;
+
+<a name="5.7"></a>
+### 5.7 Engine Damage
+ 
+[Utility not finished]   
+[To be documented]
+
+#### 5.7.x Engine Profile File
+
+Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"xlua_utils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
 
 &nbsp;
 

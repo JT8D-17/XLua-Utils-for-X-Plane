@@ -9,17 +9,35 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 VARIABLES
 
 ]]
+local Automix_Profile_File = "automixture_profile.cfg"
+local Automix_HasProfile = 0 -- Used by util_automixture.lua
 --[[ Table that contains the configuration Variables for the NC Headset module ]]
 local Automix_Config_Vars = {
 {"AUTOMIXTURE"},
 {"MainTimerInterval",0.05},    -- Main timer interval, in seconds
-{"Eng_Disp",29.98833}, -- Total displacement in litres
-{"Gas_Const",287.058}, -- J/kg*K
-{"LeverDetents",0.05,0.4,0.9,0.975,0.04}, -- Idle cutoff, auto lean, auto rich, full rich, "sticky range"
+--{"Eng_Disp",29.98833}, -- Total displacement in litres
+--{"Gas_Const",287.058}, -- J/kg*K
+--{"LeverDetents",0.05,0.4,0.9,0.975,0.04}, -- Idle cutoff, auto lean, auto rich, full rich, "sticky range"
 {"MixtureMode","Manual"}, -- "Manual", "IdleCutoff" "AutoLean", "AutoRich", "FullRich"
-{"MixtureTargets",12.5,16.25}, -- Air-fuel-ratio target for auto-rich and auto-lean
-{"MixtureLimits",1.0,0.58}, -- Lower limit for the mixture ratio
+--{"MixtureTargets",12.5,16.25}, -- Air-fuel-ratio target for auto-rich and auto-lean
+--{"MixtureLimits",1.0,0.58}, -- Lower limit for the mixture ratio
 }
+--[[ Default values for the automixture profile ]]
+local Automix_Profile = {
+{"Eng_Displace_Litres",30.0}, -- The engine displacement in litres
+{"Eng_Volumetric_Efficiency",1.0}, -- The volumetric efficiency of the engine
+{"Lever_Detents",0.05,0.4,0.9,0.975}, -- The mixture lever detents: Idle Cutoff, Auto Lean, Auto Rich, Full Rich
+{"Lever_Detent_Magnet",0.04}, -- "Sticky" range for the detents
+{"Mixture_Range",0.58,1.0}, -- Value range for the default mixture function
+{"Gas_Constant",287.058}, -- The gas constant of air in J/kg*K
+{"AirFuelRatio_Targets",12.5,16.25}, -- The air-fuel-ratio targets for auto lean and auro rich
+}
+--[[ Container tables for items to be replaced in files. First item is the path, all following subtables contain target and replacement strings.
+Format: {Path,{target string, replacement string},{target string, replacement string}, etc.}}
+Paths are relative to the aircraft main folder. Square brackets and minus signs must be escaped with percent signs.
+]]
+local Automix_Replacements_Temp = {}
+local Automix_FileReplacements_Files = {}
 --[[ List of continuously monitored datarefs used by this module ]]
 local Dref_List_Cont = {
 {"Eng_Carb","sim/cockpit2/engine/indicators/carburetor_temperature_C"}, -- deg C
@@ -42,11 +60,7 @@ local Automix_Drefs_Cont = {
 local Automix_Drefs_Once = {
 "DREFS_ONCE",
 }
---[[ Input table for the file modifier. Works relative to the aircraft main folder. First item is always the target file, second, third, fourth, etc. can be tables using the {input string, replacement string"} form.
-    - SQUARE BRACKETS OF ARRAY INDICES MUST BE ESCAPED LIKE THIS: [n] --> %[n%]
-    - MINUS SIGNS MUST BE ESCAPED LIKE THIS: - --> %-
-{Path,{target string, replacement string},{target string, replacement string}, etc.}}
-]]
+
 local file_replacements = {
     {"objects/COCKPIT-GAUGES.obj",
         {"sim/cockpit2/engine/actuators/mixture_ratio","xlua/automixture/mixture_lever_anim"},
@@ -62,14 +76,13 @@ local file_replacements = {
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local Automix_Menu_Items = {
 "Automixture",              -- Menu title, index 1
-"Full Rich",                -- Item index: 2
-"Auto Rich",                -- Item index: 3
-"Auto Lean",                -- Item index: 4
-"Idle Cutoff",              -- Item index: 5
-"[Separator]",              -- Item index: 6
-"Manual",                   -- Item index: 7
-"[Separator]",              -- Item index: 8
-"Edit File",                -- Item index: 9
+"",                         -- Item index: 2
+"[Separator]",              -- Item index: 3
+"Full Rich",                -- Item index: 4
+"Auto Rich",                -- Item index: 5
+"Auto Lean",                -- Item index: 6
+"Idle Cutoff",              -- Item index: 7
+"Manual",                   -- Item index: 8
 }
 --[[ Menu variables for FFI ]]
 local Automix_Menu_ID = nil
@@ -98,8 +111,8 @@ function Automix_DebugWindow_Init()
         Debug_Window_AddLine("AM_Spacer"," ")
         Debug_Window_AddLine("AM_Header","===== Automixture =====")
         Debug_Window_AddLine("AM_MixtureMode") -- Reserving a line in the debug window only requires an ID.
-        Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Config_Vars,"Eng_Disp",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
-        Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Config_Vars,"Gas_Const",nil,2).." J / kg*K")
+        Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
+        Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Profile,"Gas_Constant",nil,2).." J / kg*K")
         for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
             Debug_Window_AddLine("AM_E"..i.."L0","Engine "..i..":")
             Debug_Window_AddLine("AM_E"..i.."L1")
@@ -126,17 +139,46 @@ end
 FUNCTIONS
 
 ]]
-local Automix_Profile_Defaults = {
-{"CONFIG","Eng_Displace_Litres",30.0}, -- The engine displacement in litres
-{"CONFIG","Eng_Volumetric_Efficiency",1.0}, -- The volumetric efficiency of the engine
-{"CONFIG","Lever_Detents",0.05,0.4,0.9,0.975}, -- The mixture lever detents: Idle Cutoff, Auto Lean, Auto Rich, Full Rich
-{"CONFIG","Lever_Detent_Magnet",0.04}, -- "Sticky" range for the detents
-{"CONFIG","Mixture_Range",0.58,1.0}, -- Value range for the default mixture function
-{"CONFIG","AirFuelRatio_Targets",12.5,16.25}, -- The air-fuel-ratio targets for auto lean and auro rich
-{"REPLACE","objects/My_Example.obj","This is a target string or line %-%[0%]","This is the replacement line"}, -- Example replacement line
-}
---[[ Automixture profile file write ]]
-function Automixture_Profile_Write(outputfile)
+--[[ Automixture profile read ]]
+function Automix_Profile_Read(inputfile)
+    local file = io.open(inputfile, "r") -- Check if file exists
+    if file then
+        Automix_HasProfile = 1
+        LogOutput("FILE READ START: Engine Profile")
+        local counter = 0
+        Automix_Replacements_Temp = {}
+        for line in file:lines() do
+            if string.match(line,"^[^#]") then
+                counter = counter + 1
+                local splitline = SplitString(line,"([^,]+)")
+                splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
+                if splitline[1] == "CONFIG" then -- Profile configuration
+                    for i=1,#Automix_Profile do
+                        if splitline[2] == Automix_Profile[i][1] then
+                            for j=3,#splitline do
+                                Automix_Profile[i][j-1] = tonumber(splitline[j])
+                            end
+                            --print(table.concat(Automix_Profile[i],","))
+                        end
+                    end
+                end
+                if splitline[1] == "REPLACE" then -- Object file replacements
+                    Automix_Replacements_Temp[#Automix_Replacements_Temp+1] = {}
+                    for i=2,#splitline do
+                         Automix_Replacements_Temp[#Automix_Replacements_Temp][i-1] = splitline[i]
+                    end
+                    --print(table.concat(Automix_Replacements_Temp[#Automix_Replacements_Temp],","))
+                end
+            end
+        end
+        file:close()
+        if counter > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+    else
+        LogOutput("FILE NOT FOUND: Automixture Profile")
+    end
+end
+--[[ Automixture profile write ]]
+function Automix_Profile_Write(outputfile)
     LogOutput("FILE WRITE START: Automixture Profile")
     local file = io.open(outputfile, "w")
     file:write("# XLua Utils automixture profile generated on ",os.date("%x, %H:%M:%S"),"\n")
@@ -157,51 +199,77 @@ function Automixture_Profile_Write(outputfile)
     file:write("# - Square parenthesis ('[' and ']') must be prefixed with a percent character ('%'), i.e. 'engine_RPM%[2%]'.\n")
     file:write("# - Minus signs must be prefixed with percent characters ('%') e.g. 'ANIM_rotate_key %-85.000000'.\n")
     file:write("#\n")
+    for i=1,#Automix_Profile do
+        file:write("CONFIG,"..table.concat(Automix_Profile[i],",").."\n")
+    end
+    file:write("#REPLACE,objects/My_Example.obj,This is a target string or line %-%[0%],This is the replacement line") -- Example replacement line
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Automixture Profile") else LogOutput("FILE WRITE ERROR: Automixture Profile") end
     file:close()
 end
---[[ Initializes helper functions ]]
-function Automix_Helper_Init()
-    -- Constants
-    Automix_Vars.V_d = Table_ValGet(Automix_Config_Vars,"Eng_Disp",nil,2) / 1000 -- Displacement: l to m³
-    Automix_Vars.R_spec = Table_ValGet(Automix_Config_Vars,"Gas_Const",nil,2) -- J / kg K
-    -- Variables
-    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
-        Automix_Vars.p_in[i] = 0
-        Automix_Vars.N_e[i] = 0
-        Automix_Vars.T_in[i] = 0
-        Automix_Vars.m_dot[i] = 0
-        Automix_Vars.AFR_Act[i] = 0
-        Automix_Vars.AFR_Tgt[i] = 0
+--[[ Sort file replacement operations per file by finding unique filenames first and then write all operations to be performed in that file as subtables to the filename ]]
+function Automix_Sort_By_Filename(intable,outtable)
+    outtable = {}
+    local temptable = {}
+    local found = false
+    -- Find unique filenames and store them in temporary table
+    for i=1,#intable do
+        found = false
+        for j=0,#temptable do
+            if temptable[j] == intable[i][1] then found = true end
+        end
+        if not found then table.insert(temptable,intable[i][1]) end
     end
+    -- Prepare outputtable
+    for i=1,#temptable do
+        outtable[i] = {temptable[i]}
+    end
+    -- Add search and replacement strings for each file as subtable
+    for i=1,#intable do
+        for j=1,#outtable do
+            if intable[i][1] == outtable[j][1] then
+                outtable[j][#outtable[j]+1] = { }
+                for k=2,#intable[i] do
+                    outtable[j][#outtable[j]][k-1] = intable[i][k]
+                end
+                --print("For "..outtable[j][1]..": "..table.concat(outtable[j][#outtable[j]],";"))
+            end
+        end
+    end
+    for i=1,#outtable do print(outtable[i][1].." has "..(#outtable[i]-1).." replacements") end
+    return outtable
 end
---[[ Modifies a (text) file by reading it into a table, mwriting it to a backup file if none exists, modifying it according to the input table by line replacement and writing the modified file back to disk ]]
-function File_Modifier(inputtable)
-    for i=1,#inputtable do
+--[[ Modifies a (text) file by reading it into a table, writing it to a backup file if none exists, modifying it according to the input table by line replacement and writing the modified file back to disk ]]
+function Automix_File_Modifier(inputtable)
+    for i=1,#inputtable do -- Loop through input table
         local temptable = { }
         local counter = 0
         local inputfile = tostring(ACF_Folder..inputtable[i][1])
-        local file = io.open(inputfile,"r")
-        -- Read to table
-        if file then
+        local hasinput = FileExists(inputfile)
+        local backupfile = inputfile..".backup"
+        local hasbackup = FileExists(backupfile)
+        --print("Input: "..tostring(hasinput)..", Backup: "..tostring(hasbackup))
+        if hasinput then
             LogOutput("FILE MOD: START READ ("..inputfile..")")
+            local file
+            if hasbackup then
+                LogOutput("FILE MOD: BACKUP EXISTS, READING FROM BACKUP FILE")
+                file = io.open(backupfile,"r")
+            else
+                file = io.open(inputfile,"r")
+            end
             for line in file:lines() do
                 temptable[#temptable+1] = line
             end
             file:close()
             LogOutput("FILE MOD: END READ ("..#temptable.." lines)")
-
         else
             LogOutput("FILE MOD: NOT FOUND ("..inputfile..")")
         end
+        -- Modify file when it was successfully read
         if #temptable > 0 then
             -- Make backup
-            file = io.open(inputfile..".backup","r")
-            if file then
-                LogOutput("FILE MOD: BACKUP EXISTS")
-                file:close()
-            else
-                file = io.open(inputfile..".backup","w")
+            if not hasbackup then
+                file = io.open(backupfile,"w")
                 for j=1,#temptable do
                     file:write(temptable[j].."\n")
                 end
@@ -233,7 +301,22 @@ function File_Modifier(inputtable)
             end
         end
     end
-    --reload:once()
+end
+--[[ Applies the automixture profile ]]
+function Automix_Profile_Apply()
+    -- Apply constants from profile file or defaults
+    Automix_Vars.V_d = Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2) / 1000 -- Displacement: l to m³
+    Automix_Vars.R_spec = Table_ValGet(Automix_Profile,"Gas_Constant",nil,2) -- J / kg K
+    -- Create table with temporary variables for each engine
+    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+        Automix_Vars.p_in[i] = 0
+        Automix_Vars.N_e[i] = 0
+        Automix_Vars.T_in[i] = 0
+        Automix_Vars.m_dot[i] = 0
+        Automix_Vars.AFR_Act[i] = 0
+        Automix_Vars.AFR_Tgt[i] = 0
+    end
+
 end
 --[[
 
@@ -245,22 +328,23 @@ function Automix_Menu_Callbacks(itemref)
     for i=2,#Automix_Menu_Items do
         if itemref == Automix_Menu_Items[i] then
             if i == 2 then
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"FullRich") -- Set full rich
-            end
-            if i == 3 then
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoRich") -- Set auto rich
+                if Automix_HasProfile == 0 then Automix_Profile_Write(Xlua_Utils_Path..Automix_Profile_File) Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File) Automix_Menu_Watchdog(Automix_Menu_Items,2) end
+                if Automix_HasProfile == 1 then Automix_Reload() end
             end
             if i == 4 then
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoLean") -- Set auto lean
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"FullRich") -- Set full rich
             end
             if i == 5 then
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"IdleCutoff") -- Set idle cutoff
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoRich") -- Set auto rich
+            end
+            if i == 6 then
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoLean") -- Set auto lean
             end
             if i == 7 then
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"Manual") -- Set manual
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"IdleCutoff") -- Set idle cutoff
             end
-            if i == 9 then
-                File_Modifier(file_replacements)
+            if i == 8 then
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"Manual") -- Set manual
             end
             DebugLogOutput(Automix_Config_Vars[1][1]..": Set automixture mode to "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2))
             DisplayNotification("Automixture Mode: "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2),"Nominal",4)
@@ -271,6 +355,10 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function Automix_Menu_Watchdog(intable,index)
     if index == 2 then
+        if Automix_HasProfile == 0 then Menu_ChangeItemPrefix(Automix_Menu_ID,index,"Generate Automix Profile",intable)
+        elseif Automix_HasProfile == 1 then Menu_ChangeItemPrefix(Automix_Menu_ID,index,"Reload Automix Profile",intable) end
+    end
+    if index == 4 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "FullRich" then
             --[[Menu_ChangeItemPrefix(Automix_Menu_ID,index,"[*]",intable)
             Menu_ChangeItemPrefix(Automix_Menu_ID,3,"",intable)
@@ -284,7 +372,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,7,"Deactivate")
         end
     end
-    if index == 3 then
+    if index == 5 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "AutoRich" then
             --[[Menu_ChangeItemPrefix(Automix_Menu_ID,2,"",intable)
             Menu_ChangeItemPrefix(Automix_Menu_ID,index,"[*]",intable)
@@ -298,7 +386,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,7,"Deactivate")
         end
     end
-    if index == 4 then
+    if index == 6 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "AutoLean" then
             --[[Menu_ChangeItemPrefix(Automix_Menu_ID,2,"",intable)
             Menu_ChangeItemPrefix(Automix_Menu_ID,3,"",intable)
@@ -312,7 +400,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,7,"Deactivate")
         end
     end
-    if index == 5 then
+    if index == 7 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "IdleCutoff" then
             --[[Menu_ChangeItemPrefix(Automix_Menu_ID,2,"",intable)
             Menu_ChangeItemPrefix(Automix_Menu_ID,3,"",intable)
@@ -326,7 +414,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,7,"Deactivate")
         end
     end
-    if index == 7 then
+    if index == 8 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "Manual" then
             --[[Menu_ChangeItemPrefix(Automix_Menu_ID,2,"",intable)
             Menu_ChangeItemPrefix(Automix_Menu_ID,3,"",intable)
@@ -396,17 +484,17 @@ function Automix_MainTimer()
             Automix_Vars.Mix_Mode[i] = Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2)
         end
         if Automix_Vars.Mix_Mode[i] == "FullRich" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,1.0) Automix_Menu_Watchdog(Automix_Menu_Items,2) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        if Automix_Vars.Mix_Mode[i] == "AutoRich" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Config_Vars,"MixtureTargets",nil,2) Automix_Menu_Watchdog(Automix_Menu_Items,3) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        if Automix_Vars.Mix_Mode[i] == "AutoLean" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Config_Vars,"MixtureTargets",nil,3) Automix_Menu_Watchdog(Automix_Menu_Items,4) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+        if Automix_Vars.Mix_Mode[i] == "AutoRich" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,2) Automix_Menu_Watchdog(Automix_Menu_Items,3) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+        if Automix_Vars.Mix_Mode[i] == "AutoLean" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,3) Automix_Menu_Watchdog(Automix_Menu_Items,4) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
         if Automix_Vars.Mix_Mode[i] == "IdleCutoff" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,0.0) Automix_Menu_Watchdog(Automix_Menu_Items,5) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
         --
         if Automix_Vars.Mix_Mode[i] == "AutoRich" or Automix_Vars.Mix_Mode[i] == "AutoLean" then
             if Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) > 500 then
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) <= Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,2) and Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) >= Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,3) then
+                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) <= Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) and Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) >= Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then
                         Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) - (0.001 * (Automix_Vars.AFR_Tgt[i] - Automix_Vars.AFR_Act[i])))
                     end
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) > Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,2) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,2)) end -- Correct high limit
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) < Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,3) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Config_Vars,"MixtureLimits",nil,3)) end -- Correct low limit
+                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) > Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,3)) end -- Correct high limit
+                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) < Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,2)) end -- Correct low limit
             else
                 Automix_Vars.Mix_Mode[i] = "Manual"
             end
@@ -438,7 +526,8 @@ function Automix_Init()
         Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
         DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
         Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-        Automix_Helper_Init()
+        Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File)
+        Automix_Profile_Apply()
         run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
         LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
     end
@@ -446,6 +535,9 @@ end
 --[[ Reloads the Persistence configuration ]]
 function Automix_Reload()
     Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
+    Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File)
+    Automix_Profile_Apply()
+    Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
     LogOutput(Automix_Config_Vars[1][1]..": Reloaded!")
 end
 --[[
@@ -453,23 +545,22 @@ end
 XLUA DATAREFS
 
 ]]
-
 --[[ Mixture lever animation dataref ]]
 function MixtureLeverCallback()
     local average = 0
     for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
         if DRef_ManualToggle == 0 then
-            if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,2) then
+            if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
                 DRef_MixtureLeversAnim[i] = 0 -- Idle cutoff
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"IdleCutoff") -- Set idle cutoff
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) -- Auto lean
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) -- Auto lean
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoLean") -- Set auto lean
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) -- Auto rich
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) -- Auto rich
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoRich") -- Set auto rich
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) -- Full rich
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) -- Full rich
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"FullRich") -- Set full rich
             end
         end
@@ -484,17 +575,17 @@ function MixtureLeverAllCallback()
     for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
         DRef_MixtureLeversAnim[i] = DRef_MixtureLeversAllAnim
         if DRef_ManualToggle == 0 then
-            if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,2) then
+            if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
                 DRef_MixtureLeversAnim[i] = 0 -- Idle cutoff
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"IdleCutoff") -- Set idle cutoff
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) -- Auto lean
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) -- Auto lean
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoLean") -- Set auto lean
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) -- Auto rich
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) -- Auto rich
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoRich") -- Set auto rich
-            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) -- Full rich
+            elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) -- Full rich
                 Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"FullRich") -- Set full rich
             end
             DRef_MixtureLeversAllAnim = DRef_MixtureLeversAnim[i]
@@ -514,17 +605,17 @@ function ManualToggleCallback()
         local average = 0
         for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
             if DRef_ManualToggle == 0 then
-                if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,2) then
+                if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
                     DRef_MixtureLeversAnim[i] = 0 -- Idle cutoff
                     Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"IdleCutoff") -- Set idle cutoff
-                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,3) -- Auto lean
+                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,3) -- Auto lean
                     Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoLean") -- Set auto lean
-                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) + Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,4) -- Auto rich
+                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) and DRef_MixtureLeversAnim[i] < (Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) + Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,4) -- Auto rich
                     Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"AutoRich") -- Set auto rich
-                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) - Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,6)) then
-                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Config_Vars,"LeverDetents",nil,5) -- Full rich
+                elseif DRef_MixtureLeversAnim[i] > (Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) - Table_ValGet(Automix_Profile,"Lever_Detent_Magnet",nil,2)) then
+                    DRef_MixtureLeversAnim[i] = Table_ValGet(Automix_Profile,"Lever_Detents",nil,5) -- Full rich
                     Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,2,"FullRich") -- Set full rich
                 end
             end
