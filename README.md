@@ -299,8 +299,8 @@ A successfully populated container table with the input dataref examples above h
 	local mydrefcontainer = {
 	"DATAREF",
 	-- alias,dataref,dataref type,{dataref value(s) storage 1},{dataref value(s) storage 2},dataref handle
-	{"Volume_Fan","sim/operation/sound/fan_volume_ratio",2,{1},{},cdata<void *>: 0x08e409d0)
-	{"Dref3","sim/operation/sound/interior_volume_ratio",2,{1},{},cdata<void *>: 0x08e40480
+	{"Volume_Fan","sim/operation/sound/fan_volume_ratio",2,{1},{},cdata<void *>: 0x08e409d0}
+	{"Dref3","sim/operation/sound/interior_volume_ratio",2,{1},{},cdata<void *>: 0x08e40480}
 	}
 
 There are two subtables for storing dataref values at table index 4 and 5. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
