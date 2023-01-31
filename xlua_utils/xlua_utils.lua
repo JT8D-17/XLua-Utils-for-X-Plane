@@ -18,6 +18,7 @@ ACF_Filename = "" -- KEEP EMPTY, GLOBAL
 Xlua_Utils_Path = "" -- KEEP EMPTY, GLOBAL
 Xlua_Utils_PrefsFile = "" -- KEEP EMPTY, GLOBAL
 Xlua_Utils_LogFile = "" -- KEEP EMPTY, GLOBAL
+XP_Folder = "" -- KEEP EMPTY, GLOBAL
 
 XluaUtils_HasConfig = 0     -- Used by this script
 XluaPersist_HasDrefFile = 0 -- Used by util_persistence.lua
@@ -71,6 +72,8 @@ end
 -- 2: Flight start
 function flight_start()
     ACF_Folder, ACF_Filename = GetAircraftFolder() -- ALWAYS THE FIRST ITEM!
+    XP_Folder = GetXPlaneFolder()
+    print("AAAAA: "..XP_Folder)
     Xlua_Utils_Path = ACF_Folder.."plugins/xlua/scripts/xlua_utils/"
     Xlua_Utils_PrefsFile = Xlua_Utils_Path.."preferences.cfg"
     Xlua_Utils_LogFile = Xlua_Utils_Path..LogFileName

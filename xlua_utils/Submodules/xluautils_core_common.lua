@@ -9,6 +9,13 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 COMMON FUNCTIONS
 
 ]]
+--[[ Returns the path to the X-Plane root folder ]]
+function GetXPlaneFolder()
+    local xppath = ffi.new("char[2048]")
+    XPLM.XPLMGetSystemPath(xppath)
+    xppath = ffi.string(xppath)
+    return xppath
+end
 --[[ Returns the aircraft ACF file and path ]]
 function GetAircraftFolder()
     local fileName = ffi.new("char[256]")

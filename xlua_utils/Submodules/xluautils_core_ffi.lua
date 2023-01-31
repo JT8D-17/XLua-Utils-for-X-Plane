@@ -21,6 +21,7 @@ ffi.cdef([[
 /* XPLMUtilities*/
 typedef void *XPLMCommandRef;
 void XPLMDebugString(const char *inString);
+void XPLMGetSystemPath(char *outSystemPath);
 /* XPLMMenus */
 typedef int XPLMMenuCheck;
 typedef void *XPLMMenuID;
@@ -114,12 +115,33 @@ typedef int XPLMFontID;
 void XPLMDrawString(float *inColorRGB,int inXOffset,int inYOffset, char *inChar,int *inWordWrapWidth,XPLMFontID inFontID);
 void XPLMDrawTranslucentDarkBox(int inLeft,int inTop,int inRight,int inBottom);
 void XPLMGetFontDimensions(XPLMFontID inFontID,int *outCharWidth,int *outCharHeight,int *outDigitsOnly);
+void XPLMLocalToWorld(double inX,double inY,double inZ,double *outLatitude,double *outLongitude,double *outAltitude);
+void XPLMWorldToLocal(double inLatitude,double inLongitude,double inAltitude,double *outX,double *outY,double *outZ);
 /* XPLMScenery */
 typedef void *XPLMObjectRef;
+typedef void *XPLMProbeRef;
+typedef int XPLMProbeType;
+typedef int XPLMProbeResult;
 typedef struct {int structSize; float x; float y; float z; float pitch; float heading; float roll;} XPLMDrawInfo_t;
 typedef void (*XPLMObjectLoaded_f)(XPLMObjectRef inObject, void *inRefcon);
 void XPLMLoadObjectAsync(const char *inPath, XPLMObjectLoaded_f inCallback, void *inRefcon);
 void XPLMUnloadObject(XPLMObjectRef inObject);
+typedef struct {
+    int structSize;
+    float locationX;
+    float locationY;
+    float locationZ;
+    float normalX;
+    float normalY;
+    float normalZ;
+    float velocityX;
+    float velocityY;
+    float velocityZ;
+    int is_wet;
+} XPLMProbeInfo_t;
+XPLMProbeRef XPLMCreateProbe(XPLMProbeType inProbeType);
+XPLMProbeResult XPLMProbeTerrainXYZ(XPLMProbeRef inProbe,float inX,float inY,float inZ,XPLMProbeInfo_t *outInfo);
+void XPLMDestroyProbe(XPLMProbeRef inProbe);
 /* XPLMInstance */
 typedef void *XPLMInstanceRef;
 XPLMInstanceRef XPLMCreateInstance(XPLMObjectRef obj, const char **datarefs);
