@@ -25,7 +25,9 @@ The  "Auto Rich" and "Auto Lean" modes basically adjust the mixture until a give
 To obtain the FAR for each of of the aircraft's engines, air mass flow is calculated from inlet pressure (MAP), displacement, RPM, the gas constant of air and air temperature and divided by fuel flow obtained from X-Plane.
 
 With the current AFR continuously determined from fuel flow, X-Plane's mixture dataref (sim/cockpit2/engine/actuators/mixture_ratio) is adjusted within a given permissible value range (to avoid accidental engine cutoff) to attempt to match the current to the target AFR.
-While this method is not the most accurate one as it is very simplified and has to work within a timer loop trying to minimize the required CPU cycles while providing an accurate result, it is efficient and was easy to code (see the "Automix_MainTimer()" function in _"util_automixture.lua"_).   
+While this method is not the most accurate one as it is very simplified and has to work within a timer loop trying to minimize the required CPU cycles while providing an accurate result, it is efficient and was easy to code (see the "Automix_MainTimer()" function in _"util_automixture.lua"_).
+
+&nbsp;
 
 #### 1.2 Object file editing
 
@@ -34,6 +36,8 @@ While the core automixture logic may run "underneath the cowling" of any piston 
 To work around this, the automixture utility is equipped with an object file editing capability. Because X-Plane's object files are nothing but text files, they can be read, edited and saved with the appropriate Lua instructions. An aircraft reload will then instantly reflect the implemented changes. Object replacement is completely optional and the associated information is read from the automixture config file.
 
 After the automatic editing of an object file, the aircraft must be reloaded from the "Developer" -> "Reload the Current Aircraft and Art" menu.
+
+&nbsp;
 
 #### 1.3 Datarefs for custom mixture levers
 
@@ -47,9 +51,13 @@ A float type dataref used for manipulating all mixture levers at once.
 An integer type dataref used to toggle between manual and detent lever mode.   
 A value of "1" enables direct adjustment of the mixture levers while a value of "0" enables automixture control.
 
+&nbsp;
+
 #### 1.4 Configuration
 
 Automixture configuration is read from  _"xlua_utils/automixture_profile.cfg"_. This file is not initially present and has to be generated from the menu. It contains engine parameters and object replacement information. See farther below for file structure and syntax.
+
+&nbsp;
 
 #### 1.5 Integration
 
@@ -61,6 +69,7 @@ To avoid interference with aircraft that do not need automixture, the mixture ma
 
 By default, the core logic of the automixture utility updates in 20 Hz intervals (i.e. every 0.05 seconds) to keep the performance impact in X-Plane as low as possible.
 
+&nbsp;
 
 #### 1.6 Persistence
 
@@ -197,10 +206,10 @@ The syntax for "REPLACE" type lines is the following:
 
 &nbsp;
 
-Here are some general rules and considerations for editing object files:
+These are general rules and considerations for editing object files:
 
 - Only text files (OBJ or else) are supported, not binary files (in case X-Plane ever implements a binary object file format).
-- There is no limit on the amount of "REPLACE lines".
+- There is no limit on the amount of "REPLACE" lines.
 - Replacements work line by line. You can not define the content of two lines from the object file in a single "REPLACE" line.
 - Square parenthesis ('[' and ']') must be prefixed with a percent character ("%"), e.g. 'engine_RPM%[2%]'.
 - Minus signs must be prefixed with percent characters ("%"), e.g. 'ANIM_rotate_key %-85.000000'.
