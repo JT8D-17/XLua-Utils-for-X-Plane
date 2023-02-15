@@ -68,12 +68,12 @@ function aircraft_unload()
     Notify_Window_Unload()
     Main_Menu_Unload()
     AttachObject_Unload()
+    Automix_Unload()
 end
 -- 2: Flight start
 function flight_start()
     ACF_Folder, ACF_Filename = GetAircraftFolder() -- ALWAYS THE FIRST ITEM!
     XP_Folder = GetXPlaneFolder()
-    print("AAAAA: "..XP_Folder)
     Xlua_Utils_Path = ACF_Folder.."plugins/xlua/scripts/xlua_utils/"
     Xlua_Utils_PrefsFile = Xlua_Utils_Path.."preferences.cfg"
     Xlua_Utils_LogFile = Xlua_Utils_Path..LogFileName
@@ -92,7 +92,7 @@ function flight_start()
     MiscUtils_Init() -- Initialize misc utilities
     Automix_Init() -- Initialize automixture
     EngineDamage_Init() -- Initialize engine damage
-    AttachObject_Init() -- Initialize engine damage
+    AttachObject_Init() -- Initialize object attachments
     Debug_Menu_Build(XluaUtils_Menu_ID)
     if XluaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
@@ -100,7 +100,7 @@ function flight_start()
         Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
         NCHeadset_Menu_Build(XluaUtils_Menu_ID)
-        Automix_Menu_Build(XluaUtils_Menu_ID)
+        Automix_Menu_Register(XluaUtils_Menu_ID) -- Registers the automixture menu
         EngineDamage_Menu_Build(XluaUtils_Menu_ID)
         AttachObject_Menu_Build(XluaUtils_Menu_ID)
     end

@@ -14,6 +14,7 @@ This document contains information about Xlua Utils' engine damage utility.
 
 &nbsp; 
 
+<a name="1"></a>
 ### 1. Functionality/Caveats/Known Issues
 
 
@@ -24,6 +25,7 @@ This document contains information about Xlua Utils' engine damage utility.
 
 &nbsp;
 
+<a name="1"></a>
 ### 2. Engine Profile File
 
 [To be documented]
@@ -36,6 +38,7 @@ Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"
 
 &nbsp;
 
+<a name="1"></a>
 ### 3. Usage
 
 [To be documented]

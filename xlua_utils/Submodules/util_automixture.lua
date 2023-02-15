@@ -6,6 +6,12 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 ]]
 --[[
 
+TO DO: Wrapper for standard mixture commands when object has been modified with custom datarefs!
+
+
+]]
+--[[
+
 VARIABLES
 
 ]]
@@ -155,6 +161,7 @@ function Automix_Profile_Read(inputfile)
         file:close()
         if counter > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
+        Automix_HasProfile = 0
         LogOutput("FILE NOT FOUND: Automixture Profile")
     end
 end
@@ -336,7 +343,7 @@ function Automix_Menu_Callbacks(itemref)
     for i=2,#Automix_Menu_Items do
         if itemref == Automix_Menu_Items[i] then
             if i == 2 then
-                if Automix_HasProfile == 0 then Automix_Profile_Write(Xlua_Utils_Path..Automix_Profile_File) Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File) Automix_Menu_Watchdog(Automix_Menu_Items,2) end
+                if Automix_HasProfile == 0 then Automix_Profile_Write(Xlua_Utils_Path..Automix_Profile_File) Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File) Automix_Menu_Handler() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile) end
                 if Automix_HasProfile == 1 then Automix_Reload() end
             end
             if i == 4 then
@@ -417,31 +424,42 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,8,"Deactivate")
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function Automix_Menu_Build(ParentMenuID)
-    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture menu if the engine is a reciprocating type
-        local Menu_Indices = {}
-        for i=2,#Automix_Menu_Items do Menu_Indices[i] = 0 end
-        if XPLM ~= nil then
-            local Menu_Index = nil
-            Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
-            Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
-            for i=2,#Automix_Menu_Items do
-                if Automix_Menu_Items[i] ~= "[Separator]" then
-                    Automix_Menu_Pointer = Automix_Menu_Items[i]
-                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Automix_Menu_ID,Automix_Menu_Items[i],ffi.cast("void *",Automix_Menu_Pointer),1)
-                else
-                    XPLM.XPLMAppendMenuSeparator(Automix_Menu_ID)
-                end
-            end
-            for i=2,#Automix_Menu_Items do
-                if Automix_Menu_Items[i] ~= "[Separator]" then
-                    Automix_Menu_Watchdog(Automix_Menu_Items,i)
-                end
-            end
-            LogOutput(Automix_Config_Vars[1][1].." Menu initialized!")
-        end
+
+--[[ Registration routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
+function Automix_Menu_Register(ParentMenuID)
+    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 and XPLM ~= nil then -- Only initialize automixture menu if the engine is a reciprocating type
+        local Menu_Index = nil
+        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
+        Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
+        Automix_Menu_Handler()
+        LogOutput(Automix_Config_Vars[1][1].." Menu registered!")
     end
+end
+--[[ Menu building routine ]]
+function Automix_Menu_Build(startindex,endindex)
+    XPLM.XPLMClearAllMenuItems(Automix_Menu_ID)
+    local Menu_Indices = {}
+    for i=startindex,endindex do Menu_Indices[i] = 0 end
+    if Automix_Menu_ID ~= nil then
+        for i=startindex,endindex do
+            if Automix_Menu_Items[i] ~= "[Separator]" then
+                Automix_Menu_Pointer = Automix_Menu_Items[i]
+                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Automix_Menu_ID,Automix_Menu_Items[i],ffi.cast("void *",Automix_Menu_Pointer),1)
+            else
+                XPLM.XPLMAppendMenuSeparator(Automix_Menu_ID)
+            end
+        end
+        for i=startindex,endindex do
+            if Automix_Menu_Items[i] ~= "[Separator]" then
+                Automix_Menu_Watchdog(Automix_Menu_Items,i)
+            end
+        end
+        LogOutput(Automix_Config_Vars[1][1].." Menu built!")
+    end
+end
+--[[ Handles building the automixture menu depending on presence of a config file or not ]]
+function Automix_Menu_Handler()
+    if Automix_HasProfile == 0 then Automix_Menu_Build(2,2) elseif Automix_HasProfile == 1 then Automix_Menu_Build(2,#Automix_Menu_Items) end
 end
 --[[
 
@@ -450,38 +468,40 @@ RUNTIME FUNCTIONS
 ]]
 --[[ Main timer for the Automixture logic ]]
 function Automix_MainTimer()
-    if DebugIsEnabled() == 1 then Automix_DebugWindow_Update() end
-    Dataref_Read(Automix_Drefs_Cont,4,"All") -- Update continuously monitored datarefs
-    --[[ Calculate mass flow per engine
-    Source: Equation 3.14 from: Fantenberg, E. "Estimation of Air Mass Flow in Engines with Variable Valve Timing",Linköping, 2018
-    ]]
-    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
-        Automix_Vars.p_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i) * 3386.388333333334 -- inHG to N/m²
-        Automix_Vars.N_e[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) / 60 -- 1/min to 1 / s
-        Automix_Vars.T_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_Carb",4,i) + 273.15 -- °C in K
-        Automix_Vars.m_dot[i] = (Automix_Vars.p_in[i] * Automix_Vars.V_d * Automix_Vars.N_e[i]) / (2 * Automix_Vars.R_spec * Automix_Vars.T_in[i]) -- Factor 2 accounts for 1 intake in 2 revolutions in a 4 stroke engine
-        Automix_Vars.AFR_Act[i] = Automix_Vars.m_dot[i] / Table_ValGet(Automix_Drefs_Cont,"Eng_FF",4,i)
-        --
-        if Table_ValGet(Automix_Drefs_Cont,"Eng_FADEC",4,1) == 1 then Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual") end
+    if Automix_HasProfile == 1 then -- Only update if an aircraft profile file is present
+        if DebugIsEnabled() == 1 then Automix_DebugWindow_Update() end
+        Dataref_Read(Automix_Drefs_Cont,4,"All") -- Update continuously monitored datarefs
+        --[[ Calculate mass flow per engine
+        Source: Equation 3.14 from: Fantenberg, E. "Estimation of Air Mass Flow in Engines with Variable Valve Timing",Linköping, 2018
+        ]]
+        for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+            Automix_Vars.p_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i) * 3386.388333333334 -- inHG to N/m²
+            Automix_Vars.N_e[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) / 60 -- 1/min to 1 / s
+            Automix_Vars.T_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_Carb",4,i) + 273.15 -- °C in K
+            Automix_Vars.m_dot[i] = (Automix_Vars.p_in[i] * Automix_Vars.V_d * Automix_Vars.N_e[i]) / (2 * Automix_Vars.R_spec * Automix_Vars.T_in[i]) -- Factor 2 accounts for 1 intake in 2 revolutions in a 4 stroke engine
+            Automix_Vars.AFR_Act[i] = Automix_Vars.m_dot[i] / Table_ValGet(Automix_Drefs_Cont,"Eng_FF",4,i)
+            --
+            if Table_ValGet(Automix_Drefs_Cont,"Eng_FADEC",4,1) == 1 then Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual") end
 
-        if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "FullRich" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,1.0) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoRich" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,2) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoLean" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,3) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "IdleCutoff" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,0.0) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
-        --
-        if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoRich" or Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoLean" then
-            if Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) > Table_ValGet(Automix_Profile,"Minimum_RPM",nil,2) then
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) <= Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) and Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) >= Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then
-                        Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) - (0.001 * (Automix_Vars.AFR_Tgt[i] - Automix_Vars.AFR_Act[i])))
-                    end
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) > Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,3)) end -- Correct high limit
-                    if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) < Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,2)) end -- Correct low limit
-            else
-                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual")
+            if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "FullRich" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,1.0) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+            if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoRich" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,2) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+            if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoLean" then Automix_Vars.AFR_Tgt[i] = Table_ValGet(Automix_Profile,"AirFuelRatio_Targets",nil,3) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+            if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "IdleCutoff" then Automix_Vars.AFR_Tgt[i] = 0 Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,0.0) Table_ValSet(Automix_Drefs_Cont,"Eng_FADEC",4,1,0) Dataref_Write(Automix_Drefs_Cont,4,"Eng_FADEC") end
+            --
+            if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoRich" or Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1) == "AutoLean" then
+                if Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) > Table_ValGet(Automix_Profile,"Minimum_RPM",nil,2) then
+                        if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) <= Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) and Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) >= Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then
+                            Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) - (0.001 * (Automix_Vars.AFR_Tgt[i] - Automix_Vars.AFR_Act[i])))
+                        end
+                        if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) > Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,3)) end -- Correct high limit
+                        if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) < Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,2)) end -- Correct low limit
+                else
+                    Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual")
+                end
             end
         end
+        Dataref_Write(Automix_Drefs_Cont,4,"Eng_Mixt")
     end
-    Dataref_Write(Automix_Drefs_Cont,4,"Eng_Mixt")
 end
 --[[
 
@@ -494,7 +514,7 @@ function Automix_FirstRun()
     Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
-    Automix_Menu_Build(XluaUtils_Menu_ID)
+    Automix_Menu_Handler()
     LogOutput(Automix_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes automixture at every startup ]]
@@ -512,13 +532,19 @@ function Automix_Init()
         LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
     end
 end
+
 --[[ Reloads the Persistence configuration ]]
 function Automix_Reload()
     Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
     Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File)
     Automix_Profile_Apply()
     Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
+    Automix_Menu_Handler()
     LogOutput(Automix_Config_Vars[1][1]..": Reloaded!")
+end
+--[[ Unload logic for the persistence module ]]
+function Automix_Unload()
+    Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile)
 end
 --[[
 

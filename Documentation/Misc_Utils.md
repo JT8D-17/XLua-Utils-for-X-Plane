@@ -13,6 +13,7 @@ This document contains information about miscellaneous small utilities contained
 
 &nbsp;
  
+ <a name="1"></a>
 ### 1. Menu/Functionality
 
 ![XLua Misc Menu](Images/XLuaUtils_Misc.jpg  "XLua Misc Menu")
@@ -26,6 +27,7 @@ This document contains information about miscellaneous small utilities contained
 
 &nbsp;
 
+<a name="2"></a>
 ### 2. Configuration via Preferences.cfg
 
 These are the persistence module parameters which are stored in lines prefixed with "MISC_UTILS" in _"preferences.cfg"_:

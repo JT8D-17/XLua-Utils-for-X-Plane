@@ -9,14 +9,16 @@ This document contains information about Xlua Utils' noise-cancelling headset ut
 <a name="toc"></a>
 ### Table of Contents
 1. [Features](#1)  
-2. [Menu/Functionality](#2)   
-3. [Configuration via Preferences.cfg](#3)   
+2. [Known Issues](#2)  
+3. [Menu/Functionality](#3)   
+4. [Configuration via Preferences.cfg](#4)   
 
 &nbsp;
 
+<a name="1"></a>
 ### 1. Features
 
-It can be toggled from the menu or automated. When automated, the headset is only active when all engines are running.
+The noise-cancelling function can be toggled from the menu or enabled/disabled automatically. When automated, the headset is only active when all engines are running.
 
 Volume levels from the beginning of the X-Plane session are stored during module initialization for later restoration. These volume levels are restored during X-Plane's "aircraft_unload" event, e.g. when changing aircraft or shutting down X-Plane.
 
@@ -26,7 +28,19 @@ Volume levels from the beginning of the X-Plane session are stored during module
 
 &nbsp;
 
-### 2. Menu/Functionality
+<a name="2"></a>
+### 2. Known issues
+
+Reloading the aircraft or its Lua scripts, or an X-Plane program crash with the NC function active will prevent the volume level restoration logic from running. Thus, the volume levels present at script initialization will be considered defaults and noise-cancelling will be applied to the, leading to much lower than desired sound levels requiring manual restoration from X-Plane's sound menu.
+
+&nbsp;
+
+[Back to table of contents](#toc)
+
+&nbsp;
+
+<a name="3"></a>
+### 3. Menu/Functionality
 
 The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
 
@@ -51,7 +65,8 @@ When on, the dataref *"sim/operation/sound/inside_any"* is used to determine whe
 
 &nbsp;
 
-### 3. Configuration via Preferences.cfg
+<a name="4"></a>
+### 4. Configuration via Preferences.cfg
 
 These are the persistence module parameters which are stored in lines prefixed with "NCHEADSET" in _"preferences.cfg"_:
 

@@ -163,7 +163,7 @@ Reference: `xlua_utils/Submodules/util_persistence.lua`
 
 &nbsp;
 
-<a name="4.6"></a>
+<a name="6"></a>
 ### 6 Notifications
 
 To provide short-time (or permanent) information, XLua Utils features a notification window.

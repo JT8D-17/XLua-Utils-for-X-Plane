@@ -16,6 +16,7 @@ This document contains information about Xlua Utils' persistence utility.
 
 &nbsp;
 
+<a name="1"></a>
 ### 1. Caveats/Known Issues
 
 The persistence system comes with the following caveats:
@@ -36,6 +37,7 @@ In general, the simpler the addon, the higher the chance of success for a 100% c
 
 &nbsp;
 
+<a name="2"></a>
 ### 2. Files 
 
 Relevant files to this module are stored in _"xlua_utils"_ and are _"preferences.cfg"_, storing configuration data, _"datarefs.cfg"_, a manually populated list of datarefs and _"persistence_save.txt"_, the save file containing the dataref values.
@@ -46,6 +48,7 @@ Relevant files to this module are stored in _"xlua_utils"_ and are _"preferences
 
 &nbsp;
 
+<a name="3"></a>
 ### 3. Populating Datarefs.cfg
 
 An empty _"Datarefs.cfg"_ is generated at XLua Utils initialization (see chapter [5.1](#5.1) if none is present.   
@@ -69,6 +72,7 @@ Example _"datarefs.cfg"_ files for some add-on aircraft can be found in _"xlua_u
 
 &nbsp;
 
+<a name="4"></a>
 ### 4. Menu/Functionality
 
 The _"Persistence"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
@@ -105,6 +109,7 @@ Reads persistence module related data from_"preferences.cfg"_, parses _"datarefs
 
 &nbsp;
 
+<a name="5"></a>
 ### 5. Configuration via Preferences.cfg
 
 These are the persistence module parameters which are stored in lines prefixed with "PERSISTENCE" in _"preferences.cfg"_:
