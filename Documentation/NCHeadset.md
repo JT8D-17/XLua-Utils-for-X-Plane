@@ -1,6 +1,6 @@
-## Xlua Utils noise-cancelling headset utility
+## XLuaUtils Noise-Cancelling Headset Utility
 
-This document contains information about Xlua Utils' noise-cancelling headset utility.
+This document contains information about XLuaUtils' noise-cancelling headset utility.
 
 [Back to Readme.md](../README.md) 
 
@@ -42,9 +42,9 @@ Reloading the aircraft or its Lua scripts, or an X-Plane program crash with the 
 <a name="3"></a>
 ### 3. Menu/Functionality
 
-The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLua Utils' initialization.
+The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
 
-![XLua NCHeadset Menu](Images/XLuaUtils_NCHeadset.jpg  "XLua NCHeadset Menu")
+![XLuaUtils NCHeadset Menu](Images/XLuaUtils_NCHeadset.jpg  "XLuaUtils NCHeadset Menu")
 
 - _"[On/Off] Headset"_   
 Immediately puts on the headset, decreasing all non-ATC noise levels to the set level (see below). When set to off, it will also turn off headset automation.
@@ -89,7 +89,7 @@ Timer interval for headset automation checks (in seconds; default: 1)
 Use Fmod soundscape to determine if user is inside the aircraft disabled/enabled  (0/1; default: 1)
 
 When altering these parameters, only adjust the numbers and nothing else.   
-Changes to _"preferences.txt"_ can be applied immediately with the _"Reload XLua Utils Preferences"_ from the _"XLua Utils"_ menu.
+Changes to _"preferences.txt"_ can be applied immediately with the _"Reload XLuaUtils Preferences"_ from the _"XLuaUtils"_ menu.
 
 &nbsp;
 

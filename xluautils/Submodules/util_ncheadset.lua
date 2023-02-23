@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -114,25 +114,25 @@ function NCHeadset_Menu_Callbacks(itemref)
             end
             if i == 3 then
                 if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,1) else Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) end
-                Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+                Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Set Automation to "..Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2))
             end
             if i == 5 then
                 Table_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2,Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) + Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2))
-                Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+                Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
                 if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then NCHeadset_On() end
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Increased Noise Level to "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %.")
             end
             if i == 7 then
                 Table_ValSet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2,Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) - Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevelDelta",nil,2))
-                Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+                Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
                 if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then NCHeadset_On() end
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Decreased Noise Level to "..(Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * 100).." %.")
             end
             if i == 9 then
                 if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"FModCompliant",nil,2,1)
                 elseif Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then Table_ValSet(NCHeadset_Config_Vars,"FModCompliant",nil,2,0) end
-                Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
+                Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Soundscape Triggering set to "..Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2))
             end
             NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
@@ -191,15 +191,15 @@ INITIALIZATION
 ]]
 --[[ First start of the NCHeadset module ]]
 function NCHeadset_FirstRun()
-    Preferences_Write(NCHeadset_Config_Vars,Xlua_Utils_PrefsFile)
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
+    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    NCHeadset_Menu_Build(XluaUtils_Menu_ID)
+    NCHeadset_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes NCHeadset at every startup ]]
 function NCHeadset_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
     Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with currrent values as defaults
     Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values
@@ -208,7 +208,7 @@ function NCHeadset_Init()
 end
 --[[ Reloads the Persistence configuration ]]
 function NCHeadset_Reload()
-    Preferences_Read(Xlua_Utils_PrefsFile,NCHeadset_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
     LogOutput(NCHeadset_Config_Vars[1][1]..": Reloaded!")
 end

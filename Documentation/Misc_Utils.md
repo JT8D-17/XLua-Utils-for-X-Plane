@@ -1,6 +1,6 @@
-## Xlua Utils noise-cancelling headset utility
+## XLuaUtils Miscellaneous Utilities
 
-This document contains information about miscellaneous small utilities contained within Xlua Utils.
+This document contains information about miscellaneous small utilities contained within XLuaUtils.
 
 [Back to Readme.md](../README.md) 
 
@@ -16,7 +16,7 @@ This document contains information about miscellaneous small utilities contained
  <a name="1"></a>
 ### 1. Menu/Functionality
 
-![XLua Misc Menu](Images/XLuaUtils_Misc.jpg  "XLua Misc Menu")
+![XLuaUtils Misc Menu](Images/XLuaUtils_Misc.jpg  "XLuaUtils Misc Menu")
 
 - _"Repair All Damage"_ resets all 500+ of X-Plane's failure datarefs to a value of zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this. If the aircraft can not be repaired, the menu entry will read _"[Can Not Repair]"_.
 - _"Synchronize Baros"_, when enabled, will synchronize the pilot, co-pilot and standby barometers when either of these are adjusted.

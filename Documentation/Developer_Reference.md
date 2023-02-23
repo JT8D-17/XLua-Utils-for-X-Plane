@@ -1,10 +1,6 @@
-## XLua Utilities developer reference
+## XLuaUtils Developer Reference
 
-This document contains information about some Xlua Utils features useful for xlua script developers.
-
-[Back to Readme.md](../README.md) 
-
-&nbsp;
+This document contains information about some XLuaUtils features useful for XLua script developers.
 
 [Back to Readme.md](../README.md) 
 
@@ -27,9 +23,9 @@ This document contains information about some Xlua Utils features useful for xlu
 ### 1 Limitations
 
 - As XLua namespaces are completely local, reading variables from other scripts is not possible.   
-If you want to use any of XLua Utils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xlua_utils.lua`.
+If you want to use any of XLuaUtils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xluautils.lua`.
 - Any XLua limitations apply, especially regarding table scope in XLua 1.1 or newer. Any table must be - and is being - treated as local.
-- XLua Utils' capabilities do not encompass the full extent of X-Plane's API (yet?).
+- XLuaUtils' capabilities do not encompass the full extent of X-Plane's API (yet?).
 
 &nbsp;
 
@@ -40,18 +36,18 @@ If you want to use any of XLua Utils' functions in airplane related scripts, add
 <a name="2"></a>
 ### 2 Global Variables and Paths
 
-XLua Utils will populate the following variables at script startup:
+XLuaUtils will populate the following variables at script startup:
 
 - `ACF_Folder`   
 Complete path of the folder that the .acf file of the user aircraft is located in.
 - `ACF_Filename`   
 Name of the user aircraft's .acf file.
-- `Xlua_Utils_Path`   
-Complete path of the XLua Utils root folder.
-- `Xlua_Utils_PrefsFile`   
-Complete path to the XLua Utils preferences file, including filename.
+- `XLuaUtils_Path`   
+Complete path of the XLuaUtils root folder.
+- `XLuaUtils_PrefsFile`   
+Complete path to the XLuaUtils preferences file, including filename.
 
-These variables are available in all of XLua Utils' submodules.
+These variables are available in all of XLuaUtils' submodules.
 
 &nbsp;
 
@@ -64,22 +60,22 @@ These variables are available in all of XLua Utils' submodules.
 
 #### 3.1 Printing
 
-Printing to X-Plane's developer console (and stdout) is done with     `PrintToConsole(inputstring)`, with _"inputstring"_ being the string that's to be printed.
+Printing to X-Plane's developer console (and stdout) is done with `PrintToConsole(inputstring)`, with _"inputstring"_ being the string that's to be printed.
 
 
 #### 3.2 Logging
 
-Xlua Utils possesses logging capabilities outside of X-Plane's _"Log.txt"_. By default, log output is written to _"xlua_utils/z_xlua_utils_log.txt"_. This file is recreated at every plugin start of xlua. All log entries are timestamped.
+XLuaUtils possesses logging capabilities outside of X-Plane's _"Log.txt"_. By default, log output is written to _"xluautils/z_XLuaUtils_log.txt"_. This file is recreated at every plugin start of XLua. All log entries are timestamped.
 
-Writing to XLua Util's log file is achieved by `WriteToLogFile(inputstring)`, with _"inputstring"_ being the string that's to be written to the log file.
+Writing to XLuaUtils' log file is achieved by `WriteToLogFile(inputstring)`, with _"inputstring"_ being the string that's to be written to the log file.
 
 Combined printing to the developer console and writing to the log file at the same time is done with `LogOutput(inputstring)`.
 
 #### 3.3 Debug-Level Logging
 
-Information that is not necessary for day-to-day usage can be printed to the developer console and logged in XLua Util's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLua Utils/Debug"_ menu or the preferences file. 
+Information that is not necessary for day-to-day usage can be printed to the developer console and logged in XLuaUtil's log file with `DebugLogOutput(inputstring)`. This will only output an input string if _"Debug Output"_ has been activated in the _"XLuaUtils/Debug"_ menu or the preferences file. 
 
- ![XLua Utils Debug Menu](Images/XLuaUtils_DebugMenu.jpg  "XLua Utils Debug Menu")
+ ![XLuaUtils Debug Menu](Images/XLuaUtils_DebugMenu.jpg  "XLuaUtils Debug Menu")
 
 &nbsp;
 
@@ -90,13 +86,13 @@ Information that is not necessary for day-to-day usage can be printed to the dev
 <a name="4"></a>
 ### 4 Preferences
 
-XLua Utils can store configuration data for itself and any utility implemented as a submodule in a preferences file. This file is located in the _"xlua_utils"_ folder by default and named _"preferences.cfg"_.   
+XLuaUtils can store configuration data for itself and any utility implemented as a submodule in a preferences file. This file is located in the _"XLuaUtils"_ folder by default and named _"preferences.cfg"_.   
 Configuring a module to use the preferences handling system and interacting with a preferences file and table is explained below.
 
 #### 4.1 Preferences Table Format
 
-Preferences information for XLua Utils or any of its submodules is stored in specifically structured Lua tables. Any submodule wishing to use the preferences system must use a table configured as per the following example.   
-Note that, as of XLua 1.1 (or higher), a preference table has to be defined as local and are contrained to the XLua Utils submodule in which they are declared.
+Preferences information for XLuaUtils or any of its submodules is stored in specifically structured Lua tables. Any submodule wishing to use the preferences system must use a table configured as per the following example.   
+Note that, as of XLua 1.1 (or higher), a preference table has to be defined as local and are contrained to the XLuaUtils submodule in which they are declared.
 
 	local MyConfigTable = {
 	{"EXAMPLE"}, -- A unique identifier string indicating the owner of values stored in the perferences file.
@@ -106,10 +102,10 @@ Note that, as of XLua 1.1 (or higher), a preference table has to be defined as l
 
 #### 4.2 Reading/Writing From/To The Preferences File
 
-Reading from the preferences file is done with `Preferences_Read(inputfile,outputtable)`, where _"inputfile"_ is the path to the target file (usually the `Xlua_Utils_PrefsFile` variable) and _"outputtable"_ the name of the table that parsed data is output to.   
+Reading from the preferences file is done with `Preferences_Read(inputfile,outputtable)`, where _"inputfile"_ is the path to the target file (usually the `XLuaUtils_PrefsFile` variable) and _"outputtable"_ the name of the table that parsed data is output to.   
 Only lines matching the unique identifier string of _"outputtable"_ are read, the rest is ignored.
 
-Writing to the preferences file is done with `Preferences_Write(inputtable,outputfile)`, where _"inputtable"_ the name of the table that data is read from and _"outputfile"_ is the path to the target file (usually the `Xlua_Utils_PrefsFile` variable).   
+Writing to the preferences file is done with `Preferences_Write(inputtable,outputfile)`, where _"inputtable"_ the name of the table that data is read from and _"outputfile"_ is the path to the target file (usually the `XLuaUtils_PrefsFile` variable).   
 The writing process is selective, i.e. any data present in _"outputfile"_ that is not part of _"inputtable"_ is retained.
 
 
@@ -122,7 +118,7 @@ Using the example table above,  `Preferences_ValGet(MyConfigTable,"MyOtherParame
 Writing a value to a preferences table is done with `Preferences_ValSet(inputtable,item,newvalue,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a subtable, _"newvalue"_ is the value to be written and _"subitem"_ is the index of a value in the subtable.   
 Using the example table above,  `Preferences_ValSet(MyConfigTable,"MyOtherParameter","No",4)` would set the  `"Yes"` at index 4 to `"No"`.
 
-Reference: `xlua_utils/Submodules/xluautils_core_common.lua`   
+Reference: `XLuaUtils/Submodules/xluautils_core_common.lua`   
 
 &nbsp;
 
@@ -133,29 +129,29 @@ Reference: `xlua_utils/Submodules/xluautils_core_common.lua`
 <a name="5"></a>
 ### 5 Menus
 
-XLua Utils provides multiple examples for implementing menus via X-Plane API calls through LuaJIT's foreign function interface (FFI).
+XLuaUtils provides multiple examples for implementing menus via X-Plane API calls through LuaJIT's foreign function interface (FFI).
 
 **Note that menus are very volatile and prone to crash X-Plane when encountering syntax or logic errors.**
 
-The basic concept behind menus in XLua Utils is the following:
+The basic concept behind menus in XLuaUtils is the following:
 
 - Menu items are read from an initial table, in which the fist element provides the string for the menu's name, which is not used in the menu build, watchdog or callback functions.   
 All other menu items may be stated as strings from table element 2. **Index 2 is the start index for all callback or watchdog entries.**   
 Separators (horizontal lines) may be defined with a table element containing the `"[Separator]"` string.
-- The main _"_Build"_ function for the menu creates an entry in a parent menu (either X-Plane's aircraft menu or XLua Utils' menu).   
+- The main _"_Build"_ function for the menu creates an entry in a parent menu (either X-Plane's aircraft menu or XLuaUtils' menu).   
 The function then iterates over the table containing the menu entries to populate the menu.
 - The menu callback function controls the interaction of the menu entries with variables. Use this to interact with variables or datarefs.
 - The menu watchdog is used to alter menu element strings to reflect value changes of certain variables.   
 It is called during menu building, from the menu callback function or may be called from a timer.
 
-Reference: `xlua_utils/Submodules/xluautils_core_mainmenu.lua`   
-Reference: `xlua_utils/Submodules/xluautils_core_debugging.lua`   
-Reference: `xlua_utils/Submodules/util_attachobjects.lua`   
-Reference: `xlua_utils/Submodules/util_automixture.lua`  
-Reference: `xlua_utils/Submodules/util_enginedamage.lua`    
-Reference: `xlua_utils/Submodules/util_misc.lua`   
-Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
-Reference: `xlua_utils/Submodules/util_persistence.lua`   
+Reference: `XLuaUtils/Submodules/xluautils_core_mainmenu.lua`   
+Reference: `XLuaUtils/Submodules/xluautils_core_debugging.lua`   
+Reference: `XLuaUtils/Submodules/util_attachobjects.lua`   
+Reference: `XLuaUtils/Submodules/util_automixture.lua`  
+Reference: `XLuaUtils/Submodules/util_enginedamage.lua`    
+Reference: `XLuaUtils/Submodules/util_misc.lua`   
+Reference: `XLuaUtils/Submodules/util_ncheadset.lua`   
+Reference: `XLuaUtils/Submodules/util_persistence.lua`   
 
 &nbsp;
 
@@ -166,9 +162,9 @@ Reference: `xlua_utils/Submodules/util_persistence.lua`
 <a name="6"></a>
 ### 6 Notifications
 
-To provide short-time (or permanent) information, XLua Utils features a notification window.
+To provide short-time (or permanent) information, XLuaUtils features a notification window.
 
-![XLua Utils Notification Window](Images/XLuaUtils_Notifications.jpg "XLua Utils Notification Window")
+![XLuaUtils Notification Window](Images/XLuaUtils_Notifications.jpg "XLuaUtils Notification Window")
 
 Notifications are handled by means of a message stack table. This table is refreshed regularly, and time-limited notifications are automatically purged from the message stack table. If the message stack table's length is zero, the notification window will close. Use the functions below to interact with the stack.
 
@@ -186,7 +182,7 @@ Removes a notification from the stack by its ID.
 - `UpdateNotification(inputstring,colorkey,inID)`   
 Will remove a notification from and then re-add it to the stack. Use this to refresh a notification with input string that contains a variable.
 
-Reference: `xlua_utils/Submodules/xluautils_core_notifications.lua`
+Reference: `XLuaUtils/Submodules/xluautils_core_notifications.lua`
 
 &nbsp;
 
@@ -198,9 +194,9 @@ Reference: `xlua_utils/Submodules/xluautils_core_notifications.lua`
 ### 7 Debug Window
 
 The debug window is a simple window that may be used to display debug data or other information. Its size and position as well as its state (open/closed) is automatically saved and restored after a script reload or X-Plane restart.   
-Toggling the window's visibility is done with "[Open/Close] Debug Window" in the _"XLua Utils/Debug"_ menu.
+Toggling the window's visibility is done with "[Open/Close] Debug Window" in the _"XLuaUtils/Debug"_ menu.
 
- ![XLua Utils Debug Window](Images/XLuaUtils_DebugWindow.jpg  "XLua Utils Debug Window")
+ ![XLuaUtils Debug Window](Images/XLuaUtils_DebugWindow.jpg  "XLuaUtils Debug Window")
  
  The following methods are provided for interacting with the debug window's content:
  
@@ -219,8 +215,8 @@ _"id"_: The unique ID of the item to be replaced.
 _"string"_: The new string for the item.   
  _"colorkey"_: The color of the item. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
 
-Reference: `xlua_utils/Submodules/xluautils_core_debugging.lua`   
-Reference: `xlua_utils/Examples/DebugWindow.lua`
+Reference: `XLuaUtils/Submodules/xluautils_core_debugging.lua`   
+Reference: `XLuaUtils/Examples/DebugWindow.lua`
 
 &nbsp;
 
@@ -231,12 +227,12 @@ Reference: `xlua_utils/Examples/DebugWindow.lua`
 <a name="8"></a>
 ### 8 Dataref Handlers
 
-XLua Utils enables handling datarefs from an input ttable containing a list of datarefs. A table of input datarefs can be checked for validity and transferred into a container table which holds various information about each dataref. Said container table can then be used for further manipulation or storage in a save file.
+XLuaUtils enables handling datarefs from an input ttable containing a list of datarefs. A table of input datarefs can be checked for validity and transferred into a container table which holds various information about each dataref. Said container table can then be used for further manipulation or storage in a save file.
 
 #### 8.1 Dataref Tables
 
 To facilitate handling of datarefs, a simple **input table** is used in which each element consists of a subtable with an alias string (used for easier lookup in the code) followed by the dataref stated as a string. If a specific alias for a dataref is not required, "Dref[n]" can be assigned to generate an alias from the table element's index. See below for an example. All types of X-Plane datarefs are supported.   
-Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are contrained to the XLua Utils submodule in which they are declared.
+Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are contrained to the XLuaUtils submodule in which they are declared.
 
 	local mydreflist={
 	{"Volume_Fan","sim/operation/sound/fan_volume_ratio"}, -- Actual X-Plane dataref, will be found and stored for use later on
@@ -274,9 +270,9 @@ Writing back values from the container table to X-Plane's corresponding datarefs
 Again using the example container table above, writing to X-Plane from storage position 2 (table element index 5)  and only updating _"Dref3"_ (the alias of _"sim/operation/sound/interior_volume_ratio"_, see above) would be:
 `Dataref_Read(mydrefcontainer,5,"Dref3")`
 
-Reference: `xlua_utils/Submodules/xluautils_core_datarefs.lua`   
-Reference: `xlua_utils/Submodules/util_ncheadset.lua`   
-Reference: `xlua_utils/Submodules/util_misc.lua`   
+Reference: `XLuaUtils/Submodules/xluautils_core_datarefs.lua`   
+Reference: `XLuaUtils/Submodules/util_ncheadset.lua`   
+Reference: `xluautils/Submodules/util_misc.lua`   
 
 &nbsp;
 

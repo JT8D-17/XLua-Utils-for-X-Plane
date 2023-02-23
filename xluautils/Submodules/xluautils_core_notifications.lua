@@ -1,10 +1,10 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
-local Window_Title = "Xlua Utils Notifications"
+local Window_Title = "XLuaUtils Notifications"
 local Window_StringColors = {
 {0.929, 0.929, 0.929},  -- RGB Nominal
 {0, 0.760, 0.090},      -- RGB Success
@@ -95,7 +95,7 @@ function Notify_Window_Draw(inWindowID,inRefcon)
     Window_Coords_Set(NotifyWindow_ID,Window_Coords)
     Window_LineProps[2] = tonumber(string.format("%d",(Window_Size[1] / (0.75 * Window_FontProps[1])))) -- Maximum number of displayed characters per line
     XPLM.XPLMDrawTranslucentDarkBox(Window_Coords[1],Window_Coords[2],Window_Coords[3],Window_Coords[4])
-    XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Window_Coords[1]+5),(Window_Coords[2]-Window_LineProps[1]),ffi.new("char[256]","Xlua Utils Notification:"),nil,Window_FontID)
+    XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Window_Coords[1]+5),(Window_Coords[2]-Window_LineProps[1]),ffi.new("char[256]","XLuaUtils Notification:"),nil,Window_FontID)
     local buffer = ffi.new("char[1024]")
     for i = 1,#Notification_Stack_Buffer do
         if string.len(Notification_Stack_Buffer[i][1]) > Window_LineProps[2] then buffer = "("..Notification_Stack_Buffer[i][3]..") "..string.sub(Notification_Stack_Buffer[i][1],1,Window_LineProps[2]) else buffer = "("..Notification_Stack_Buffer[i][3]..") "..Notification_Stack_Buffer[i][1] end

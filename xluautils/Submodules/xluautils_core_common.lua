@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -105,8 +105,8 @@ PREFERENCE FILE I/O FUNCTIONS
 function Preferences_Read(inputfile,outputtable)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
-        XluaUtils_HasConfig = 1
-        LogOutput("FILE READ START: Xlua Utils Preferences")
+        XLuaUtils_HasConfig = 1
+        LogOutput("FILE READ START: XLuaUtils Preferences")
         local i=0
         for line in file:lines() do
             -- Find lines matching first subtable of output table
@@ -156,13 +156,13 @@ function Preferences_Read(inputfile,outputtable)
         file:close()
         if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
-        LogOutput("FILE NOT FOUND: Xlua Utils Preferences")
+        LogOutput("FILE NOT FOUND: XLuaUtils Preferences")
     end
 end
 --[[ Preferences config file write ]]
 function Preferences_Write(inputtable,outputfile)
     local temptable = { }
-    LogOutput("FILE WRITE START: Xlua Utils Preferences")
+    LogOutput("FILE WRITE START: XLuaUtils Preferences")
     local file = io.open(outputfile, "r")
     if file then
         --Read output file and store all lines not part of inputtable and temptable
@@ -175,7 +175,7 @@ function Preferences_Write(inputtable,outputfile)
     end
     -- Start writing to output file, write temptable and then inputtable
     file = io.open(outputfile,"w")
-    file:write("# Xlua Utils Preferences File generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
+    file:write("# XLuaUtils Preferences File generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("\n")
     for j=3,#temptable do
         file:write(temptable[j].."\n")
@@ -195,7 +195,7 @@ function Preferences_Write(inputtable,outputfile)
             if k < #inputtable[j] then file:write(",") else file:write("\n") end
         end
     end
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Xlua Utils Preferences") else LogOutput("FILE WRITE ERROR: Xlua Utils Preferences") end
+    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: XLuaUtils Preferences") else LogOutput("FILE WRITE ERROR: XLuaUtils Preferences") end
     file:close()
 end
 --[[
@@ -206,7 +206,7 @@ COMMON MENU FUNCTIONS
 --[[ Menu cleanup upon script reload or session exit ]]
 function Menu_CleanUp(menu_id,menu_index)
    if menu_id ~= nil then XPLM.XPLMClearAllMenuItems(menu_id) XPLM.XPLMDestroyMenu(menu_id) end
-   if menu_index ~= nil then XPLM.XPLMRemoveMenuItem(XPLM.XPLMFindAircraftMenu(),XluaUtils_Menu_Index) end
+   if menu_index ~= nil then XPLM.XPLMRemoveMenuItem(XPLM.XPLMFindAircraftMenu(),XLuaUtils_Menu_Index) end
 end
 --[[ Menu item prefix name change ]]
 function Menu_ChangeItemPrefix(menu_id,index,prefix,intable)

@@ -1,6 +1,6 @@
-# XLua Utils for X-Plane 11/12
+# XLuaUtils for X-Plane 11/12
 
-This is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a cohesive companion utility. XLua Utils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
+XLuaUtils is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a companion script. XLuaUtils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
 It can be installed and used in any X-Plane 11/12 aircraft
 
 It also implements wrappers for some paths, logging, notifications, dataref interaction and debug information, which can help aircraft developers during development of XLua scripts.
@@ -42,23 +42,23 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 <a name="2.0"></a>
 ## 2 - Installation
 
-### 2.1 Aircraft without an xlua plugin
+### 2.1 Aircraft without an XLua plugin
 
 - Copy the *"xlua"* folder from, e.g. _"[Main X-Plane folder]/Aircraft/Laminar Research/Cessna 172SP/plugins"_ into the _"plugins"_ folder of the aircraft that you wish to use XLuaUtils with.
 - Delete all subfolders from the _"[Aircraft's main folder]/plugins/xlua/scripts"_ folder.
-- Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
+- Copy the _"xluautils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
-### 2.2 Aircraft with an xlua plugin
+### 2.2 Aircraft with an XLua plugin
 
 - Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
 ### 2.3 Post-Installation
 
-XLua Utils is working correctly if X-Plane's main menu bar contains a menu with the aircraft's name and an _"XLua Utils"_ submenu (see chapter [5.1](#5.1)).
+XLuaUtils is working correctly if X-Plane's main menu bar contains a menu with the aircraft's name and an _"XLuaUtils"_ submenu (see chapter [5.1](#5.1)).
 
-![XLua Utils Main Menu Entry](Documentation/Images/XLuaUtils_MenuEntry.jpg  "XLua Utils Main Menu Entry")
+![XLuaUtils Main Menu Entry](Documentation/Images/XLuaUtils_MenuEntry.jpg  "XLuaUtils Main Menu Entry")
 
-If you have no intention of using XLua Utils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
+If you have no intention of using XLuaUtils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
 A quick read of [chapter 4](#4.0) is recommended regardless, because some information there may come in handy at some point.
 
 
@@ -71,7 +71,7 @@ A quick read of [chapter 4](#4.0) is recommended regardless, because some inform
 <a name="3.0"></a>
 ## 3 - Uninstallation
 
-Delete the _"xlua_utils"_ folder from _"[Aircraft's main folder]/plugins/xlua/scripts/"_
+Delete the _"xluautils"_ folder from _"[Aircraft's main folder]/plugins/xlua/scripts/"_
 
 &nbsp;
 
@@ -82,7 +82,7 @@ Delete the _"xlua_utils"_ folder from _"[Aircraft's main folder]/plugins/xlua/sc
 <a name="4.0"></a>
 ## 4 - Developer Reference
 
-XLua Utils provides a range of useful functions for Xlua developers to help debug code or implement utilities.   
+XLuaUtils provides a range of useful functions for XLua developers to help debug code or implement utilities.   
 See the [developer reference](Documentation/Developer_Reference.md) document for more information.
 
 &nbsp;
@@ -97,13 +97,13 @@ See the [developer reference](Documentation/Developer_Reference.md) document for
 <a name="5.1"></a>
 ### 5.1 Initialization/Main Menu
 
-After a successful installation, the main X-Plane menu bar contains a menu with the aircraft's name with a _"XLua Utils"_ submenu.
+After a successful installation, the main X-Plane menu bar contains a menu with the aircraft's name with a _"XLuaUtils"_ submenu.
 
-![XLua Utils Main Menu](Documentation/Images/XLuaUtils_Menu.jpg  "XLua Utils Main Menu")
+![XLuaUtils Main Menu](Documentation/Images/XLuaUtils_Menu.jpg  "XLuaUtils Main Menu")
 
-- _"Initialize XLua Utils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLua Utils' initialization and preferences system (see chapter [4.4](#4.4)).   
-Note that some XLua Utils elements or submodules do not initially save their state and will require changing their settings before they will do so.   
- _"Reload XLua Utils Preferences"_ will replace _"Initialize XLua Utils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
+- _"Initialize XLuaUtils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLuaUtils' initialization and preferences system (see chapter [4.4](#4.4)).   
+Note that some XLuaUtils elements or submodules do not initially save their state and will require changing their settings before they will do so.   
+ _"Reload XLuaUtils Preferences"_ will replace _"Initialize XLuaUtils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
 - The _"Debug"_ submenu is always visible and contains controls for debug-level logging (chapter  [4.3.3](#4.3))  and the debug window (chapter [4.7](#4.7)).
@@ -115,7 +115,7 @@ Use this function to reload preferences values that have been altered via manual
 <a name="5.2"></a>
 ### 5.2 Persistence
 
-XLua Utils' persistence module parses a list of datarefs at startup, whose values are either manually or automatically written to a persistence state file. This state file is then parsed at X-Plane session initialization and the values are written back to these datarefs. The module only works for the aircraft running XLua Utils (i.e. the currently active user aircraft).
+XLuaUtils' persistence module parses a list of datarefs at startup, whose values are either manually or automatically written to a persistence state file. This state file is then parsed at X-Plane session initialization and the values are written back to these datarefs. The module only works for the aircraft running XLuaUtils (i.e. the currently active user aircraft).
 
 See [Documentation/Persistence.md](Documentation/Persistence.md) for more information.
 
@@ -160,7 +160,7 @@ See [Documentation/Misc_Utils.md](Documentation/Misc_Utils.md) for more informat
 
 As of version 12.00, X-Plane does not support complex automatic mixture controllers as found, for example on [Pratt & Whitney R-1830 type engines](https://www.enginehistory.org/Piston/P&W/R-1830/r-1830.shtml) of Douglas DC-3s and C-47s. These automatic controllers, in their "Auto Lean" and "Auto Rich" modes, automatically set the fuel mixture based on altitude to attain a specific [air-fuel-ratio](https://en.wikipedia.org/wiki/Air%E2%80%93fuel_ratio), easing crew workload and ensure maximum power or fuel saving.
 
-Xlua Utils has an automixture utility modeled after the R-1830's mixture controller with the following modes:
+XLuaUtils has an automixture utility modeled after the R-1830's mixture controller with the following modes:
 - Manual: Manual mixture control
 - Idle Cutoff: Turns off the engine(s)
 - Auto Lean: Lean mixture (default air-fuel-ratio: 16.5) for fuel economy during cruise
@@ -211,6 +211,6 @@ See [Documentation/Engine_Damage.md](Documentation/Engine_Damage.md) for more in
 <a name="6.0"></a>
 ## 6 - License
 
-XLua Utils is licensed under the European Union Public License v1.2 (see _EUPL-1.2-license.txt_). Compatible licenses (e.g. GPLv3) are listed  in the section "Appendix" in the license file.
+XLuaUtils is licensed under the European Union Public License v1.2 (see _EUPL-1.2-license.txt_). Compatible licenses (e.g. GPLv3) are listed  in the section "Appendix" in the license file.
 
 [Back to table of contents](#toc)

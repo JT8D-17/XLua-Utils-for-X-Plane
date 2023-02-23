@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -258,7 +258,7 @@ function EngineDamage_Menu_Callbacks(itemref)
     for i=2,#EngineDamage_Menu_Items do
         if itemref == EngineDamage_Menu_Items[i] then
             if i == 2 then
-                if EngineDamage_HasProfile == 0 then EngineDamage_Profile_Write(Xlua_Utils_Path..EngineDamage_Profile_File) EngineDamage_Profile_Read(Xlua_Utils_Path..EngineDamage_Profile_File) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,2) end
+                if EngineDamage_HasProfile == 0 then EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File) EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,2) end
                 if EngineDamage_HasProfile == 1 then EngineDamage_Reload() end
             end
             if i == 3 then
@@ -291,7 +291,7 @@ function EngineDamage_Menu_Callbacks(itemref)
                 Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
             end
-            Preferences_Write(EngineDamage_Config_Vars,Xlua_Utils_PrefsFile)
+            Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
             EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
             EngineDamage_Notifications()
             if DebugIsEnabled() == 1 then Debug_Reload() end
@@ -379,27 +379,27 @@ INITIALIZATION
 ]]
 --[[ First start of the engine damage module ]]
 function EngineDamage_FirstRun()
-    Preferences_Write(EngineDamage_Config_Vars,Xlua_Utils_PrefsFile)
-    --[[if FileExists(Xlua_Utils_Path..EngineDamage_Profile_File) then
+    Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
+    --[[if FileExists(XLuaUtils_Path..EngineDamage_Profile_File) then
         LogOutput(EngineDamage_Config_Vars[1][1]..": Existing engine profile found, skipping creation of a new one!")
     else
-        EngineDamage_Profile_Write(Xlua_Utils_Path..EngineDamage_Profile_File)
+        EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
     end]]
-    Preferences_Read(Xlua_Utils_PrefsFile,EngineDamage_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
-    EngineDamage_Menu_Build(XluaUtils_Menu_ID)
+    EngineDamage_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(EngineDamage_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes engine damage at every startup ]]
 function EngineDamage_Init()
     math.randomseed(os.time()) -- Generate random seed for random number generator
-    Preferences_Read(Xlua_Utils_PrefsFile,EngineDamage_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
     Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with currrent values
     Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-    EngineDamage_Profile_Read(Xlua_Utils_Path..EngineDamage_Profile_File)
+    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
     EngineDamage_Notifications()
     EngineDamage_ProfileAircraft()
     run_at_interval(EngineDamage_MainTimer,Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2))
@@ -407,8 +407,8 @@ function EngineDamage_Init()
 end
 --[[ Reloads the engine damage configuration ]]
 function EngineDamage_Reload()
-    Preferences_Read(Xlua_Utils_PrefsFile,EngineDamage_Config_Vars)
-    EngineDamage_Profile_Read(Xlua_Utils_Path..EngineDamage_Profile_File)
+    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
+    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
     EngineDamage_Notifications()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Reloaded!")
 end

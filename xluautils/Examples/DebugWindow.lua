@@ -4,7 +4,7 @@ XLuaUtils Example
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
---[[ Initializes the debug window lines used by this module. Called from "Debug_Start" in xlua_utils.lua ]]
+--[[ Initializes the debug window lines used by this module. Called from "Debug_Start" in xluautils.lua ]]
 function Example_DebugWindow_Init()
     --[[ Adds a static line with a unique ID to XLuaUtils' debug window ]]
     Debug_Window_AddLine("Header","I am a static debug window line, created on "..os.date("%x, %H:%M:%S"),"Nominal") -- Adds a static line that is not updated to the debug window. Useful for headers or other things. ID should be unique.

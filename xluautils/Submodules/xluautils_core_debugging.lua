@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -9,7 +9,7 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 VARIABLES
 
 ]]
-local Window_Title = "Xlua Utils Debug Window"
+local Window_Title = "XLuaUtils Debug Window"
 local Debug_Config_Vars = {
 {"DEBUG"},
 {"DebugOutput",0},
@@ -52,7 +52,7 @@ function PrintToConsole(inputstring)
 end
 --[[ Write to log file ]]
 function WriteToLogFile(inputstring,infile)
-	local file = io.open(Xlua_Utils_Path..LogFileName, "a") -- Check if file exists
+	local file = io.open(infile, "a") -- Check if file exists
 	file:write(os.date("%x, %H:%M:%S"),": ",inputstring,"\n")
 	file:close()
 end
@@ -63,7 +63,7 @@ end
 --[[ Logging wrapper ]]
 function LogOutput(inputstring)
     PrintToConsole(inputstring)
-    WriteToLogFile(inputstring,Xlua_Utils_LogFile) -- Insert logfile name for sanity and efficiency
+    WriteToLogFile(inputstring,XLuaUtils_LogFile) -- Insert logfile name for sanity and efficiency
 end
 --[[ Debug logging wrapper ]]
 function DebugLogOutput(inputstring)
@@ -109,7 +109,7 @@ function Debug_Window_ReplaceLine(id,string,colorkey)
 end
 --[[ Reloads a window ]]
 function Debug_Window_Reload()
-    Preferences_Read(Xlua_Utils_PrefsFile,Debug_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,Debug_Config_Vars)
     for i=1,4 do Window_Coords[i] = Table_ValGet(Debug_Config_Vars,"DebugWindowPos",nil,(i+1)) end
     Window_Coords_Set(DebugWindow_ID,Window_Coords)
 end
@@ -179,14 +179,14 @@ function Debug_Menu_Callbacks(itemref)
         if itemref == Debug_Menu_Items[i] then
             if i == 2 then
                 if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 0 then Debug_Start() Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,1) else Debug_Stop() Table_ValSet(Debug_Config_Vars,"DebugOutput",nil,2,0)  end
-                Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput("Set Xlua Utils Debug Output to "..Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2))
+                Preferences_Write(Debug_Config_Vars,XLuaUtils_PrefsFile)
+                DebugLogOutput("Set XLuaUtils Debug Output to "..Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2))
             end
             if i == 3 then
                 if Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2) == 0 then Table_ValSet(Debug_Config_Vars,"DebugWindow",nil,2,1) else Table_ValSet(Debug_Config_Vars,"DebugWindow",nil,2,0) end
                 Debug_Window_Visibility(DebugWindow_ID)
-                Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile)
-                DebugLogOutput("Set Xlua Utils Debug Window state to "..Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2))
+                Preferences_Write(Debug_Config_Vars,XLuaUtils_PrefsFile)
+                DebugLogOutput("Set XLuaUtils Debug Window state to "..Table_ValGet(Debug_Config_Vars,"DebugWindow",nil,2))
             end
             if i == 4 then
                 Debug_Reload()
@@ -237,11 +237,11 @@ INITIALIZATION
 ]]
 --[[ Initializes the debug module at every startup ]]
 function Debug_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,Debug_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,Debug_Config_Vars)
     LogOutput(Debug_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Unload logic for this module ]]
 function Debug_Unload()
     if DebugWindow_ID ~= 0 then Window_Destroy(DebugWindow_ID) end
-    if FileExists(Xlua_Utils_PrefsFile) then Preferences_Write(Debug_Config_Vars,Xlua_Utils_PrefsFile) end
+    if FileExists(XLuaUtils_PrefsFile) then Preferences_Write(Debug_Config_Vars,XLuaUtils_PrefsFile) end
 end

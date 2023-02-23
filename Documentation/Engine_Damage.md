@@ -1,6 +1,6 @@
-## Xlua Utils engine damage utility
+## XLuaUtils Engine Damage Utility
 
-This document contains information about Xlua Utils' engine damage utility.
+This document contains information about XLuaUtils' engine damage utility.
 
 [Back to Readme.md](../README.md) 
 
@@ -30,7 +30,7 @@ This document contains information about Xlua Utils' engine damage utility.
 
 [To be documented]
 
-Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"xlua_utils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
+Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
 
 &nbsp;
 

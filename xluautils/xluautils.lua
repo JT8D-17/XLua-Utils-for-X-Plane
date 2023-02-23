@@ -10,25 +10,25 @@ BK, 2022
 GLOBAL VARIABLES
 
 ]]
-ScriptName = "Xlua Utils"
-LogFileName = "z_xlua_utils_log.txt"
+ScriptName = "XLuaUtils"
+LogFileName = "z_xluautils_log.txt"
 
 ACF_Folder = "" -- KEEP EMPTY, GLOBAL
 ACF_Filename = "" -- KEEP EMPTY, GLOBAL
-Xlua_Utils_Path = "" -- KEEP EMPTY, GLOBAL
-Xlua_Utils_PrefsFile = "" -- KEEP EMPTY, GLOBAL
-Xlua_Utils_LogFile = "" -- KEEP EMPTY, GLOBAL
+XLuaUtils_Path = "" -- KEEP EMPTY, GLOBAL
+XLuaUtils_PrefsFile = "" -- KEEP EMPTY, GLOBAL
+XLuaUtils_LogFile = "" -- KEEP EMPTY, GLOBAL
 XP_Folder = "" -- KEEP EMPTY, GLOBAL
 
-XluaUtils_HasConfig = 0     -- Used by this script
-XluaPersist_HasDrefFile = 0 -- Used by util_persistence.lua
+XLuaUtils_HasConfig = 0     -- Used by this script
+UtilPersist_HasDrefFile = 0 -- Used by util_persistence.lua
 
 --[[
 
 SUBMODULES
 
 ]]
-ffi = require ("ffi") -- LuaJIT FFI module
+ffi = require("ffi") -- LuaJIT FFI module
 dofile("Submodules/xluautils_core_ffi.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_common.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
@@ -74,15 +74,15 @@ end
 function flight_start()
     ACF_Folder, ACF_Filename = GetAircraftFolder() -- ALWAYS THE FIRST ITEM!
     XP_Folder = GetXPlaneFolder()
-    Xlua_Utils_Path = ACF_Folder.."plugins/xlua/scripts/xlua_utils/"
-    Xlua_Utils_PrefsFile = Xlua_Utils_Path.."preferences.cfg"
-    Xlua_Utils_LogFile = Xlua_Utils_Path..LogFileName
-    DeleteLogFile(Xlua_Utils_LogFile)
+    XLuaUtils_Path = ACF_Folder.."plugins/xlua/scripts/xluautils/"
+    XLuaUtils_PrefsFile = XLuaUtils_Path.."preferences.cfg"
+    XLuaUtils_LogFile = XLuaUtils_Path..LogFileName
+    DeleteLogFile(XLuaUtils_LogFile)
     FFI_CheckInit()
     LogOutput("FLIGHT START")
     LogOutput("ACF Folder: "..ACF_Folder)
     LogOutput("ACF File: "..ACF_Filename)
-    LogOutput("Xlua Utils Path: "..Xlua_Utils_Path)
+    LogOutput("XLuaUtils Path: "..XLuaUtils_Path)
     Main_Menu_Build() -- Build main XLua Utils menu
     Debug_Init() -- Initialize debug module
     Notify_Window_Build() -- Build notification window
@@ -93,18 +93,18 @@ function flight_start()
     Automix_Init() -- Initialize automixture
     EngineDamage_Init() -- Initialize engine damage
     AttachObject_Init() -- Initialize object attachments
-    Debug_Menu_Build(XluaUtils_Menu_ID)
-    if XluaUtils_HasConfig == 1 then
+    Debug_Menu_Build(XLuaUtils_Menu_ID)
+    if XLuaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
-        Persistence_Menu_Build(XluaUtils_Menu_ID) -- Persistence menu
+        Persistence_Menu_Build(XLuaUtils_Menu_ID) -- Persistence menu
         Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
-        NCHeadset_Menu_Build(XluaUtils_Menu_ID)
-        Automix_Menu_Register(XluaUtils_Menu_ID) -- Registers the automixture menu
-        EngineDamage_Menu_Build(XluaUtils_Menu_ID)
-        AttachObject_Menu_Build(XluaUtils_Menu_ID)
+        NCHeadset_Menu_Build(XLuaUtils_Menu_ID)
+        Automix_Menu_Register(XLuaUtils_Menu_ID) -- Registers the automixture menu
+        EngineDamage_Menu_Build(XLuaUtils_Menu_ID)
+        AttachObject_Menu_Build(XLuaUtils_Menu_ID)
     end
-    MiscUtils_Menu_Build(XluaUtils_Menu_ID)
+    MiscUtils_Menu_Build(XLuaUtils_Menu_ID)
     if DebugIsEnabled() == 1 then Debug_Start() end
 end
 -- 3: Flight crash
@@ -115,7 +115,7 @@ end]]
 end]]
 -- 5: After physics
 --[[function after_physics()
-    --XluaUtils_Menu_Watchdog(XluaUtils_Menu_Items,2)
+    --XLuaUtils_Menu_Watchdog(XLuaUtils_Menu_Items,2)
 end]]
 --[[
 

@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -43,8 +43,8 @@ local AttachObj_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 --local Objects = {
 -- Name, path,pos x (+ = right),pos y (+ = up),pos z (+ = aft),rot x (+ = aft),rot y (+ = cw),rot z (+ = right),display dataref,dataref index (if array),operator,value
---{"Pole_Test","plugins/xlua/scripts/xlua_utils/Examples/Resources/pole.obj",0,0,0,0,0,0,"sim/flightmodel/weight/m_stations",0,"gt",600},
---{"Pole_Test2","plugins/xlua/scripts/xlua_utils/Examples/Resources/pole.obj",-5,0,0,0,0,45,"sim/flightmodel/weight/m_stations",1,"gt",600},
+--{"Pole_Test","plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj",0,0,0,0,0,0,"sim/flightmodel/weight/m_stations",0,"gt",600},
+--{"Pole_Test2","plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj",-5,0,0,0,0,45,"sim/flightmodel/weight/m_stations",1,"gt",600},
 --}
 local AttachObj_Container = { } -- Container table for object data
 local AttachObj_Inst                                                -- Placeholder for instance array
@@ -100,15 +100,15 @@ FUNCTIONS
 --[[ Attached object config file write ]]
 function AttachObject_Config_Write()
     LogOutput("FILE WRITE START: Attached Object Configuration")
-    local file = io.open(Xlua_Utils_Path..AttachObj_Config_File, "w")
-    file:write("# XLua Utils attachable object configuration generated on ",os.date("%x, %H:%M:%S"),"\n")
+    local file = io.open(XLuaUtils_Path..AttachObj_Config_File, "w")
+    file:write("# XLuaUtils attachable object configuration generated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
-    file:write("# This file contains profile information for XLua Utils' attachable objects module.\n")
+    file:write("# This file contains profile information for XLuaUtils' attachable objects module.\n")
     file:write("#\n")
     file:write("# Line format pattern:")
     file:write("# Object alias, root folder (ACF_Folder/XP_Folder), object path relative to root folder, Position X (+ = right), Position Y (+ = up), Position Z (+ = aft), Rotation X (+ = aft), Rotation Y (+ = cw), Rotation Z (+ = right)\n")
     file:write("# Display dataref name, display dataref value index (should be zero if not array), comparison operator (lt,eq,gt), dataref value, on ground flag (0/1)\n")
-    file:write("# Example: Pole_Test,ACF_Folder,plugins/xlua/scripts/xlua_utils/Examples/Resources/pole.obj,5,1,2,45,10,22,sim/flightmodel/weight/m_stations,1,gt,600,0\n")
+    file:write("# Example: Pole_Test,ACF_Folder,plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj,5,1,2,45,10,22,sim/flightmodel/weight/m_stations,1,gt,600,0\n")
     file:write("# (An object named Pole_Test is loaded from the specified path relative to the aircraft folder, is located 5 m to the right, 1 m up and 2 m aft of the aircraft's origin and is rotated 45° back, 10° clockwise and 22° to the right. It will display when sim/flightmodel/weight/m_stations[1] is greater than 600 kg and does not stick to the ground.)\n")
     file:write("#\n")
     if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Attached Object Configuration") else LogOutput("FILE WRITE ERROR: Attached Object Configuration") end
@@ -116,7 +116,7 @@ function AttachObject_Config_Write()
 end
 --[[ Attached object config file write ]]
 function AttachObject_Config_Read()
-    local file = io.open(Xlua_Utils_Path..AttachObj_Config_File, "r") -- Check if file exists
+    local file = io.open(XLuaUtils_Path..AttachObj_Config_File, "r") -- Check if file exists
     if file then
         LogOutput("FILE READ START: Attached Object Configuration")
         local i=0
@@ -212,7 +212,7 @@ function AttachObject_CreateInstances()
         run_after_time(AttachObject_Delayed,0.25) -- Delay initial drawing a bit
     end
 end
---[[ Transforms aircraft coordinates into local coordinates. Source: Austin Meyer himself. :) ]]
+--[[ Transforms aircraft coordinates into local GL coordinates. Source: Austin Meyer himself. :) ]]
 function AttachObject_AcftToWorld(x_acft,y_acft,z_acft,in_phi_deg,in_psi_deg,in_the_deg)
         local phi_rad = math.rad(in_phi_deg) -- Convert to radians
         local psi_rad = math.rad(in_psi_deg)
@@ -332,7 +332,7 @@ function AttachObject_Menu_Callbacks(itemref)
             if i == 4 then
                 if Table_ValGet(AttachObj_Config_Vars,"HideObjs",nil,2) == 0 then Table_ValSet(AttachObj_Config_Vars,"HideObjs",nil,2,1) AttachObject_Hide_All() else Table_ValSet(AttachObj_Config_Vars,"HideObjs",nil,2,0) end
             end
-            --Preferences_Write(AttachObj_Config_Vars,Xlua_Utils_PrefsFile)
+            --Preferences_Write(AttachObj_Config_Vars,XLuaUtils_PrefsFile)
             AttachObject_Menu_Watchdog(AttachObj_Menu_Items,i)
             if DebugIsEnabled() == 1 then Debug_Reload() end
         end
@@ -351,7 +351,7 @@ function AttachObject_Menu_Watchdog(intable,index)
         if Table_ValGet(AttachObj_Config_Vars,"HideObjs",nil,2) == 1 then Menu_CheckItem(AttachObj_Menu_ID,index,"Activate") else Menu_CheckItem(AttachObj_Menu_ID,index,"Deactivate") end
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
+--[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLuaUtils Menu! ]]
 function AttachObject_Menu_Build(ParentMenuID)
     local Menu_Indices = {}
     for i=2,#AttachObj_Menu_Items do Menu_Indices[i] = 0 end
@@ -416,16 +416,16 @@ end
 --[[ First start of the engine damage module ]]
 function AttachObject_FirstRun()
     AttachObject_Config_Write() -- Write new skeleton config file
-    if FileExists(Xlua_Utils_Path..AttachObj_Config_File) then AttachObj_HasConfig = 1 end -- Check if config file exists
-    --Preferences_Write(AttachObj_Config_Vars,Xlua_Utils_PrefsFile)
-    --Preferences_Read(Xlua_Utils_PrefsFile,AttachObj_Config_Vars)
+    if FileExists(XLuaUtils_Path..AttachObj_Config_File) then AttachObj_HasConfig = 1 end -- Check if config file exists
+    --Preferences_Write(AttachObj_Config_Vars,XLuaUtils_PrefsFile)
+    --Preferences_Read(XLuaUtils_PrefsFile,AttachObj_Config_Vars)
     --DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
-    --AttachObj_Menu_Build(XluaUtils_Menu_ID)
+    --AttachObj_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(AttachObj_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes engine damage at every startup ]]
 function AttachObject_Init()
-    if FileExists(Xlua_Utils_Path..AttachObj_Config_File) then -- Check if config file exists
+    if FileExists(XLuaUtils_Path..AttachObj_Config_File) then -- Check if config file exists
         AttachObj_HasConfig = 1
         AttachObject_Startup()
     end

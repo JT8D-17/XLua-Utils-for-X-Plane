@@ -1,6 +1,6 @@
-## Xlua Utils automixture utility
+## XLuaUtils Automixture Utility
 
-This document contains information about Xlua Utils' automixture utility.
+This document contains information about XLuaUtils' automixture utility.
 
 [Back to Readme.md](../README.md) 
 
@@ -43,11 +43,11 @@ After the automatic editing of an object file, the aircraft must be reloaded fro
 
 The automixture utility supplies custom datarefs to control its mixture lever logic from the edited mixture lever objects or external hardware. These datarefs are:
 
-- ```xlua/automixture/mixture_lever_anim```     
-This is a float array type dataref with 8 indexes (representing the maximum number of engines on X-Plane aircraft), i.e. ```xlua/automixture/mixture_lever_anim[0]``` to ```xlua/automixture/mixture_lever_anim[7]```. 
-- ```xlua/automixture/mixture_lever_anim_all```     
+- ```xluautils/automixture/mixture_lever_anim```     
+This is a float array type dataref with 8 indexes (representing the maximum number of engines on X-Plane aircraft), i.e. ```xluautils/automixture/mixture_lever_anim[0]``` to ```xluautils/automixture/mixture_lever_anim[7]```. 
+- ```xluautils/automixture/mixture_lever_anim_all```     
 A float type dataref used for manipulating all mixture levers at once.
-- ```xlua/automixture/toggle_manual_mode```   
+- ```xluautils/automixture/toggle_manual_mode```   
 An integer type dataref used to toggle between manual and detent lever mode.   
 A value of "1" enables direct adjustment of the mixture levers while a value of "0" enables automixture control.
 
@@ -55,7 +55,7 @@ A value of "1" enables direct adjustment of the mixture levers while a value of 
 
 #### 1.4 Configuration
 
-Automixture configuration is read from  _"xlua_utils/automixture_profile.cfg"_. This file is not initially present and has to be generated from the menu. It contains engine parameters and object replacement information. See farther below for file structure and syntax.
+Automixture configuration is read from  _"xluautils/automixture_profile.cfg"_. This file is not initially present and has to be generated from the menu. It contains engine parameters and object replacement information. See farther below for file structure and syntax.
 
 &nbsp;
 
@@ -73,7 +73,7 @@ By default, the core logic of the automixture utility updates in 20 Hz intervals
 
 #### 1.6 Persistence
 
-The update frequency for the timer as well as the mixture mode for each engine is stored in _"preferences.cfg"_ in the "xlua_utils" folder. The preferences file is updated when generating an automixture profile file (see below) and when unloading the aircraft while quitting X-Plane or an aircraft reload. It is read every time the automixture utility is initialized or reloaded.
+The update frequency for the timer as well as the mixture mode for each engine is stored in _"preferences.cfg"_ in the "xluautils" folder. The preferences file is updated when generating an automixture profile file (see below) and when unloading the aircraft while quitting X-Plane or an aircraft reload. It is read every time the automixture utility is initialized or reloaded.
 
 The relevant lines in _"preferences.cfg"_ are:
 - ```AUTOMIXTURE,MainTimerInterval:string,0.05:number```, with "0.05" representing the refresh rate of the core logic.
@@ -133,17 +133,17 @@ Make manual backups and use common sense when defining object file editing opera
 <a name="4"></a>
 ### 4. Menu
 
-Without _"xlua_utils/automixture_profile.cfg"_ present, the only available menu item is "Generate Automix Profile". Upon clicking this menu item,  _"xlua_utils/automixture_profile.cfg"_ will be generated, parse and the menu will be updated.
+Without _"xluautils/automixture_profile.cfg"_ present, the only available menu item is "Generate Automix Profile". Upon clicking this menu item,  _"xluautils/automixture_profile.cfg"_ will be generated, parse and the menu will be updated.
 
 ![Automixture menu without config](Images/XLuaUtils_Automix_Menu_1.jpg)
 
 &nbsp;
 
-When _"xlua_utils/automixture_profile.cfg"_ is present, the complete range of menu items is available.
+When _"xluautils/automixture_profile.cfg"_ is present, the complete range of menu items is available.
 
 ![Automixture menu with config](Images/XLuaUtils_Automix_Menu_2.jpg)
 
-- "Reload Automix Profile" reads _"xlua_utils/automixture_profile.cfg" and the automixture related lines from _"preferences.cfg"._
+- "Reload Automix Profile" reads _"xluautils/automixture_profile.cfg" and the automixture related lines from _"preferences.cfg"._
 If the file is not present anymore, the menu will reload into the "without profile" state.  
 If the file has been found, the information within the profile file will be parsed. 
 - "Full Rich" sets X-Plane mixture for all engines to 100 %.
@@ -218,7 +218,7 @@ These are general rules and considerations for editing object files:
 
 #### 5.3 Examples
 
-Example _"automixture_profile.cfg"_ files for some add-on aircraft can be found in _"xlua_utils/Config Files/Automixture"_. These may be used as a starting point or template. Contributions are welcome.
+Example _"automixture_profile.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Automixture"_. These may be used as a starting point or template. Contributions are welcome.
 
 &nbsp;
 

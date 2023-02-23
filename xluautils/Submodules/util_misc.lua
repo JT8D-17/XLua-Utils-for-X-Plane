@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -562,8 +562,8 @@ local Dref_List = {
 --[[ Fixed datarefs that need constant monitoring ]]
 OnGround = find_dataref("sim/flightmodel/failures/onground_any") -- Repair function
 GroundSpeed = find_dataref("sim/flightmodel2/position/groundspeed") -- Repair function
---IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel") -- Inherited from xlua_ncheadset.lua
---NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines") -- Inherited from xlua_ncheadset.lua
+--IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel") -- Inherited from util_ncheadset.lua
+--NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines") -- Inherited from util_ncheadset.lua
 Baro_Pilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot") -- Barometer synchronization
 Baro_CoPilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot") -- Barometer synchronization
 Baro_Stby = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_stby") -- Barometer synchronization
@@ -644,7 +644,7 @@ function MiscUtils_Menu_Callbacks(itemref)
                 else
                     Table_ValSet(MiscUtils_Config_Vars,"SyncBaros",nil,2,0) DebugLogOutput("Barometer synchronization: Off") DisplayNotification("Barometer synchronization disabled.","Nominal",5)
                 end
-                Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
+                Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
             end
             MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
         end
@@ -692,15 +692,15 @@ INITIALIZATION
 ]]
 --[[ First start of the misc utils module ]]
 function MiscUtils_FirstRun()
-    Preferences_Write(MiscUtils_Config_Vars,Xlua_Utils_PrefsFile)
-    Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
+    Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
+    Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    MiscUtils_Menu_Init(XluaUtils_Menu_ID)
+    MiscUtils_Menu_Init(XLuaUtils_Menu_ID)
     LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes the misc utils module at every startup ]]
 function MiscUtils_Init()
-    Preferences_Read(Xlua_Utils_PrefsFile,MiscUtils_Config_Vars)
+    Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
     Dataref_Read(MiscUtils_Datarefs,5,"All") -- Populate dataref container with current values as defaults
     Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values

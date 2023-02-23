@@ -1,6 +1,6 @@
 --[[
 
-XLua Module, required by xlua_utils.lua
+XLuaUtils Module, required by xluautils.lua
 Licensed under the EUPL v1.2: https://eupl.eu/
 
 ]]
@@ -343,7 +343,7 @@ function Automix_Menu_Callbacks(itemref)
     for i=2,#Automix_Menu_Items do
         if itemref == Automix_Menu_Items[i] then
             if i == 2 then
-                if Automix_HasProfile == 0 then Automix_Profile_Write(Xlua_Utils_Path..Automix_Profile_File) Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File) Automix_Menu_Handler() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile) end
+                if Automix_HasProfile == 0 then Automix_Profile_Write(XLuaUtils_Path..Automix_Profile_File) Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File) Automix_Menu_Handler() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile) end
                 if Automix_HasProfile == 1 then Automix_Reload() end
             end
             if i == 4 then
@@ -510,8 +510,8 @@ INITIALIZATION
 ]]
 --[[ First start of the automixture module ]]
 function Automix_FirstRun()
-    Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile)
-    Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
+    Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
+    Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
     Automix_Menu_Handler()
@@ -523,10 +523,10 @@ function Automix_Init()
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     Dataref_Read(Automix_Drefs_Once,4,"All") -- Populate dataref container with current values
     if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture if the engine is a reciprocating type
-        Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
+        Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
         DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
         Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-        Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File)
+        Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
         Automix_Profile_Apply()
         run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
         LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
@@ -535,8 +535,8 @@ end
 
 --[[ Reloads the Persistence configuration ]]
 function Automix_Reload()
-    Preferences_Read(Xlua_Utils_PrefsFile,Automix_Config_Vars)
-    Automix_Profile_Read(Xlua_Utils_Path..Automix_Profile_File)
+    Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
+    Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
     Automix_Profile_Apply()
     Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
     Automix_Menu_Handler()
@@ -544,7 +544,7 @@ function Automix_Reload()
 end
 --[[ Unload logic for the persistence module ]]
 function Automix_Unload()
-    Preferences_Write(Automix_Config_Vars,Xlua_Utils_PrefsFile)
+    Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
 end
 --[[
 
@@ -576,7 +576,7 @@ function MixtureLeverCallback()
     end
     DRef_MixtureLeversAllAnim = average / Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)
 end
-DRef_MixtureLeversAnim = create_dataref("xlua/automixture/mixture_lever_anim","array[8]",MixtureLeverCallback)
+DRef_MixtureLeversAnim = create_dataref("xluautils/automixture/mixture_lever_anim","array[8]",MixtureLeverCallback)
 --[[ All mixture lever animation dataref ]]
 function MixtureLeverAllCallback()
     for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
@@ -599,7 +599,7 @@ function MixtureLeverAllCallback()
         end
     end
 end
-DRef_MixtureLeversAllAnim = create_dataref("xlua/automixture/mixture_lever_anim_all","number",MixtureLeverAllCallback)
+DRef_MixtureLeversAllAnim = create_dataref("xluautils/automixture/mixture_lever_anim_all","number",MixtureLeverAllCallback)
 --[[ Manual mode toggle dataref ]]
 function ManualToggleCallback()
     if DRef_ManualToggle == 1 then
@@ -636,4 +636,4 @@ function ManualToggleCallback()
         DRef_MixtureLeversAllAnim = average / Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)
     end
 end
-DRef_ManualToggle = create_dataref("xlua/automixture/toggle_manual_mode","number",ManualToggleCallback)
+DRef_ManualToggle = create_dataref("xluautils/automixture/toggle_manual_mode","number",ManualToggleCallback)
