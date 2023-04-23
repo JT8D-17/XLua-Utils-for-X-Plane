@@ -2,13 +2,17 @@ This folder contains dataref files for XLuaUtils' persistence utility for variou
 
 &nbsp;
 
+## Installation
+
 To install, copy and paste the file for the aircraft in question to the _"[Aircraft root folder]/plugins/xlua/scripts/xluautils"_ and rename it to _datarefs.cfg_.   
 After that, the file can be used by the persistence module as described in the main XLuaUtils manual.
-
-&nbsp;
 
 If there is a sub-folder for an aircraft add-on in this folder, check it for any enclosed supplementary readme file as it will contain important additional information.
 
 &nbsp;
 
-Contributiing _dataref.cfg_ files for other aircraft is appreciated.
+## Contributions
+
+Thanks to the following people who have contributed _datarefs.cfg_ files:
+
+* Jan -  Rotate_MD11.cfg
