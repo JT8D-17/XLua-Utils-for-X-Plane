@@ -15,4 +15,4 @@ If there is a sub-folder for an aircraft add-on in this folder, check it for any
 
 Thanks to the following people who have contributed _datarefs.cfg_ files:
 
-* Jan -  Rotate_MD11.cfg
+* Jan -  Rotate_MD11.cfg, Rotate_MD80.cfg
