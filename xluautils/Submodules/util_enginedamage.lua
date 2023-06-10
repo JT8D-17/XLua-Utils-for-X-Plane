@@ -24,17 +24,20 @@ local EngineDamage_Profile = {
 {"DMG_CHT",0,-1,1.5,300,10,0.75},
 {"DMG_EGT",0,-1,1.5,240,120,0.75},
 {"DMG_ITT",0,-1,1.5,120,5,0.75},
+{"DMG_MP",0,-1,1.5,300,7.5,0.75},
 {"DMG_N1",0,-1,1.5,500,10,0.75},
 {"DMG_N2",0,-1,1.5,400,10,0.75},
 {"DMG_TRQ",0,-1,1.5,50,15,0.75},
 {"RandomizeLimit",0.98,1.04},       -- Randomization range for limit values
 {"RandomizeDamage",0.98,1.02},       -- Randomization range for incurred damage
+{"FailureChance",0.001,0.1},     -- Chance for failure per time unit at 0 and 100% stress
 }
 --[[ List of continuously monitored datarefs used by this module ]]
 local Dref_List_Cont = {
 {"Eng_CHT","sim/flightmodel2/engines/CHT_deg_C"}, -- deg C
 {"Eng_EGT","sim/flightmodel2/engines/EGT_deg_C"}, -- deg C
 {"Eng_ITT","sim/flightmodel2/engines/ITT_deg_C"}, -- deg C
+{"Eng_MP","sim/flightmodel/engine/ENGN_MPR"}, -- inHG
 {"Eng_N1","sim/flightmodel2/engines/N1_percent"}, -- %
 {"Eng_N2","sim/flightmodel2/engines/N2_percent"}, -- %
 {"Eng_TRQ","sim/flightmodel/engine/POINT_driv_TRQ"}, -- Nm
@@ -95,6 +98,7 @@ local Dref_List_Once = {
 {"Limit_CHT","sim/aircraft/engine/acf_max_CHT"},     -- Maximum CHT
 {"Limit_EGT","sim/aircraft/engine/acf_max_EGT"},     -- Maximum EGT
 {"Limit_ITT","sim/aircraft/engine/acf_max_ITT"},     -- Maximum ITT
+{"Limit_MP","sim/aircraft/engine/acf_mpmax"},     -- Maximum manifold pressure
 {"Limit_N1","sim/aircraft/limits/red_hi_N1"},     -- Maximum N1
 {"Limit_N2","sim/aircraft/limits/red_hi_N2"},     -- Maximum N2
 {"Limit_TRQ","sim/flightmodel/engine/POINT_max_TRQ"}, -- Maximum torque
@@ -119,21 +123,21 @@ local EngineDamage_Menu_Items = {
 "CHT",                      -- Item index: 5
 "EGT",                      -- Item index: 6
 "ITT",                      -- Item index: 7
-"N1",                       -- Item index: 8
-"N2",                       -- Item index: 9
-"TRQ",                      -- Item index: 10
-"[Separator]",              -- Item index: 11
-"Disable All",              -- Item index: 12
-"Repair Engine(s)",         -- Item index: 13
+"MP",                       -- Item index: 8
+"N1",                       -- Item index: 9
+"N2",                       -- Item index: 10
+"TRQ",                      -- Item index: 11
+"[Separator]",              -- Item index: 12
+"Disable All",              -- Item index: 13
+"Repair Engine(s)",         -- Item index: 14
 }
 --[[ Menu variables for FFI ]]
 local EngineDamage_Menu_ID = nil
 local EngineDamage_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 local EngineData={} -- Engine data container
-local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,N1=0,N2=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_N1={},F_N2={},F_TRQ={}} -- Helper to only display notifications upon changes
+local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_MP={},F_N1={},F_N2={},F_TRQ={}} -- Helper to only display notifications upon changes
 local Notification_ID = {Stress="",Fail=""}
-local Fail_Chance = {x1=0,y1=1000,x2=100,y2=10}
 --[[
 
 DEBUG WINDOW
@@ -149,6 +153,7 @@ function EngineDamage_DebugWindow_Init()
         if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."CHT") end
         if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."EGT") end
         if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."ITT") end
+        if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."MP") end
         if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N1") end
         if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
@@ -191,6 +196,7 @@ function EngineDamage_ProfileAircraft()
             {"CHT","°C",-1,-1,-1,-1,0,0,0,0},
             {"EGT","°C",-1,-1,-1,-1,0,0,0,0},
             {"ITT","°C",-1,-1,-1,-1,0,0,0,0},
+            {"MP","inHg",-1,-1,-1,-1,0,0,0,0},
             {"N1","%",-1,-1,-1,-1,0,0,0,0},
             {"N2","%",-1,-1,-1,-1,0,0,0,0},
             {"TRQ","Nm",-1,-1,-1,-1,0,0,0,0},
@@ -202,7 +208,7 @@ function EngineDamage_ProfileAircraft()
             if Table_ValGet(EngineData[i],"EGT",nil,1) == "EGT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_EGT_C",4,1) == 0 then Table_ValSet(EngineData[i],"EGT",nil,2,"°F") end
             if Table_ValGet(EngineData[i],"ITT",nil,1) == "ITT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then Table_ValSet(EngineData[i],"ITT",nil,2,"°F") end
             --
-            if Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1) > 100 or Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then
+            if Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1) ~= nil or Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then -- Check if there is a user override for the limit
                     Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3)) -- Assign the user override
                 else
@@ -225,6 +231,13 @@ function EngineDamage_ProfileAircraft()
             end
         end
     end
+end
+--[[ Calculates a random number from a range of values, whose upper limit is calculated from a probability gradient ]]
+local function EngineDamage_RandomIntfromRange(engineindex,paramindex)
+    local randomnumber
+    -- (((1 / probability_2) - (1 / probability_1)) / range) * (stress / max_stress * 100) + (1 / probability_1)
+    randomnumber = math.random(0,math.ceil((((1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,3)) - (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))) / 100) * (Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,8) / Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,5) * 100) + (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))))
+    return randomnumber
 end
 --[[ Checks an engine component for being above a limit and accumulates stress on the engine ]]
 local function EngineDamage_CheckStress()
@@ -269,10 +282,12 @@ local function EngineDamage_CheckStress()
                         if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) < 0 then Table_ValSet(EngineData[i],EngineData[i][j][1],nil,8,0) end
                     end
                     -- Probability of failure
-                    if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > 0 and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 and Table_ValGet(EngineData[i],EngineData[i][j][1],nil,10) == math.random(0,math.ceil(((Fail_Chance.y2-Fail_Chance.y1)/(Fail_Chance.x2-Fail_Chance.x1) * Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) / Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) * 100) + Fail_Chance.y1)) then
+                    if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > 0 and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
+                        if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,10) == EngineDamage_RandomIntfromRange(i,j) then
                             Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,0)
                             Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,6)
                             Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
+                        end
                     end
                 -- Fail component if overstressed
                 --if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) >= Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
@@ -302,9 +317,11 @@ function EngineDamage_RepairAll()
                 Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,0)
                 Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Repaired engine damage ("..EngineData[i][j][1].."_"..i..")")
+                DisplayNotification("Repaired engine "..i.." from "..EngineData[i][j][1].." damage.","Success",10)
             end
         end
     end
+    --DisplayNotification("All engine damage has been repaired!","Success",10)
 end
 --[[ Engine profile read ]]
 function EngineDamage_Profile_Read(inputfile)
@@ -364,6 +381,8 @@ function EngineDamage_Notifications()
     if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) < Notifications_OldStatus.EGT then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by EGT: Off") DisplayNotification("Engine damage by EGT: Off","Nominal",5)  Notifications_OldStatus.EGT = Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) > Notifications_OldStatus.ITT then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by ITT: On") DisplayNotification("Engine damage by ITT: On","Caution",5)  Notifications_OldStatus.ITT = Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) < Notifications_OldStatus.ITT then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by ITT: Off") DisplayNotification("Engine damage by ITT: Off","Nominal",5)  Notifications_OldStatus.ITT = Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) > Notifications_OldStatus.MP then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by MP: On") DisplayNotification("Engine damage by MP: On","Caution",5)  Notifications_OldStatus.MP = Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) < Notifications_OldStatus.MP then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by MP: Off") DisplayNotification("Engine damage by MP: On","Caution",5)  Notifications_OldStatus.MP = Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) > Notifications_OldStatus.N1 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N1: On") DisplayNotification("Engine damage by N1: On","Caution",5)  Notifications_OldStatus.N1 = Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) < Notifications_OldStatus.N1 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N1: Off") DisplayNotification("Engine damage by N1: Off","Nominal",5)  Notifications_OldStatus.N1 = Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) > Notifications_OldStatus.N2 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N2: On") DisplayNotification("Engine damage by N2: On","Caution",5)  Notifications_OldStatus.N2 = Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) end
@@ -397,24 +416,29 @@ function EngineDamage_Menu_Callbacks(itemref)
                 if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) end
             end
             if i == 8 then
-                if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) end
+                if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,0) end
             end
             if i == 9 then
-                if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) end
+                if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) end
             end
             if i == 10 then
+                if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) end
+            end
+            if i == 11 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1)else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
             end
-            if i == 12 then
+            if i == 13 then
                 Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,5)
                 Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,6)
                 Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,7)
-                Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,8)
-                Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,9)
-                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
+                Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,8)
+                Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,9)
+                Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
+                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,11)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
+                DisplayNotification("All engine damage sources have been disabled!","Nominal",10)
             end
-            if i == 13 then
+            if i == 14 then
                 EngineDamage_RepairAll()
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
@@ -449,20 +473,27 @@ function EngineDamage_Menu_Watchdog(intable,index)
         if Table_ValGet(EngineData[1],"ITT",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"ITT",nil,3)).." "..Table_ValGet(EngineData[1],"ITT",nil,2)..")",intable) end
     end
     if index == 8 then
+        if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
+        else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(EngineData[1],"MP",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%.2f",Table_ValGet(EngineData[1],"MP",nil,3)).." "..Table_ValGet(EngineData[1],"MP",nil,2)..")",intable) end
+    end
+    if index == 9 then
         if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"N1",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"N1",nil,3)).." "..Table_ValGet(EngineData[1],"N1",nil,2)..")",intable) end
     end
-    if index == 9 then
+    if index == 10 then
         if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"N2",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"N2",nil,3)).." "..Table_ValGet(EngineData[1],"N2",nil,2)..")",intable) end
     end
-    if index == 10 then
+    if index == 11 then
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+        print(Table_ValGet(EngineData[1],"TRQ",nil,3))
         if Table_ValGet(EngineData[1],"TRQ",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"TRQ",nil,3)).." "..Table_ValGet(EngineData[1],"TRQ",nil,2)..")",intable) end
     end
+    print(index)
 end
 --[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
 function EngineDamage_Menu_Build(ParentMenuID)
@@ -536,6 +567,7 @@ end
 function EngineDamage_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
+    EngineDamage_ProfileAircraft()
     EngineDamage_Notifications()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Reloaded!")
 end
