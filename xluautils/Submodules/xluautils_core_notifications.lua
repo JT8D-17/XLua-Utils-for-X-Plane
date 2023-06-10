@@ -28,7 +28,7 @@ FUNCTIONS
 ]]
 --[[ Function to display a notification. Parameters: inputstring, "Nominal"/"Success"/"Caution"/"Warning", displaytime in seconds (negative number produces a pinned notification; number must be unique!) ]]
 function DisplayNotification(inputstring,colorkey,displaytime)
-    if displaytime > 0 then displaytime = os.clock() + displaytime end
+    if displaytime > 0 then displaytime = os.time() + displaytime end
     Notification_Stack[#Notification_Stack+1] = {inputstring,colorkey,displaytime}
 end
 --[[ Check if a notification with a unique ID exists ]]
@@ -58,8 +58,8 @@ function UpdateNotificationWindowBuffer()
         if Notification_Stack[i][3] <= 0 then
             Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = {Notification_Stack[i][1],Notification_Stack[i][2],"xx"}
         else
-            if os.clock() <= Notification_Stack[i][3] then
-                Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = {Notification_Stack[i][1],Notification_Stack[i][2],string.format("%02d",Notification_Stack[i][3] - os.clock())}
+            if os.time() <= Notification_Stack[i][3] then
+                Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = {Notification_Stack[i][1],Notification_Stack[i][2],string.format("%02d",Notification_Stack[i][3] - os.time())}
                 --PrintToConsole(table.concat(Notification_Stack_Buffer[#Notification_Stack_Buffer],","))
             else
                 Notification_Stack_ToDelete[#Notification_Stack_ToDelete+1] = i
@@ -134,7 +134,7 @@ function Notify_Window_Build()
     XLuaUtils_NotifyWin.handleMouseWheelFunc = function(inWindowID,x,y,wheel,clicks,inRefcon) return 1 end
     XLuaUtils_NotifyWin.refcon = nil
     XLuaUtils_NotifyWin.decorateAsFloatingWindow = 0 -- Or 1
-    XLuaUtils_NotifyWin.layer = 1 -- DO NOT PICK 2
+    XLuaUtils_NotifyWin.layer = 0 -- DO NOT PICK 2
     XLuaUtils_NotifyWin.handleRightClickFunc = function(inWindowID,x,y,inMouse,inRefcon) return 1 end
     XLuaUtils_NotifyWin.structSize = ffi.sizeof(XLuaUtils_NotifyWin)
     NotifyWindow_ID = XPLM.XPLMCreateWindowEx(ffi.cast("XPLMCreateWindow_t *",XLuaUtils_NotifyWin))

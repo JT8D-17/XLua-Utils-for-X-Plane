@@ -8,6 +8,7 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 
 VARIABLES
 
+
 ]]
 local EngineDamage_Profile_File = "engine_profile.cfg"
 local EngineDamage_HasProfile = 0 -- Used by util_enginedamage.lua
@@ -37,6 +38,54 @@ local Dref_List_Cont = {
 {"Eng_N1","sim/flightmodel2/engines/N1_percent"}, -- %
 {"Eng_N2","sim/flightmodel2/engines/N2_percent"}, -- %
 {"Eng_TRQ","sim/flightmodel/engine/POINT_driv_TRQ"}, -- Nm
+{"Fail_CHT_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_3","sim/operation/failures/rel_engfir2"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_4","sim/operation/failures/rel_engfir3"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_5","sim/operation/failures/rel_engfir4"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_6","sim/operation/failures/rel_engfir5"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_7","sim/operation/failures/rel_engfir6"}, -- 0: Normal, 6: Failed
+{"Fail_CHT_8","sim/operation/failures/rel_engfir7"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_3","sim/operation/failures/rel_engfir2"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_4","sim/operation/failures/rel_engfir3"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_5","sim/operation/failures/rel_engfir4"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_6","sim/operation/failures/rel_engfir5"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_7","sim/operation/failures/rel_engfir6"}, -- 0: Normal, 6: Failed
+{"Fail_EGT_8","sim/operation/failures/rel_engfir7"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_3","sim/operation/failures/rel_engfir2"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_4","sim/operation/failures/rel_engfir3"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_5","sim/operation/failures/rel_engfir4"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_6","sim/operation/failures/rel_engfir5"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_7","sim/operation/failures/rel_engfir6"}, -- 0: Normal, 6: Failed
+{"Fail_ITT_8","sim/operation/failures/rel_engfir7"}, -- 0: Normal, 6: Failed
+{"Fail_N1_1","sim/operation/failures/rel_engfai0"}, -- 0: Normal, 6: Failed
+{"Fail_N1_2","sim/operation/failures/rel_engfai1"}, -- 0: Normal, 6: Failed
+{"Fail_N1_3","sim/operation/failures/rel_engfai2"}, -- 0: Normal, 6: Failed
+{"Fail_N1_4","sim/operation/failures/rel_engfai3"}, -- 0: Normal, 6: Failed
+{"Fail_N1_5","sim/operation/failures/rel_engfai4"}, -- 0: Normal, 6: Failed
+{"Fail_N1_6","sim/operation/failures/rel_engfai5"}, -- 0: Normal, 6: Failed
+{"Fail_N1_7","sim/operation/failures/rel_engfai6"}, -- 0: Normal, 6: Failed
+{"Fail_N1_8","sim/operation/failures/rel_engfai7"}, -- 0: Normal, 6: Failed
+{"Fail_N2_1","sim/operation/failures/rel_engfai0"}, -- 0: Normal, 6: Failed
+{"Fail_N2_2","sim/operation/failures/rel_engfai1"}, -- 0: Normal, 6: Failed
+{"Fail_N2_3","sim/operation/failures/rel_engfai2"}, -- 0: Normal, 6: Failed
+{"Fail_N2_4","sim/operation/failures/rel_engfai3"}, -- 0: Normal, 6: Failed
+{"Fail_N2_5","sim/operation/failures/rel_engfai4"}, -- 0: Normal, 6: Failed
+{"Fail_N2_6","sim/operation/failures/rel_engfai5"}, -- 0: Normal, 6: Failed
+{"Fail_N2_7","sim/operation/failures/rel_engfai6"}, -- 0: Normal, 6: Failed
+{"Fail_N2_8","sim/operation/failures/rel_engfai7"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_1","sim/operation/failures/rel_pshaft0"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_2","sim/operation/failures/rel_pshaft1"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_3","sim/operation/failures/rel_pshaft2"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_4","sim/operation/failures/rel_pshaft3"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_5","sim/operation/failures/rel_pshaft4"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_6","sim/operation/failures/rel_pshaft5"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_7","sim/operation/failures/rel_pshaft6"}, -- 0: Normal, 6: Failed
+{"Fail_TRQ_8","sim/operation/failures/rel_pshaft7"}, -- 0: Normal, 6: Failed
 }
 --[[ List of one-shot updated datarefs used by this module ]]
 local Dref_List_Once = {
@@ -74,20 +123,23 @@ local EngineDamage_Menu_Items = {
 "N2",                       -- Item index: 9
 "TRQ",                      -- Item index: 10
 "[Separator]",              -- Item index: 11
-"All Off & Repair",         -- Item index: 12
+"Disable All",              -- Item index: 12
+"Repair Engine(s)",         -- Item index: 13
 }
 --[[ Menu variables for FFI ]]
 local EngineDamage_Menu_ID = nil
 local EngineDamage_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 local EngineData={} -- Engine data container
-local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,N1=0,N2=0,TRQ=0} -- Helper to only display notifications upon changes
+local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,N1=0,N2=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_N1={},F_N2={},F_TRQ={}} -- Helper to only display notifications upon changes
+local Notification_ID = {Stress="",Fail=""}
+local Fail_Chance = {x1=0,y1=1000,x2=100,y2=10}
 --[[
 
 DEBUG WINDOW
 
 ]]
---[[ Adds things to the debug window ]]
+--[[ Adds things to the debug window - HANDLED IN xluautils.lua!! ]]
 function EngineDamage_DebugWindow_Init()
     Debug_Window_AddLine("ED_Spacer"," ")
     Debug_Window_AddLine("ED_Header","===== Engine Damage =====")
@@ -108,7 +160,7 @@ function EngineDamage_DebugWindow_Update()
     for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
         -- Loop through engine data table and see if the parameters in its subtables can be populated
         for j=1,#EngineData[i] do
-            if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 then Debug_Window_ReplaceLine("ED_E"..i..EngineData[i][j][1],"  "..EngineData[i][j][1].." Stress: "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7).."/"..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." (+/-".." nnn / "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s)") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 then Debug_Window_ReplaceLine("ED_E"..i..EngineData[i][j][1],"  "..EngineData[i][j][1].." Stress: "..string.format("%.2f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8)).."/"..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." ("..string.format("%+.4f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7)).." / "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s)") end
         end
     end
 end
@@ -128,20 +180,20 @@ function EngineDamage_CalculateSlope(x1,x2,y1,y2)
     local dy = y2-y1
     local dx = x2-x1
     local slope = dy/dx
-
+    return slope
 end
 --[[ Gathers information about the aircraft's engine type and auto-actiavtes suitable damage datarefs ]]
 function EngineDamage_ProfileAircraft()
     -- Loop through available engines
     for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
         EngineData[i] = {
-            -- ID, unit, base limit, base limit randomized, stress tolerance randomized, stress rate slope, stress accumulated
-            {"CHT","°C",-1,-1,-1,-1,0},
-            {"EGT","°C",-1,-1,-1,-1,0},
-            {"ITT","°C",-1,-1,-1,-1,0},
-            {"N1","%",-1,-1,-1,-1,0},
-            {"N2","%",-1,-1,-1,-1,0},
-            {"TRQ","Nm",-1,-1,-1,-1,0},
+            -- 1: ID,2: unit,3: base limit,4: base limit randomized,5: stress tolerance randomized,6: stress rate slope,7: stress rate,8: accumulated stress,9: stress recess rate randomized,10: Random lucky number
+            {"CHT","°C",-1,-1,-1,-1,0,0,0,0},
+            {"EGT","°C",-1,-1,-1,-1,0,0,0,0},
+            {"ITT","°C",-1,-1,-1,-1,0,0,0,0},
+            {"N1","%",-1,-1,-1,-1,0,0,0,0},
+            {"N2","%",-1,-1,-1,-1,0,0,0,0},
+            {"TRQ","Nm",-1,-1,-1,-1,0,0,0,0},
         }
         -- Loop through engine data table and see if the parameters in its subtables can be populated
         for j=1,#EngineData[i] do
@@ -165,20 +217,91 @@ function EngineDamage_ProfileAircraft()
                 local tolerance_high = math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,6)))
                 -- 3. Stress accumulation rate is always 1 at base limit, but needs to be calculated for upper limit. This will normalize the sustained stress to the value range at the base limit. From that, calculate the slope and store it in engine data.
                 Table_ValSet(EngineData[i],EngineData[i][j][1],nil,6,math.abs(((Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) / tolerance_high) - 1) / (limit_high - Table_ValGet(EngineData[i],EngineData[i][j][1],nil,4))))
-                LogOutput("Aircraft engine "..i.." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,1).." tolerates stress at "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,4).." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." for "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." s and its stress rate increases by "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,6).." per "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." above the limit.")
+                -- 4. Stress recess rate uses the damage type randomization
+                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,9,EngineDamage_Randomize("RandomizeDamage",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,7)) * -1)
+                -- 5. Assign a random lucky number to the engine
+                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,10,math.ceil(math.random()*10))
+                LogOutput("Aircraft engine "..i.." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,1).." tolerates stress at "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,4).." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." for "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." s and its stress rate increases by "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,6).." per "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." above the limit every "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s and will decrease by "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,9).." per "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s")
             end
         end
     end
 end
---[[ ]]
+--[[ Checks an engine component for being above a limit and accumulates stress on the engine ]]
 local function EngineDamage_CheckStress()
-    Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
     for i=1,#EngineData do -- Loop through all engines
         for j=1,#EngineData[i] do -- Loop through all engine parameters
+            Notification_ID.Stress = tonumber("-990"..i..j) -- Assign a unique ID for a notification based on engine number and parameter
+            Notification_ID.Fail = tonumber("-991"..i..j) -- Assign a unique ID for a notification based on engine number and parameter
             if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 and EngineData[i][j][3] > -1 then -- Check if parameter is enabled and has a limit set
                 if EngineData[i][j][2] == "°F" then end -- Input value fahrenheit adjustment
                 --print(i.." "..EngineData[i][j][1]..": "..Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i))
-
+                -- If component has not failed:
+                if Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
+                    -- Calculate the stress rate
+                    if Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) > EngineData[i][j][3] then
+                        -- Display notification
+                        if not CheckNotification(Notification_ID.Stress) then
+                            DisplayNotification("Engine "..i.." is accumulating stress from "..EngineData[i][j][1].."! ("..string.format("%.2f",(Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) / Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5)) * 100).." %)","Warning",Notification_ID.Stress)
+                        else
+                            UpdateNotification("Engine "..i.." is accumulating stress from "..EngineData[i][j][1].."! ("..string.format("%.2f",(Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) / Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5)) * 100).." %)","Warning",Notification_ID.Stress)
+                        end
+                        --
+                        if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) < Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) then
+                            Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) - EngineData[i][j][3]) * Table_ValGet(EngineData[i],EngineData[i][j][1],nil,6))
+                        else
+                            Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,0)
+                        end
+                    else
+                        -- Remove notification
+                        if CheckNotification(Notification_ID.Stress) then RemoveNotification(Notification_ID.Stress) end
+                        --
+                        if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > 0 then
+                            Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,Table_ValGet(EngineData[i],EngineData[i][j][1],nil,9))
+                        else
+                            Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,0)
+                        end
+                    end
+                    -- Calculate the accumulated stress
+                    if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7) ~= 0 then
+                        Table_ValSet(EngineData[i],EngineData[i][j][1],nil,8,Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) + Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7))
+                        -- Clamp stress level
+                        if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) then Table_ValSet(EngineData[i],EngineData[i][j][1],nil,8,Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5)) end
+                        if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) < 0 then Table_ValSet(EngineData[i],EngineData[i][j][1],nil,8,0) end
+                    end
+                    -- Probability of failure
+                    if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > 0 and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 and Table_ValGet(EngineData[i],EngineData[i][j][1],nil,10) == math.random(0,math.ceil(((Fail_Chance.y2-Fail_Chance.y1)/(Fail_Chance.x2-Fail_Chance.x1) * Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) / Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) * 100) + Fail_Chance.y1)) then
+                            Table_ValSet(EngineData[i],EngineData[i][j][1],nil,7,0)
+                            Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,6)
+                            Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
+                    end
+                -- Fail component if overstressed
+                --if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) >= Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
+                --    Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,6)
+                --    Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
+                --end
+                else
+                    if Table_ValGet(EngineDamage_Config_Vars,"Notify_Pin",nil,2) == 1 then
+                        if not CheckNotification(Notification_ID.Fail) then DisplayNotification("Engine "..i.." has failed due to excessive "..EngineData[i][j][1].."!","Warning",Notification_ID.Fail) end
+                    else
+                        if Notifications_OldStatus["F_"..EngineData[i][j][1]][i] ~= i then
+                            DisplayNotification("Engine "..i.." has failed due to excessive "..EngineData[i][j][1].."!","Warning",60)
+                            Notifications_OldStatus["F_"..EngineData[i][j][1]][i] = i
+                        end
+                    end
+                    if CheckNotification(Notification_ID.Stress) then RemoveNotification(Notification_ID.Stress) end
+                end
+            end
+        end
+    end
+end
+--[[ Repairs any engine damage ]]
+function EngineDamage_RepairAll()
+    for i=1,#EngineData do -- Loop through all engines
+        for j=1,#EngineData[i] do -- Loop through all engine parameters
+            if Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) == 6 then
+                Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,0)
+                Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
+                DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Repaired engine damage ("..EngineData[i][j][1].."_"..i..")")
             end
         end
     end
@@ -225,7 +348,7 @@ function EngineDamage_Profile_Write(outputfile)
     file:write("# The new values will then be used after reloading the file from the \"Engine Damage\" menu in XLua Utils.\n")
     file:write("#\n")
     file:write("# Format for the damage-related parameters:\n")
-    file:write("# ID, Enabled, base parameter redline (-1 = use dataref val), base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding")
+    file:write("# ID, Enabled, base parameter redline (-1 = use dataref val), base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding.\n")
     file:write("#\n")
     for i=1,#EngineDamage_Profile do
         file:write(table.concat(EngineDamage_Profile[i],",").."\n")
@@ -290,6 +413,9 @@ function EngineDamage_Menu_Callbacks(itemref)
                 Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,9)
                 Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
+            end
+            if i == 13 then
+                EngineDamage_RepairAll()
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
             EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
@@ -370,6 +496,7 @@ RUNTIME FUNCTIONS
 --[[ Main timer for the engine damage logic ]]
 function EngineDamage_MainTimer()
     if DebugIsEnabled() == 1 then EngineDamage_DebugWindow_Update() end
+    Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
     EngineDamage_CheckStress()
 end
 --[[

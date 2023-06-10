@@ -108,7 +108,7 @@ local function Dataref_Access_Read(intable,index,subtable)
         XPLM.XPLMGetDatab(intable[index][6],ffi.cast("void *",value),0,size) -- Get byte array values from dataref
         intable[index][subtable][1] = ffi.string(value) -- Write dataref value to value subtable for dataref
     end
-    DebugLogOutput("Reading "..intable[index][1].." ("..intable[index][2].."; Type: "..intable[index][3].."; Values: "..table.concat(intable[index][subtable],",")..")")
+    --DebugLogOutput("Reading "..intable[index][1].." ("..intable[index][2].."; Type: "..intable[index][3].."; Values: "..table.concat(intable[index][subtable],",")..")")
 end
 --[[ Write a dataref ]]
 local function Dataref_Access_Write(intable,index,subtable)

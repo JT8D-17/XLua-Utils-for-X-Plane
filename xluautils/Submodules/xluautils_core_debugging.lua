@@ -69,7 +69,7 @@ end
 function DebugLogOutput(inputstring)
     if Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2) == 1 then
         PrintToConsole(inputstring)
-        WriteToLogFile(inputstring)
+        WriteToLogFile(inputstring,XLuaUtils_LogFile) -- Insert logfile name for sanity and efficiency
     end
 end
 --[[ Checks if debugging is enabled ]]
