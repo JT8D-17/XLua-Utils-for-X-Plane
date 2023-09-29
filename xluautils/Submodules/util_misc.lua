@@ -93,6 +93,11 @@ local Dref_List = {
 {"Dref[n]","sim/operation/failures/rel_lagear3"},	-- Landing Gear 3 retract
 {"Dref[n]","sim/operation/failures/rel_lagear4"},	-- Landing Gear 4 retract
 {"Dref[n]","sim/operation/failures/rel_lagear5"},	-- Landing Gear 5 retract
+{"Dref[n]","sim/operation/failures/rel_lagear6"},	-- Landing Gear 6 retract
+{"Dref[n]","sim/operation/failures/rel_lagear7"},	-- Landing Gear 7 retract
+{"Dref[n]","sim/operation/failures/rel_lagear8"},	-- Landing Gear 8 retract
+{"Dref[n]","sim/operation/failures/rel_lagear9"},	-- Landing Gear 9 retract
+{"Dref[n]","sim/operation/failures/rel_lagear10"},	-- Landing Gear 10 retract
 {"Dref[n]","sim/operation/failures/rel_collapse1"},	-- Landing gear 1 gear collapse
 {"Dref[n]","sim/operation/failures/rel_collapse2"},	-- Landing gear 2 gear collapse
 {"Dref[n]","sim/operation/failures/rel_collapse3"},	-- Landing gear 3 gear collapse
