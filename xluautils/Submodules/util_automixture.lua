@@ -495,9 +495,9 @@ function Automix_MainTimer()
                         end
                         if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) > Table_ValGet(Automix_Profile,"Mixture_Range",nil,3) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,3)) end -- Correct high limit
                         if Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i) < Table_ValGet(Automix_Profile,"Mixture_Range",nil,2) then Table_ValSet(Automix_Drefs_Cont,"Eng_Mixt",4,i,Table_ValGet(Automix_Profile,"Mixture_Range",nil,2)) end -- Correct low limit
-                else
-                    Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual")
                 end
+            else
+                Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+1,"Manual")
             end
         end
         Dataref_Write(Automix_Drefs_Cont,4,"Eng_Mixt")
