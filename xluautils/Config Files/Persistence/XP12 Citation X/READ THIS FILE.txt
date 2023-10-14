@@ -1,4 +1,8 @@
-The custom datarefs created in the xlua scripts of the XP12 Citation X are created as non-writable, preventing them being written to by the persistence module. The enclosed modified init.lua for XLua 1.0 provides a workaround.
+The custom datarefs created in the xlua scripts of this aircraft are created as non-writable, preventing them being written to by the persistence module.
+Therefore, xlua/init.lua must be edited.
 
-Installation:
-Make a backup of xlua/init.lua and replace it with the one from this folder!
+1. Make a backup of xlua/init.lua
+2. In xlua/init.lua, find the code block starting with "function create_dataref(name,type,notifier)".
+3. A few lines below, there will be this line: "dref = XLuaCreateDataRef(name,type,"no",nil)".
+4. Replace the "no" with "yes", i.e: "dref = XLuaCreateDataRef(name,type,"yes",nil)".
+5. Save and close init.lua. All custom datarefs created by this aircraft are now writable.

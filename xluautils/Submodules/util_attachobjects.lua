@@ -124,21 +124,29 @@ function AttachObject_Config_Read()
             if string.match(line,"^[^#]") then -- Only catch lines that are not starting with a "#"
                 local splitvalues = SplitString(line,"([^,]+)") -- Split line at commas
                 --print(table.concat(splitvalues,";"))
-                AttachObj_Container[#AttachObj_Container+1] = { }
-                for k=1,3 do
-                    AttachObj_Container[#AttachObj_Container][k] = tostring(splitvalues[k]) -- Alias, OBJ path
+                if #splitvalues == 14 and splitvalues[2] ~= "skip" and splitvalues[3] ~= "skip" then
+                    AttachObj_Container[#AttachObj_Container+1] = { }
+                    if splitvalues[1] ~= "skip" then AttachObj_Container[#AttachObj_Container][1] = tostring(splitvalues[1]) else AttachObj_Container[#AttachObj_Container][1] = "Obj_"..(i+1) end -- Object alias
+                    AttachObj_Container[#AttachObj_Container][2] = tostring(splitvalues[2]) -- Object root folder
+                    AttachObj_Container[#AttachObj_Container][3] = tostring(splitvalues[3]) -- Object path
+                    for k=4,9 do
+                        if splitvalues[k] ~= "skip" then
+                            AttachObj_Container[#AttachObj_Container][k] = tonumber(splitvalues[k]) -- X/Y/Z Position, X/Y/Z Rotation
+                        else
+                            AttachObj_Container[#AttachObj_Container][k] = 0
+                        end
+                    end
+                    if splitvalues[10] ~= "skip" then AttachObj_Container[#AttachObj_Container][10] = tostring(splitvalues[10]) else AttachObj_Container[#AttachObj_Container][10] = "None" end -- Dataref
+                    if splitvalues[11] ~= "skip" then AttachObj_Container[#AttachObj_Container][11] = tonumber(splitvalues[11]) else AttachObj_Container[#AttachObj_Container][11] = 0 end -- Dataref index
+                    if splitvalues[12] ~= "skip" then AttachObj_Container[#AttachObj_Container][12] = tostring(splitvalues[12]) else AttachObj_Container[#AttachObj_Container][12] = "None" end -- Dataref comparison operator
+                    if splitvalues[13] ~= "skip" then AttachObj_Container[#AttachObj_Container][13] = tonumber(splitvalues[13]) else AttachObj_Container[#AttachObj_Container][13] = -1 end -- Dataref comparison value
+                    if splitvalues[14] ~= "skip" then AttachObj_Container[#AttachObj_Container][14] = tonumber(splitvalues[14]) else AttachObj_Container[#AttachObj_Container][14] = 0 end -- "On ground" flag
+                    AttachObj_Container[#AttachObj_Container][15] = 0 -- "Is hidden flag"
+                    print(table.concat(AttachObj_Container[#AttachObj_Container],";"))
+                    i=i+1
+                else
+                    LogOutput("OBJECT READ ERROR: Not Enough Parameters (Requires 14) or Invalid Path Formatting")
                 end
-                for k=4,9 do
-                    AttachObj_Container[#AttachObj_Container][k] = tonumber(splitvalues[k]) -- X/Y/Z Position, X/Y/Z Rotation
-                end
-                AttachObj_Container[#AttachObj_Container][10] = tostring(splitvalues[10]) -- Dataref
-                AttachObj_Container[#AttachObj_Container][11] = tonumber(splitvalues[11]) -- Dataref index
-                AttachObj_Container[#AttachObj_Container][12] = tostring(splitvalues[12]) -- Dataref comparison operator
-                AttachObj_Container[#AttachObj_Container][13] = tonumber(splitvalues[13]) -- Dataref comparison value
-                AttachObj_Container[#AttachObj_Container][14] = tonumber(splitvalues[14]) -- "On ground" flag
-                AttachObj_Container[#AttachObj_Container][15] = 0 -- "Is hidden flag"
-                --print(table.concat(AttachObj_Container[#AttachObj_Container],";"))
-                i=i+1
             end
         end
         file:close()
@@ -150,36 +158,42 @@ end
 --[[ Checks if any object datarefs is already present in Dref_List_Cont and if not, adds it ]]
 function AttachObject_Init_CopyDrefTable()
     for j=1,#AttachObj_Container do
-        local present = false
-        for k=1,#Dref_List_Cont do if AttachObj_Container[j][10] == Dref_List_Cont[k][2] then present = true --[[print("Already present: "..AttachObj_Container[j][10])]] end end
-        if not present then Dref_List_Cont[#Dref_List_Cont+1] = {"Dref[n]",AttachObj_Container[j][10]} end
+        if AttachObj_Container[j][10] ~= "None" then
+            local present = false
+            for k=1,#Dref_List_Cont do if AttachObj_Container[j][10] == Dref_List_Cont[k][2] then present = true --[[print("Already present: "..AttachObj_Container[j][10])]] end end
+            if not present then Dref_List_Cont[#Dref_List_Cont+1] = {"Dref[n]",AttachObj_Container[j][10]} end
+        end
     end
 end
 --[[ ]]
 function AttachObject_CheckVisibility()
     Dataref_Read(AttachObj_Drefs_Cont,4,"All")
     for i=1,#AttachObj_Container do
-        for j=1,#AttachObj_Drefs_Cont do
-            if AttachObj_Container[i][10] == AttachObj_Drefs_Cont[j][2] then
-                if AttachObj_Container[i][12] == "lt" then
-                    if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] < AttachObj_Container[i][13] then
-                        AttachObj_Container[i][15] = 1
-                        --print(i..": Lower")
-                    else AttachObj_Container[i][15] = 0 end
+        if AttachObj_Container[i][10] ~= "None" then
+            for j=1,#AttachObj_Drefs_Cont do
+                if AttachObj_Container[i][10] == AttachObj_Drefs_Cont[j][2] then
+                    if AttachObj_Container[i][12] == "lt" then
+                        if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] < AttachObj_Container[i][13] then
+                            AttachObj_Container[i][15] = 1
+                            --print(i..": Lower")
+                        else AttachObj_Container[i][15] = 0 end
 
-                elseif AttachObj_Container[i][12] == "eq" then
-                    if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] == AttachObj_Container[i][13] then
-                        AttachObj_Container[i][15] = 1
-                        --print(i..": Equal")
-                    else AttachObj_Container[i][15] = 0 end
+                    elseif AttachObj_Container[i][12] == "eq" then
+                        if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] == AttachObj_Container[i][13] then
+                            AttachObj_Container[i][15] = 1
+                            --print(i..": Equal")
+                        else AttachObj_Container[i][15] = 0 end
 
-                elseif AttachObj_Container[i][12] == "gt" then
-                    if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] > AttachObj_Container[i][13] then
-                        AttachObj_Container[i][15] = 1
-                        --print(i..": Greater")
-                    else AttachObj_Container[i][15] = 0 end
+                    elseif AttachObj_Container[i][12] == "gt" then
+                        if AttachObj_Drefs_Cont[j][4][(AttachObj_Container[i][11]+1)] > AttachObj_Container[i][13] then
+                            AttachObj_Container[i][15] = 1
+                            --print(i..": Greater")
+                        else AttachObj_Container[i][15] = 0 end
+                    end
                 end
             end
+        else
+            AttachObj_Container[i][15] = 1 -- Always draw object when it has no dataref
         end
     end
     --AttachObj_Drefs_Cont

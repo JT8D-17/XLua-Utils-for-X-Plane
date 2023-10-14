@@ -124,6 +124,7 @@ typedef int XPLMProbeType;
 typedef int XPLMProbeResult;
 typedef struct {int structSize; float x; float y; float z; float pitch; float heading; float roll;} XPLMDrawInfo_t;
 typedef void (*XPLMObjectLoaded_f)(XPLMObjectRef inObject, void *inRefcon);
+void XPLMLoadObject(const char *inPath);
 void XPLMLoadObjectAsync(const char *inPath, XPLMObjectLoaded_f inCallback, void *inRefcon);
 void XPLMUnloadObject(XPLMObjectRef inObject);
 typedef struct {
