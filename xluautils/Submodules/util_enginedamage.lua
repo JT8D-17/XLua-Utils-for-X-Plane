@@ -181,13 +181,6 @@ local function EngineDamage_Randomize(target,input)
     output = input * output
     return output
 end
---[[ Calculates the slope between two set points ]]
-function EngineDamage_CalculateSlope(x1,x2,y1,y2)
-    local dy = y2-y1
-    local dx = x2-x1
-    local slope = dy/dx
-    return slope
-end
 --[[ Gathers information about the aircraft's engine type and auto-actiavtes suitable damage datarefs ]]
 function EngineDamage_ProfileAircraft()
     -- Loop through available engines
@@ -248,11 +241,10 @@ local function EngineDamage_CheckStress()
             Notification_ID.Stress = tonumber("-990"..i..j) -- Assign a unique ID for a notification based on engine number and parameter
             Notification_ID.Fail = tonumber("-991"..i..j) -- Assign a unique ID for a notification based on engine number and parameter
             if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 and EngineData[i][j][3] > -1 then -- Check if parameter is enabled and has a limit set
-                if EngineData[i][j][2] == "°F" then end -- Input value fahrenheit adjustment
                 --print(i.." "..EngineData[i][j][1]..": "..Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i))
                 -- If component has not failed:
                 if Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
-                    -- Adjust for various peculiaritzies in units
+                    -- Adjust for various peculiarities in units
                     local datarefval = 0
                     if EngineData[i][j][1] == "CHT" or EngineData[i][j][1] == "EGT" or EngineData[i][j][1] == "ITT" then -- Handle temperatures in Fahrenheit
                         if EngineData[i][j][2] == "°F" then  datarefval = (Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) * 1.8) + 32 -- Convert °C in °F
@@ -575,8 +567,8 @@ function EngineDamage_Init()
     Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
-    Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with currrent values
-    Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
+    Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with current values
+    Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
     EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
     EngineDamage_Notifications()
     EngineDamage_ProfileAircraft()
