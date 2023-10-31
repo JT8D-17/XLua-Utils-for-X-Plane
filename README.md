@@ -58,8 +58,8 @@ XLuaUtils is working correctly if X-Plane's main menu bar contains a menu with t
 
 ![XLuaUtils Main Menu Entry](Documentation/Images/XLuaUtils_MenuEntry.jpg  "XLuaUtils Main Menu Entry")
 
-If you have no intention of using XLuaUtils for development purposes, consult [chapter 5](#5.0) of this readme to learn about the end-user oriented tools.
-A quick read of [chapter 4](#4.0) is recommended regardless, because some information there may come in handy at some point.
+If you have no intention of using XLuaUtils for development purposes, consult [section 5](#5.0) of this readme to learn about the end-user oriented tools.
+A quick read of [section 4](#4.0) is recommended regardless, because some information there may come in handy at some point.
 
 
 &nbsp;
@@ -83,7 +83,7 @@ Delete the _"xluautils"_ folder from _"[Aircraft's main folder]/plugins/xlua/scr
 ## 4 - Developer Reference
 
 XLuaUtils provides a range of useful functions for XLua developers to help debug code or implement utilities.   
-See the [developer reference](Documentation/Developer_Reference.md) document for more information.
+See the [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md) document for more information.
 
 &nbsp;
 
@@ -101,14 +101,14 @@ After a successful installation, the main X-Plane menu bar contains a menu with 
 
 ![XLuaUtils Main Menu](Documentation/Images/XLuaUtils_Menu.jpg  "XLuaUtils Main Menu")
 
-- _"Initialize XLuaUtils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLuaUtils' initialization and preferences system (see chapter [4.4](#4.4)).   
+- _"Initialize XLuaUtils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLuaUtils' initialization and preferences system (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 4).   
 Note that some XLuaUtils elements or submodules do not initially save their state and will require changing their settings before they will do so.   
  _"Reload XLuaUtils Preferences"_ will replace _"Initialize XLuaUtils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
-- The _"Debug"_ submenu is always visible and contains controls for debug-level logging (chapter  [4.3.3](#4.3))  and the debug window (chapter [4.7](#4.7)).
+- The _"Debug"_ submenu is always visible and contains controls for debug-level logging (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 3)  and the debug window ([Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 7).
 
-- The _"Miscellaneous"_ menu is a container for miscellaneous built-in utilities (see chapter [5.4](#5.4)) that are always available.
+- The _"Miscellaneous"_ menu is a container for miscellaneous built-in utilities (see [section 5.4](#5.4) below) that are always available.
 
 &nbsp;
 
