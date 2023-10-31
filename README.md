@@ -182,8 +182,8 @@ See [Documentation/Automixture.md](Documentation/Automixture.md) for more inform
 <a name="5.6"></a>
 ### 5.6 Attach Objects
 
-The object attachment utility can be used to display objects loaded from object files inside or outside the aircraft.   
-These objects can be set to display within a certain dataref value range and will either move with the aircraft (e.g. passengers) or stick to the ground (e.g. ground equipment).   
+The object attachment utility can be used to display objects loaded from object files outside the aircraft.   
+These objects can be set to display within a certain dataref value range and will either move with the aircraft (e.g. external loads) or stick to the ground (e.g. ground equipment).   
 Object definition is provided from a simple text-based input file and objects can be reloaded at any time.
 
 See [Documentation/Attach_Objects.md](Documentation/Automixture.md) for more information. 

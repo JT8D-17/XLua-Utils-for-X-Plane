@@ -115,9 +115,9 @@ All engine damage may be repaired at any time from the menu to avoid frustration
 <a name="3"></a>
 ### 3. Engine Profile
 
-#### 3.1 File information
+#### 3.1 File Information
 
-An engine profile with some basic data is stored in _"[Aircraft folder]/plugins/xlua/scripts/xluautils/Submodules/engine_profile.cfg"_.   
+An engine profile file is stored in _"[Aircraft folder]/plugins/xlua/scripts/xluautils/Submodules/engine_profile.cfg"_.   
 This file is generated when "Engine Damage" is initialized and its file header contains information regarding line structuring and more.
 
 Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
