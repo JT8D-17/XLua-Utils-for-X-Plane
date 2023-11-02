@@ -40,8 +40,8 @@ The supported engine parameters for "Engine Damage" are:
 - Exhaust gas temperature (EGT)
 - Interstage turbine temperature (ITT)
 - Manifold pressure (MP)
-- First spool rotation speed (N1)
-- Second spool rotation speed (N2)
+- First spool (or prop) rotation speed (N1)
+- Second spool (or engine) rotation speed (N2)
 - Torque (TRQ)
 
 Any of these can be enabled at any time. However, there should be a sensible limit set in the _.acf_ file (and detected from a dataref) or set in the engine profile.
@@ -89,7 +89,7 @@ Accumulated engine stress can not exceed the maximum stress tolerance limit base
 
 #### 2.7 Engine Failure
 
-When an engine has accumulated stress greater than zero, there is a chance of failure. At the lower engine limit, the default chance is 0.001, i.e. 1 in 1000 per second (which is the default script refresh rate), while at the upper limit, the default chance is 1 in 10 per second. The failure chance is linearly interpolated between these limits.    
+When an engine has accumulated stress greater than zero, there is a chance of failure. At the lower engine limit, the default chance is 0.0001, i.e. 1 in 10000 per second (which is the default script refresh rate), while at the upper limit, the default chance is 1 in 100 per second. The failure chance is linearly interpolated between these limits.    
 The failure system uses a "lucky number" between 1 and 10, which is assigned to each monitored parameter of each engine during module initialization at each aircraft (re)load. Each script update cycle, this "lucky number" is compared against a randomly picked number from a pool whose size is determined by the current engine stress level.  
 When the "lucky number" matches the randomly picked number, the engine will fail.   
 The failure mode depends on the engine parameter that caused the failure. Supported modes are:
@@ -128,21 +128,30 @@ Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"
 
 "DMG_" lines contain data for a given supported engine parameter (see section "Supported Parameters"). All of these lines share the same amount and order of values:
 	
-	DMG_CHT,0,-1,1.5,300,10,0.75
+	DMG_CHT,0,-1,°C,1.5,300,10,0.75
 
 |Value Index|Value (Range)|Description|
 |-|-|-|
 |1|"DMG_xxx"|"DMG_" plus the identifier of the engine parameter (e.g. "DMG_EGT")|
 |2|1 or 0|1: The given parameter is monitored|
-|3|-1 or > 0|-1: Use dataref/_.acf_ parameter limit, any other value: Use the specified limit (see note about units below)|
-|4|> 1.0|Scalar for the parameter limit at index 3 to obtain the upper limit (see section "Base values")|
-|5|> 0|Time (in seconds) for which the engine can take stress when this engine parameter is at the lower limit specified at index 3|
-|6|> 0 and < [time at upper limit]|Time (in seconds) for which the engine can take stress when this engine parameter is at the upper limit calulated from index 3 and 4|
-|7|> 0|The current engine stress accumulation rate is scaled by this value when engine stress is decreasing|
+|3|-1 or > 0|-1: Use dataref/_.acf_ parameter limit, any other value: Use the specified limit. Value must be greater than zero.|
+|4|[See table below]|The unit used for the manual limit (value 3). See table below for supported units.|
+|5|> 1.0|Scalar for the parameter limit at index 3 to obtain the upper limit (see section "Base values")|
+|6|> 0|Time (in seconds) for which the engine can take stress when this engine parameter is at the lower limit specified at index 3|
+|7|> 0 and < [time at upper limit]|Time (in seconds) for which the engine can take stress when this engine parameter is at the upper limit calulated from index 3 and 4|
+|8|> 0|The current engine stress accumulation rate is scaled by this value when engine stress is decreasing|
 
-About units:   
-- Both degrees Celsius (°C) and degrees Fahrenheit (°F) are supported as a unit for temperature limits.
-- Torque may be stated in Newtonmeters (Nm) or pound-foot (lb-ft).
+&nbsp;
+
+These units may be used for manual limits for "DMG_" properties in _engine_damage.cfg_:
+- CHT, EGT, ITT: °C, °F
+- MP: inHg
+- N1, N2: %
+- TRQ: %, Nm, lb-ft
+
+If no manual limit is specified, the unit will be determined by the dataref.  
+Mistyped or unsupported units will be ignored.  
+
 
 &nbsp;
 

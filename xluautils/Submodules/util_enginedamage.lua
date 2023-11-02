@@ -20,17 +20,17 @@ local EngineDamage_Config_Vars = {
 }
 --[[ Table with engine profile information ]]
 local EngineDamage_Profile = {
--- ID, Enabled, base parameter redline (-1 = use dataref val), base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding
-{"DMG_CHT",0,-1,1.5,300,10,0.75},
-{"DMG_EGT",0,-1,1.5,240,120,0.75},
-{"DMG_ITT",0,-1,1.5,120,5,0.75},
-{"DMG_MP",0,-1,1.5,300,7.5,0.75},
-{"DMG_N1",0,-1,1.5,500,10,0.75},
-{"DMG_N2",0,-1,1.5,400,10,0.75},
-{"DMG_TRQ",0,-1,1.5,50,15,0.75},
+-- ID, Enabled, base parameter redline (-1 = use dataref val), unit, base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding
+{"DMG_CHT",0,-1,"°C",1.5,300,10,0.75},
+{"DMG_EGT",0,-1,"°C",1.5,240,120,0.75},
+{"DMG_ITT",0,-1,"°C",1.5,120,5,0.75},
+{"DMG_MP",0,-1,"inHg",1.5,300,7.5,0.75},
+{"DMG_N1",0,-1,"%",1.5,500,10,0.75},
+{"DMG_N2",0,-1,"%",1.5,400,10,0.75},
+{"DMG_TRQ",0,-1,"Nm",1.5,50,15,0.75},
 {"RandomizeLimit",0.98,1.04},       -- Randomization range for limit values
 {"RandomizeDamage",0.98,1.02},       -- Randomization range for incurred damage
-{"FailureChance",0.001,0.1},     -- Chance for failure per time unit at 0 and 100% stress
+{"FailureChance",0.0001,0.01},     -- Chance for failure per time unit at 0 and 100% stress
 }
 --[[ List of continuously monitored datarefs used by this module ]]
 local Dref_List_Cont = {
@@ -197,34 +197,47 @@ function EngineDamage_ProfileAircraft()
         }
         -- Loop through engine data table and see if the parameters in its subtables can be populated
         for j=1,#EngineData[i] do
-            -- Adjust property unit if it's not Celsius
-            if Table_ValGet(EngineData[i],"CHT",nil,1) == "CHT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_CHT_C",4,1) == 0 then Table_ValSet(EngineData[i],"CHT",nil,2,"°F") end
-            if Table_ValGet(EngineData[i],"EGT",nil,1) == "EGT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_EGT_C",4,1) == 0 then Table_ValSet(EngineData[i],"EGT",nil,2,"°F") end
-            if Table_ValGet(EngineData[i],"ITT",nil,1) == "ITT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then Table_ValSet(EngineData[i],"ITT",nil,2,"°F") end
-            if Table_ValGet(EngineData[i],"TRQ",nil,1) == "TRQ" and Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) < 200 then Table_ValSet(EngineData[i],"TRQ",nil,2,"%") end
-            --
-            if Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1) ~= nil or Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then
-                if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then -- Check if there is a user override for the limit
+            -- Guess property unit if no override was set by user
+            if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) == -1 then
+                if EngineData[i][j][1] == "CHT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_CHT_C",4,1) == 0 then Table_ValSet(EngineData[i],"CHT",nil,2,"°F") end
+                if EngineData[i][j][1] == "EGT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_EGT_C",4,1) == 0 then Table_ValSet(EngineData[i],"EGT",nil,2,"°F") end
+                if EngineData[i][j][1] == "ITT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then Table_ValSet(EngineData[i],"ITT",nil,2,"°F") end
+                if EngineData[i][j][1] == "TRQ" and Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) < 200 then Table_ValSet(EngineData[i],"TRQ",nil,2,"%") end
+            end
+            -- Fill EngineData table
+            if Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1) ~= nil or Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > -1 then -- Check if dataref exists or has an override set
+                if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3) > 0 then -- Check if there is a user override for the limit
+                    -- Sanity check for units
+                    local unit = Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,4)
+                    if unit == "°C" or unit == "°F" or unit == "inHg" or unit == "%" or unit == "°C" or unit == "Nm" or unit == "lb-ft" then
+                        Table_ValSet(EngineData[i],EngineData[i][j][1],nil,2,Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,4)) -- Assign the user override unit
+                    end
                     Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3)) -- Assign the user override
                 else
                     Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1)) -- Assign the dataref limit
                 end
-                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,6,math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,5)))) -- Randomize damage tolerance a bit
-                -- 1. Randomize the base limit and store it in EngineData, calculate the upper limit (base limit * scalar) and randomize
+                -- Use value #6 as temporary storage for the randomized damage tolerance
+                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,6,math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,6))))
+                -- 1. Randomize the base limit and store it as value #4 in EngineData, calculate the upper limit (base limit * scalar) and randomize
                 Table_ValSet(EngineData[i],EngineData[i][j][1],nil,4,math.ceil(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,3))))
-                local limit_high = math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,3) * Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,4)))
+                local limit_high = math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,3) * Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,5)))
                 -- 2. Randomize the stress tolerance at base limit (seconds) and store it in EngineData, randomize the stress tolerance at upper limit (seconds)
-                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,5,math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,5))))
-                local tolerance_high = math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,6)))
+                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,5,math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,6))))
+                local tolerance_high = math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,7)))
                 -- 3. Stress accumulation rate is always 1 at base limit, but needs to be calculated for upper limit. This will normalize the sustained stress to the value range at the base limit. From that, calculate the slope and store it in engine data.
                 Table_ValSet(EngineData[i],EngineData[i][j][1],nil,6,math.abs(((Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) / tolerance_high) - 1) / (limit_high - Table_ValGet(EngineData[i],EngineData[i][j][1],nil,4))))
                 -- 4. Stress recess rate uses the damage type randomization
-                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,9,EngineDamage_Randomize("RandomizeDamage",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,7)) * -1)
+                Table_ValSet(EngineData[i],EngineData[i][j][1],nil,9,EngineDamage_Randomize("RandomizeDamage",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,8)) * -1)
                 -- 5. Assign a random lucky number to the engine
                 Table_ValSet(EngineData[i],EngineData[i][j][1],nil,10,math.ceil(math.random()*10))
                 LogOutput("Aircraft engine "..i.." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,1).." tolerates stress at "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,4).." "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." for "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." s and its stress rate increases by "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,6).." per "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,2).." above the limit every "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s and will decrease by "..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,9).." per "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s")
             end
+
         end
+    end
+    -- Update menu
+    for i=2,#EngineDamage_Menu_Items do
+        EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
     end
 end
 --[[ Calculates a random number from a range of values, whose upper limit is calculated from a probability gradient ]]
@@ -233,6 +246,16 @@ local function EngineDamage_RandomIntfromRange(engineindex,paramindex)
     -- (((1 / probability_2) - (1 / probability_1)) / range) * (stress / max_stress * 100) + (1 / probability_1)
     randomnumber = math.random(0,math.ceil((((1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,3)) - (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))) / 100) * (Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,8) / Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,5) * 100) + (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))))
     return randomnumber
+end
+--[[ Unit converter ]]
+local function EngineDamage_UnitConverter(in_value,in_unit,out_unit)
+    local out_value = 0
+    if in_unit == "°C" and out_unit == "°F" then out_value = (in_value * 1.8) + 32 end
+    if in_unit == "°F" and out_unit == "°C" then out_value = (in_value - 32) / 1.8 end
+    if in_unit == "lb-ft" and out_unit == "Nm" then out_value = in_value * 1.35582 end
+    if in_unit == "Nm" and out_unit == "lb-ft" then out_value = in_value / 1.35582 end
+    if in_unit == out_unit then out_value = in_value end
+    return out_value
 end
 --[[ Checks an engine component for being above a limit and accumulates stress on the engine ]]
 local function EngineDamage_CheckStress()
@@ -244,15 +267,27 @@ local function EngineDamage_CheckStress()
                 --print(i.." "..EngineData[i][j][1]..": "..Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i))
                 -- If component has not failed:
                 if Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
-                    -- Adjust for various peculiarities in units
                     local datarefval = 0
-                    if EngineData[i][j][1] == "CHT" or EngineData[i][j][1] == "EGT" or EngineData[i][j][1] == "ITT" then -- Handle temperatures in Fahrenheit
-                        if EngineData[i][j][2] == "°F" then  datarefval = (Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) * 1.8) + 32 -- Convert °C in °F
-                        else datarefval = Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) end -- Use celsius
+                    -- Handle CHT dataref temperature unit and engine profile unit
+                    if EngineData[i][j][1] == "CHT" then
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Unit_CHT_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
+                        else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
                     end
+                    -- Handle EGT dataref temperature unit and engine profile unit
+                    if EngineData[i][j][1] == "EGT" then
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Unit_EGT_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
+                        else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
+                    end
+                    -- Handle ITT dataref temperature unit and engine profile unit
+                    if EngineData[i][j][1] == "ITT" then
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
+                        else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
+                    end
+                    -- Handle TRQ dataref unit and engine profile unit
                     if EngineData[i][j][1] == "TRQ" then
-                        if EngineData[i][j][2] == "%" then datarefval = Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) / Table_ValGet(EngineDamage_Drefs_Once,"Max_TRQ",4,1) * 100
-                        else datarefval = Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) end
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) < 200 and EngineData[i][j][2] == "%" then datarefval = Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) / Table_ValGet(EngineDamage_Drefs_Once,"Max_TRQ",4,1) * 100 end
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) > 200 and EngineData[i][j][2] == "Nm" then datarefval = Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i) end
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) > 200 and EngineData[i][j][2] == "lb-ft" then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"Nm","lb-ft") end
                     end
                     -- Calculate the stress rate
                     if datarefval > EngineData[i][j][3] then
@@ -344,7 +379,11 @@ function EngineDamage_Profile_Read(inputfile)
                 for i=1,#EngineDamage_Profile do
                     if EngineDamage_Profile[i][1] == splitline[1] then
                         for j=2,#splitline do
-                            EngineDamage_Profile[i][j] = tonumber(splitline[j])
+                            if j == 4 then -- Check for known strings
+                                EngineDamage_Profile[i][j] = tostring(splitline[j])
+                            else
+                                EngineDamage_Profile[i][j] = tonumber(splitline[j])
+                            end
                         end
                         --print(table.concat(EngineDamage_Profile[i],","))
                     end
@@ -369,7 +408,7 @@ function EngineDamage_Profile_Write(outputfile)
     file:write("# The new values will then be used after reloading the file from the \"Engine Damage\" menu in XLua Utils.\n")
     file:write("#\n")
     file:write("# Format for the damage-related parameters:\n")
-    file:write("# ID, Enabled, base parameter redline (-1 = use dataref val), base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding.\n")
+    file:write("# ID, Enabled, base parameter redline (-1 = use dataref val), unit, base redline scalar to calculate damage accumulation rate from, base limit damage tolerance (in seconds), damage tolerance at node calculated from base redline * scalar (in seconds), scalar for damage rate when damage is receding.\n")
     file:write("#\n")
     for i=1,#EngineDamage_Profile do
         file:write(table.concat(EngineDamage_Profile[i],",").."\n")
@@ -435,7 +474,7 @@ function EngineDamage_Menu_Callbacks(itemref)
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
             if i == 11 then
-                if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1)else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
+                if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
             if i == 13 then

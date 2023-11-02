@@ -9,7 +9,7 @@ Licensed under the EUPL v1.2: https://eupl.eu/
 VARIABLES
 
 ]]
---[[ Table that contains the configuration Variables for the NC Headset module ]]
+--[[ Table that contains the configuration variables for the NC Headset module ]]
 local NCHeadset_Config_Vars = {
 {"NCHEADSET"},
 {"Automation",0},
@@ -201,12 +201,12 @@ end
 function NCHeadset_Init()
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with currrent values as defaults
-    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with currrent values
+    Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
+    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
     run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
     LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end
---[[ Reloads the Persistence configuration ]]
+--[[ Reloads the NCHeadset configuration ]]
 function NCHeadset_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)

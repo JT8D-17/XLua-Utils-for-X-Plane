@@ -41,6 +41,7 @@ dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_attachobjects.lua")  -- UTILITY
+dofile("Submodules/util_oxygensystem.lua")  -- UTILITY
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
 --[[
 
@@ -93,6 +94,7 @@ function flight_start()
     Automix_Init() -- Initialize automixture
     EngineDamage_Init() -- Initialize engine damage
     AttachObject_Init() -- Initialize object attachments
+    OxygenSystem_Init() -- Initialize Oxygen System
     Debug_Menu_Build(XLuaUtils_Menu_ID)
     if XLuaUtils_HasConfig == 1 then
         Main_Menu_Init() -- Only triggers the menu watchdog
@@ -103,6 +105,7 @@ function flight_start()
         Automix_Menu_Register(XLuaUtils_Menu_ID) -- Registers the automixture menu
         EngineDamage_Menu_Build(XLuaUtils_Menu_ID)
         AttachObject_Menu_Build(XLuaUtils_Menu_ID)
+        OxygenSystem_Menu_Build(XLuaUtils_Menu_ID)
     end
     MiscUtils_Menu_Build(XLuaUtils_Menu_ID)
     if DebugIsEnabled() == 1 then Debug_Start() end
