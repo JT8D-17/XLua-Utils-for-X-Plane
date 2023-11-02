@@ -75,7 +75,7 @@ end
 
 --[[ Gets old dataref values ]]
 function OxygenSystem_WriteSaved()
-    DRef_Oxy_Capacity = Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2)
+    if Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2) > DRef_Oxy_Capacity then DRef_Oxy_Capacity = Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2) end
     DRef_Oxy_Remain = Table_ValGet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2)
     DRef_Oxy_FlowSetting = Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2)
     DRef_Oxy_NumUsers = Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2)

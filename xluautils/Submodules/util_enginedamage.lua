@@ -27,6 +27,8 @@ local EngineDamage_Profile = {
 {"DMG_MP",0,-1,"inHg",1.5,300,7.5,0.75},
 {"DMG_N1",0,-1,"%",1.5,500,10,0.75},
 {"DMG_N2",0,-1,"%",1.5,400,10,0.75},
+{"DMG_OIL_P",0,-1,"psi",1.5,600,10,0.75},
+{"DMG_OIL_T",0,-1,"°C",1.5,600,10,0.75},
 {"DMG_TRQ",0,-1,"Nm",1.5,50,15,0.75},
 {"RandomizeLimit",0.98,1.04},       -- Randomization range for limit values
 {"RandomizeDamage",0.98,1.02},       -- Randomization range for incurred damage
@@ -40,6 +42,8 @@ local Dref_List_Cont = {
 {"Eng_MP","sim/flightmodel/engine/ENGN_MPR"}, -- inHG
 {"Eng_N1","sim/flightmodel2/engines/N1_percent"}, -- %
 {"Eng_N2","sim/flightmodel2/engines/N2_percent"}, -- %
+{"Eng_OIL_P","sim/cockpit2/engine/indicators/oil_pressure_psi"}, -- psi
+{"Eng_OIL_T","sim/cockpit2/engine/indicators/oil_temperature_deg_C"}, -- deg C
 {"Eng_TRQ","sim/flightmodel/engine/ENGN_driv_TRQ"}, -- Nm
 {"Fail_CHT_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
 {"Fail_CHT_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
@@ -81,6 +85,22 @@ local Dref_List_Cont = {
 {"Fail_N2_6","sim/operation/failures/rel_engfai5"}, -- 0: Normal, 6: Failed
 {"Fail_N2_7","sim/operation/failures/rel_engfai6"}, -- 0: Normal, 6: Failed
 {"Fail_N2_8","sim/operation/failures/rel_engfai7"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_1","sim/operation/failures/rel_oilpmp0"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_2","sim/operation/failures/rel_oilpmp1"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_3","sim/operation/failures/rel_oilpmp2"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_4","sim/operation/failures/rel_oilpmp3"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_5","sim/operation/failures/rel_oilpmp4"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_6","sim/operation/failures/rel_oilpmp5"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_7","sim/operation/failures/rel_oilpmp6"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_P_8","sim/operation/failures/rel_oilpmp7"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_3","sim/operation/failures/rel_engfir2"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_4","sim/operation/failures/rel_engfir3"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_5","sim/operation/failures/rel_engfir4"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_6","sim/operation/failures/rel_engfir5"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_7","sim/operation/failures/rel_engfir6"}, -- 0: Normal, 6: Failed
+{"Fail_OIL_T_8","sim/operation/failures/rel_engfir7"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_1","sim/operation/failures/rel_pshaft0"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_2","sim/operation/failures/rel_pshaft1"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_3","sim/operation/failures/rel_pshaft2"}, -- 0: Normal, 6: Failed
@@ -101,11 +121,14 @@ local Dref_List_Once = {
 {"Limit_MP","sim/aircraft/engine/acf_mpmax"},     -- Maximum manifold pressure
 {"Limit_N1","sim/aircraft/limits/red_hi_N1"},     -- Maximum N1
 {"Limit_N2","sim/aircraft/limits/red_hi_N2"},     -- Maximum N2
+{"Limit_OIL_P","sim/aircraft/engine/acf_max_OILP"},     -- Maximum oil pressure in psi
+{"Limit_OIL_T","sim/aircraft/engine/acf_max_OILT"},     -- Maximum oil temperature in °C
 {"Limit_TRQ","sim/aircraft/limits/red_hi_TRQ"},     -- Maximum torque in Nm or %
 {"Max_TRQ","sim/aircraft/controls/acf_trq_max_eng"},     -- Maximum torque in Nm
 {"Unit_CHT_C","sim/aircraft/engine/acf_CHT_is_C"}, -- Unit for the CHT limit
 {"Unit_EGT_C","sim/aircraft/engine/acf_EGT_is_C"}, -- Unit for the EGT limit
 {"Unit_ITT_C","sim/aircraft/engine/acf_ITT_is_C"}, -- Unit for the ITT limit
+{"Unit_OIL_T_C","sim/aircraft/engine/acf_oilT_is_C"}, -- Unit for the oil temperature limit
 }
 --[[ Container table for continuously monitored datarefs, which are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local EngineDamage_Drefs_Cont = {
@@ -127,17 +150,19 @@ local EngineDamage_Menu_Items = {
 "MP",                       -- Item index: 8
 "N1",                       -- Item index: 9
 "N2",                       -- Item index: 10
-"TRQ",                      -- Item index: 11
-"[Separator]",              -- Item index: 12
-"Disable All",              -- Item index: 13
-"Repair Engine(s)",         -- Item index: 14
+"OIL_P",                     -- Item index: 11
+"OIL_T",                     -- Item index: 12
+"TRQ",                      -- Item index: 13
+"[Separator]",              -- Item index: 14
+"Disable All",              -- Item index: 15
+"Repair Engine(s)",         -- Item index: 16
 }
 --[[ Menu variables for FFI ]]
 local EngineDamage_Menu_ID = nil
 local EngineDamage_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 local EngineData={} -- Engine data container
-local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_MP={},F_N1={},F_N2={},F_TRQ={}} -- Helper to only display notifications upon changes
+local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,OIL_P=0,OIL_T=0,TRQ=0} -- Helper to only display notifications upon changes
 local Notification_ID = {Stress="",Fail=""}
 --[[
 
@@ -157,6 +182,8 @@ function EngineDamage_DebugWindow_Init()
         if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."MP") end
         if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N1") end
         if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
+        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_P") end
+        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_T") end
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
     end
 end
@@ -193,6 +220,8 @@ function EngineDamage_ProfileAircraft()
             {"MP","inHg",-1,-1,-1,-1,0,0,0,0},
             {"N1","%",-1,-1,-1,-1,0,0,0,0},
             {"N2","%",-1,-1,-1,-1,0,0,0,0},
+            {"OIL_P","psi",-1,-1,-1,-1,0,0,0,0},
+            {"OIL_T","°C",-1,-1,-1,-1,0,0,0,0},
             {"TRQ","Nm",-1,-1,-1,-1,0,0,0,0},
         }
         -- Loop through engine data table and see if the parameters in its subtables can be populated
@@ -202,6 +231,7 @@ function EngineDamage_ProfileAircraft()
                 if EngineData[i][j][1] == "CHT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_CHT_C",4,1) == 0 then Table_ValSet(EngineData[i],"CHT",nil,2,"°F") end
                 if EngineData[i][j][1] == "EGT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_EGT_C",4,1) == 0 then Table_ValSet(EngineData[i],"EGT",nil,2,"°F") end
                 if EngineData[i][j][1] == "ITT" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then Table_ValSet(EngineData[i],"ITT",nil,2,"°F") end
+                if EngineData[i][j][1] == "OIL_T" and Table_ValGet(EngineDamage_Drefs_Once,"Unit_OIL_T_C",4,1) == 0 then Table_ValSet(EngineData[i],"OIL_T",nil,2,"°F") end
                 if EngineData[i][j][1] == "TRQ" and Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) < 200 then Table_ValSet(EngineData[i],"TRQ",nil,2,"%") end
             end
             -- Fill EngineData table
@@ -281,6 +311,11 @@ local function EngineDamage_CheckStress()
                     -- Handle ITT dataref temperature unit and engine profile unit
                     if EngineData[i][j][1] == "ITT" then
                         if Table_ValGet(EngineDamage_Drefs_Once,"Unit_ITT_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
+                        else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
+                    end
+                    -- Handle oil temp dataref temperature unit and engine profile unit
+                    if EngineData[i][j][1] == "OIL_T" then
+                        if Table_ValGet(EngineDamage_Drefs_Once,"Unit_OIL_T_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
                         else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
                     end
                     -- Handle TRQ dataref unit and engine profile unit
@@ -430,6 +465,10 @@ function EngineDamage_Notifications()
     if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) < Notifications_OldStatus.N1 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N1: Off") DisplayNotification("Engine damage by N1: Off","Nominal",5)  Notifications_OldStatus.N1 = Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) > Notifications_OldStatus.N2 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N2: On") DisplayNotification("Engine damage by N2: On","Caution",5)  Notifications_OldStatus.N2 = Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) < Notifications_OldStatus.N2 then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by N2: Off") DisplayNotification("Engine damage by N2: Off","Nominal",5)  Notifications_OldStatus.N2 = Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) > Notifications_OldStatus.OIL_P then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by P_Oil: On") DisplayNotification("Engine damage by P_Oil: On","Caution",5)  Notifications_OldStatus.OIL_P = Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) < Notifications_OldStatus.OIL_P then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by P_Oil: Off") DisplayNotification("Engine damage by P_Oil: Off","Nominal",5)  Notifications_OldStatus.OIL_P = Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) > Notifications_OldStatus.OIL_T then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by T_Oil: On") DisplayNotification("Engine damage by T_Oil: On","Caution",5)  Notifications_OldStatus.OIL_T = Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) < Notifications_OldStatus.OIL_T then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by T_Oil: Off") DisplayNotification("Engine damage by T_Oil: Off","Nominal",5)  Notifications_OldStatus.OIL_T = Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) > Notifications_OldStatus.TRQ then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by TRQ: On") DisplayNotification("Engine damage by TRQ: On","Caution",5)  Notifications_OldStatus.TRQ = Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) < Notifications_OldStatus.TRQ then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by TRQ: Off") DisplayNotification("Engine damage by TRQ: Off","Nominal",5)  Notifications_OldStatus.TRQ = Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) end
 end
@@ -474,22 +513,32 @@ function EngineDamage_Menu_Callbacks(itemref)
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
             if i == 11 then
-                if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
+                if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,0) end
+                EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
+            end
+            if i == 12 then
+                if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
             if i == 13 then
+                if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
+                EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
+            end
+            if i == 15 then
                 Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,5)
                 Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,6)
                 Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,7)
                 Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,8)
                 Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,9)
                 Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
-                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,11)
+                Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,11)
+                Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,12)
+                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,13)
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
                 DisplayNotification("All engine damage sources have been disabled!","Nominal",10)
             end
-            if i == 14 then
+            if i == 16 then
                 EngineDamage_RepairAll()
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
@@ -539,6 +588,16 @@ function EngineDamage_Menu_Watchdog(intable,index)
         if Table_ValGet(EngineData[1],"N2",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"N2",nil,3)).." "..Table_ValGet(EngineData[1],"N2",nil,2)..")",intable) end
     end
     if index == 11 then
+        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
+        else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(EngineData[1],"OIL_P",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"OIL_P",nil,3)).." "..Table_ValGet(EngineData[1],"OIL_P",nil,2)..")",intable) end
+    end
+    if index == 12 then
+        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
+        else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(EngineData[1],"OIL_T",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"OIL_T",nil,3)).." "..Table_ValGet(EngineData[1],"OIL_T",nil,2)..")",intable) end
+    end
+    if index == 13 then
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         --print(Table_ValGet(EngineData[1],"TRQ",nil,3))

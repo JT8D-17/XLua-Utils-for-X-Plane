@@ -36,12 +36,14 @@ Engine failure due to stress is probabilistic, with the chance being greater the
 #### 2.1 Supported Parameters
 
 The supported engine parameters for "Engine Damage" are:
-- Cylinder head temperature (CHT)
-- Exhaust gas temperature (EGT)
-- Interstage turbine temperature (ITT)
-- Manifold pressure (MP)
-- First spool (or prop) rotation speed (N1)
-- Second spool (or engine) rotation speed (N2)
+- cylinder head temperature (CHT)
+- exhaust gas temperature (EGT)
+- interstage turbine temperature (ITT)
+- manifold pressure (MP)
+- first spool (or prop) rotation speed (N1)
+- second spool (or engine) rotation speed (N2)
+- oil pressure (OIL_P)
+- oil temmperature (OIL_T)
 - Torque (TRQ)
 
 Any of these can be enabled at any time. However, there should be a sensible limit set in the _.acf_ file (and detected from a dataref) or set in the engine profile.
@@ -93,8 +95,9 @@ When an engine has accumulated stress greater than zero, there is a chance of fa
 The failure system uses a "lucky number" between 1 and 10, which is assigned to each monitored parameter of each engine during module initialization at each aircraft (re)load. Each script update cycle, this "lucky number" is compared against a randomly picked number from a pool whose size is determined by the current engine stress level.  
 When the "lucky number" matches the randomly picked number, the engine will fail.   
 The failure mode depends on the engine parameter that caused the failure. Supported modes are:
-- Engine fire (CHT, EGT, ITT)
+- Engine fire (CHT, EGT, ITT, oil temperature)
 - Loss of power (N1, N2)
+- Oil pump failure (oil pressure)
 - Shaft breakage (torque)
 
 A notification will be displayed for 60 seconds (default) when an engine fails.
@@ -117,10 +120,10 @@ All engine damage may be repaired at any time from the menu to avoid frustration
 
 #### 3.1 File Information
 
-An engine profile file is stored in _"[Aircraft folder]/plugins/xlua/scripts/xluautils/Submodules/engine_profile.cfg"_.   
-This file is generated when "Engine Damage" is initialized and its file header contains information regarding line structuring and more.
+An engine profile file is stored in _"[Aircraft folder]/plugins/xlua/scripts/xluautils/engine_profile.cfg"_.   
+This file can be edited with any text editor and is generated when "Engine Damage" is initialized. Its file header contains information regarding line structuring and more.
 
-Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
+Example _"engine_profile.cfg"_ files for some aircraft can be found in _"xluautils/Config Files/Engine Damage"_. These may be used as a starting point or template. Contributions are welcome.
 
 &nbsp;
 
@@ -144,9 +147,10 @@ Example _"engine_profile.cfg"_ files for some add-on aircraft can be found in _"
 &nbsp;
 
 These units may be used for manual limits for "DMG_" properties in _engine_damage.cfg_:
-- CHT, EGT, ITT: °C, °F
+- CHT, EGT, ITT, OIL_T: °C, °F
 - MP: inHg
 - N1, N2: %
+- OIL_P: psi
 - TRQ: %, Nm, lb-ft
 
 If no manual limit is specified, the unit will be determined by the dataref.  
@@ -187,7 +191,17 @@ The "FailureChance" line controls the failure chance for this aircraft's engines
 <a name="4"></a>
 ### 4. Menu
 
-[To be documented]
+The _"Engine Damage"_ submenu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
+
+![XLuaUtils Engine Damage Menu](Images/XLuaUtils_EngineDamage.jpg  "XLuaUtils Engine Damage Menu")
+
+|Menu Item|Description|
+|-|-|
+Generate/Reload Engine Profile|Click to write or read _plugins/xlua/scripts/xluautils/engine_profile.cfg_  
+Pin Messages|When active, engine failure notifications will remain on screen instead of disappearing after 60 seconds.  
+CHT ... TRQ|Shows the available properties that can be monitored and their limit and unit as determined from the datarefs or _engine_profile.cfg_. Click to toggle monitoring of this parameter. **Caution:** Will rewrite _engine_profile.cfg_!  
+Disable All|Turns of monitoring of all enabled parameters
+Repair Engine(s)|Clears all engine failures. Note that all failed engines will have to be restarted again!
 
 &nbsp;
 
@@ -198,7 +212,12 @@ The "FailureChance" line controls the failure chance for this aircraft's engines
 <a name="5"></a>
 ### 5. Usage
 
-[To be documented]
+1. Generate an engine profile file with "Generate Engine Profile" from the menu.   
+ **Warning:** An existing _engine_profile.cfg_ file will be overwritten, so back up your old one before!
+2. If happy with all default values, simply enable the parameters you wish to have monitored from the menu   
+or   
+Apply any overrides and enable parameters within _engine_profile.cfg_, then use "Reload Engine Profile" from the menu to read and apply the overrides. **Warning:** Do not use the "CHT" ... "TRQ" or "Disable All" menu before finishing your edits and reloading _engine_profile.cfg_ or your customized file will be overwritten!
+3. Test fly your aircraft. I'm 99 % sure you will try to test the engines' limits.
 
 &nbsp;
 
