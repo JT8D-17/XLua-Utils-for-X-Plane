@@ -103,8 +103,9 @@ function OxygenSystem_MainTimer()
     -- Write remainning oxygen in bottle to persistence table
     if DRef_Oxy_ValvePos == 1 then Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain) end
     -- Refresh menu entries
-    OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,11)
-    OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,13)
+    for i=2,#OxygenSystem_Menu_Items do
+        OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
+    end
 end
 --[[
 
@@ -167,14 +168,14 @@ function OxygenSystem_Menu_Watchdog(intable,index)
         elseif Table_ValGet(OxygenSystem_Config_Vars,"Automation",nil,2) == 1 then Menu_ChangeItemPrefix(OxygenSystem_Menu_ID,index,"[On] ",intable) end
     end
     if index == 5 or index == 6 then
-        if Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2) < 1 then Table_ValSet(OxygenSystem_Config_Vars,"Users",nil,2,1) end
-        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,3,"Users +1 ["..Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2).."]",1)
-        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,4,"Users -1 ["..Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2).."]",1)
+        if Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2) < 1 then Table_ValSet(OxygenSystem_Config_Vars,"Users",nil,2,1) DRef_Oxy_NumUsers = 1 end
+        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,3,"Users +1 ["..DRef_Oxy_NumUsers.."]",1)
+        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,4,"Users -1 ["..DRef_Oxy_NumUsers.."]",1)
     end
     if index == 8 or index == 9 then
-        if Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2) < 0 then Table_ValSet(OxygenSystem_Config_Vars,"FlowSetting",nil,2,0) end
-        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,6,"Flow Setting +1 ["..Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2).."]",1)
-        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,7,"Flow Setting -1 ["..Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2).."]",1)
+        if Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2) < 0 then Table_ValSet(OxygenSystem_Config_Vars,"FlowSetting",nil,2,0) DRef_Oxy_FlowSetting = 0 end
+        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,6,"Flow Setting +1 ["..DRef_Oxy_FlowSetting.."]",1)
+        XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,7,"Flow Setting -1 ["..DRef_Oxy_FlowSetting.."]",1)
     end
     if index == 11 then
         if DRef_OnGround == 1 or DebugIsEnabled() == 1 then XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,9,"Refill Bottle",1)

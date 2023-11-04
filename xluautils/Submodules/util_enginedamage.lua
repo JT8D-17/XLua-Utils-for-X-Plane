@@ -17,6 +17,7 @@ local EngineDamage_Config_Vars = {
 {"ENGINEDAMAGE"},
 {"MainTimerInterval",1},    -- Main timer interval, in seconds
 {"Notify_Pin",1},           -- Display all notifications as long as condition persists
+{"Notify_Time",30},           -- Display all notifications as long as condition persists
 }
 --[[ Table with engine profile information ]]
 local EngineDamage_Profile = {
@@ -162,7 +163,7 @@ local EngineDamage_Menu_ID = nil
 local EngineDamage_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 local EngineData={} -- Engine data container
-local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,OIL_P=0,OIL_T=0,TRQ=0} -- Helper to only display notifications upon changes
+local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,OIL_P=0,OIL_T=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_MP={},F_N1={},F_N2={},F_OIL_P={},F_OIL_T={},F_TRQ={}} -- Helper to only display notifications upon changes
 local Notification_ID = {Stress="",Fail=""}
 --[[
 
@@ -363,17 +364,20 @@ local function EngineDamage_CheckStress()
                             Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
                         end
                     end
+
                 -- Fail component if overstressed
                 --if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) >= Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5) and Table_ValGet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1) ~= 6 then
                 --    Table_ValSet(EngineDamage_Drefs_Cont,"Fail_"..EngineData[i][j][1].."_"..i,4,1,6)
                 --    Dataref_Write(EngineDamage_Drefs_Cont,4,"Fail_"..EngineData[i][j][1].."_"..i)
                 --end
+                    if CheckNotification(Notification_ID.Fail) then RemoveNotification(Notification_ID.Fail) end -- Handle removal of failure notification if the failure was fixed by another plugin
                 else
                     if Table_ValGet(EngineDamage_Config_Vars,"Notify_Pin",nil,2) == 1 then
                         if not CheckNotification(Notification_ID.Fail) then DisplayNotification("Engine "..i.." has failed due to excessive "..EngineData[i][j][1].."!","Warning",Notification_ID.Fail) end
+
                     else
                         if Notifications_OldStatus["F_"..EngineData[i][j][1]][i] ~= i then
-                            DisplayNotification("Engine "..i.." has failed due to excessive "..EngineData[i][j][1].."!","Warning",60)
+                            DisplayNotification("Engine "..i.." has failed due to excessive "..EngineData[i][j][1].."!","Warning",Table_ValGet(EngineDamage_Config_Vars,"Notify_Time",nil,2))
                             Notifications_OldStatus["F_"..EngineData[i][j][1]][i] = i
                         end
                     end

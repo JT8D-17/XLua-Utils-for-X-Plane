@@ -9,10 +9,11 @@ This document contains information about XLuaUtils' "Engine Damage" utility.
 <a name="toc"></a>
 ### Table of Contents
 1. [Introduction](#1)  
-2. [Design Concept](#2)   
-3. [Engine Profile](#3)   
-4. [Menu](#4)   
-3. [Usage](#5)   
+1. [Design Concept](#2)   
+1. [Engine Profile](#3)   
+1. [Menu](#4)   
+1. [Usage](#5)   
+1. [Configuration](#6)
 
 &nbsp; 
 
@@ -198,7 +199,7 @@ The _"Engine Damage"_ submenu is available when a _"persistence.cfg"_ file was f
 |Menu Item|Description|
 |-|-|
 Generate/Reload Engine Profile|Click to write or read _plugins/xlua/scripts/xluautils/engine_profile.cfg_  
-Pin Messages|When active, engine failure notifications will remain on screen instead of disappearing after 60 seconds.  
+Pin Messages|When active, engine failure notifications will remain on screen instead of disappearing after a set time (see "Configuration" below).  
 CHT ... TRQ|Shows the available properties that can be monitored and their limit and unit as determined from the datarefs or _engine_profile.cfg_. Click to toggle monitoring of this parameter. **Caution:** Will rewrite _engine_profile.cfg_!  
 Disable All|Turns of monitoring of all enabled parameters
 Repair Engine(s)|Clears all engine failures. Note that all failed engines will have to be restarted again!
@@ -225,3 +226,25 @@ Apply any overrides and enable parameters within _engine_profile.cfg_, then use 
 
 &nbsp; 
  
+<a name="6"></a>
+### 6. Configuration
+
+"Engine Damage" can be configured in _"plugins/xlua/scripts/xluautils/preferences.cfg"_. Relevant lines:
+
+```
+ENGINEDAMAGE,MainTimerInterval:string,1:number
+ENGINEDAMAGE,Notify_Pin:string,1:number
+ENGINEDAMAGE,Notify_Time:string,30:number
+```
+
+&nbsp;
+
+Parameter|Value Range|Description
+-|-|-
+MainTimerInterval|> 0|Sets the refresh interval for Engine Damage's main timer. Should be greater than zero. **Warning:** The lower the interval, the more frequent the failure chance calculation and thus the higher the chance of engine failure!
+Notify_Pin|1 or 0|Same as the menu's "Pin Messages" item
+Notify_Time|> 0|Sets how long a notification will be displayed if "Pin Messages" is *not* enabled
+
+&nbsp;
+
+[Back to table of contents](#toc)

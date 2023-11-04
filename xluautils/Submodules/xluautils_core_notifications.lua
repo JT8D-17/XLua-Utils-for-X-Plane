@@ -41,8 +41,7 @@ end
 function RemoveNotification(inID)
     for i=1,#Notification_Stack do
         if Notification_Stack[i][3] == inID then
-            table.remove(Notification_Stack,i)
-            break
+            Notification_Stack[i][3] = os.time()
         end
     end
 end
@@ -55,39 +54,33 @@ end
 function UpdateNotificationWindowBuffer()
     Notification_Stack_Buffer = { }
     for i=1,#Notification_Stack do
-        if Notification_Stack[i][3] <= 0 then
-            Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = {Notification_Stack[i][1],Notification_Stack[i][2],"xx"}
-        else
-            if os.time() <= Notification_Stack[i][3] then
-                Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = {Notification_Stack[i][1],Notification_Stack[i][2],string.format("%02d",Notification_Stack[i][3] - os.time())}
-                --PrintToConsole(table.concat(Notification_Stack_Buffer[#Notification_Stack_Buffer],","))
-            else
-                Notification_Stack_ToDelete[#Notification_Stack_ToDelete+1] = i
-            end
+        if Notification_Stack[i][3] <= 0 or os.time() < Notification_Stack[i][3] then
+            Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = Notification_Stack[i] --{Notification_Stack[i][1],Notification_Stack[i][2],"xx"}
+        --else
+            --print("Remove: "..Notification_Stack[i][3].." --> "..os.time())
         end
     end
+    Notification_Stack = Notification_Stack_Buffer
 end
---[[ Removes timed out items from the notification stack ]]
-function CleanNotificationStack()
-    if #Notification_Stack_ToDelete > 0 then
-        for k=1,#Notification_Stack_ToDelete do
-            table.remove(Notification_Stack,k)
-            Notification_Stack_ToDelete = { }
-        end
-    end
-end
---[[ Test timer for notification handling ]]
+--[[Main timer for notification handling ]]
 function NotificationTimer()
+    -- Test timer for when the debug window is open
     if XPLM.XPLMGetWindowIsVisible(DebugWindow_ID) == 1 then
+        --if not CheckNotification(-10) then DisplayNotification("Debug window open, time: "..os.date("%x, %H:%M:%S"),"Nominal",-10) end
         UpdateNotification("Debug window open, time: "..os.date("%x, %H:%M:%S"),"Nominal",-10)
     elseif XPLM.XPLMGetWindowIsVisible(DebugWindow_ID) == 0 and CheckNotification(-10) then
         RemoveNotification(-10)
     end
+    -- Display window if there are any notifications
     if #Notification_Stack > 0 then XPLM.XPLMSetWindowIsVisible(NotifyWindow_ID,1) else XPLM.XPLMSetWindowIsVisible(NotifyWindow_ID,0) end
 end
 --[[ Draw callback for the notification window ]]
 function Notify_Window_Draw(inWindowID,inRefcon)
     --XPLM.XPLMDrawTranslucentDarkBox(Window_Coords[1],Window_Coords[2],Window_Coords[3],Window_Coords[4])
+    Window_XP_Coords_Get(Window_Coords)
+    Window_Coords[1] = Window_Coords[1] + 10
+    Window_Coords[2] = Window_Coords[2] - 100
+    Window_Coords[3] = Window_Coords[3] - 10
     UpdateNotificationWindowBuffer()
     Window_Size[1] = Window_Coords[3] - Window_Coords[1] -- Calculate horizontal window size
     Window_Size[2] = (Window_LineProps[1] * (#Notification_Stack_Buffer+1)) + (0.5 * Window_LineProps[1]) -- Calculate vertical window size
@@ -98,13 +91,14 @@ function Notify_Window_Draw(inWindowID,inRefcon)
     XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Window_Coords[1]+5),(Window_Coords[2]-Window_LineProps[1]),ffi.new("char[256]","XLuaUtils Notification:"),nil,Window_FontID)
     local buffer = ffi.new("char[1024]")
     for i = 1,#Notification_Stack_Buffer do
-        if string.len(Notification_Stack_Buffer[i][1]) > Window_LineProps[2] then buffer = "("..Notification_Stack_Buffer[i][3]..") "..string.sub(Notification_Stack_Buffer[i][1],1,Window_LineProps[2]) else buffer = "("..Notification_Stack_Buffer[i][3]..") "..Notification_Stack_Buffer[i][1] end
+        local time_remaining = "Pin"
+        if Notification_Stack_Buffer[i][3] >= 0 then time_remaining = string.format("%02d",Notification_Stack[i][3] - os.time()) end
+        if string.len(Notification_Stack_Buffer[i][1]) > Window_LineProps[2] then buffer = "("..time_remaining..") "..string.sub(Notification_Stack_Buffer[i][1],1,Window_LineProps[2]) else buffer = "("..time_remaining..") "..Notification_Stack_Buffer[i][1] end
         if Notification_Stack_Buffer[i][2] == "Nominal" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
         if Notification_Stack_Buffer[i][2] == "Success" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[2]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
         if Notification_Stack_Buffer[i][2] == "Caution" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[3]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
         if Notification_Stack_Buffer[i][2] == "Warning" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[4]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
     end
-    CleanNotificationStack()
 end
 --[[
 
