@@ -12,9 +12,9 @@ local OxygenSystem_Config_Vars = {
 {"OXYGENSYSTEM"},
 {"MainTimerInterval",1},
 {"Automation",0},
-{"AutoAltitude",12500},
-{"BottleCapacityLiters",400},
-{"BottleRemainingLiters",400},
+{"PilotAltitude",10000,8000},
+{"BottleCapacityLiters",50},
+{"BottleRemainingLiters",50},
 {"FlowSetting",2},
 {"MasksOn",0},
 {"Users",1},
@@ -39,14 +39,15 @@ local OxygenSystem_Menu_Items = {
 local OxygenSystem_Menu_ID = nil
 local OxygenSystem_Menu_Pointer = ffi.new("const char")
 --
-local Pilot_Hypoxia_Stage = {0,"Fine"}
 local Hypoxia_Stages_Alt = {11500,14000,15000} -- Onset, Impact, Blacked Out
 local Hypoxia_Stage = 0 -- For locking the notification
+local Bottle_Warn_Level = 0 -- For locking the notification
 --[[
 
 DATAREFS
 
 ]]
+Dref_CabinAlt_Warn = find_dataref("sim/cockpit2/annunciators/cabin_altitude_12500")
 DRef_OnGround = find_dataref("sim/flightmodel/failures/onground_any")
 DRef_Oxy_Capacity = find_dataref("sim/aircraft/overflow/acf_o2_bottle_cap_liters")
 DRef_Oxy_FlowSetting = find_dataref("sim/cockpit2/oxygen/actuators/demand_flow_setting")
@@ -86,22 +87,49 @@ end
 function OxygenSystem_MainTimer()
     -- Handle automatic donning and undonning of oxygen masks
     if Table_ValGet(OxygenSystem_Config_Vars,"Automation",nil,2) == 1 then
-        if DRef_PilotAlt > Table_ValGet(OxygenSystem_Config_Vars,"AutoAltitude",nil,2) and DRef_Oxy_ValvePos == 0 then OxygenSystem_On() end
-        if DRef_PilotAlt < Table_ValGet(OxygenSystem_Config_Vars,"AutoAltitude",nil,2) and DRef_Oxy_ValvePos == 1 then OxygenSystem_Off() end
+        if Dref_CabinAlt_Warn == 1 and DRef_Oxy_ValvePos == 0 then OxygenSystem_On() end
+        if Dref_CabinAlt_Warn == 0 and DRef_Oxy_ValvePos == 1 then OxygenSystem_Off() end
+        if DRef_Oxy_ValvePos == 1 then
+            if DRef_PilotAlt > Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,2) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting + 1
+            elseif DRef_PilotAlt < Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,3) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting - 1
+            end
+            if DRef_Oxy_FlowSetting < 0 then DRef_Oxy_FlowSetting = 0 end
+            if DRef_Oxy_FlowSetting > 8 then DRef_Oxy_FlowSetting = 8 end
+        end
     end
     -- Determine pilot pilot condition
     if DRef_PilotAlt < Hypoxia_Stages_Alt[1] and Hypoxia_Stage ~= 0 then
         Hypoxia_Stage = 0
-        DisplayNotification("Oxygen System: Pilot Is Fine!","Nominal",5)
+        DisplayNotification("Oxygen System: Pilot Is Fine!","Nominal",10)
     elseif DRef_PilotAlt > Hypoxia_Stages_Alt[2] and DRef_PilotAlt < Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 1 then
         Hypoxia_Stage = 1
-        DisplayNotification("Oxygen System: Pilot Feels Hypoxia!","Caution",5)
+        DisplayNotification("Oxygen System: Pilot Feels Hypoxia!","Caution",10)
     elseif DRef_PilotAlt > Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 2 then
         Hypoxia_Stage = 2
-        DisplayNotification("Oxygen System: Pilot Impaired From Hypoxia!","Warning",5)
+        DisplayNotification("Oxygen System: Pilot Impaired From Hypoxia!","Warning",10)
     end
-    -- Write remainning oxygen in bottle to persistence table
+    -- Write remaining oxygen in bottle to persistence table
     if DRef_Oxy_ValvePos == 1 then Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain) end
+    -- Inform about oxygen bottle levels
+
+
+    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.75 and Bottle_Warn_Level < 1 then
+        Bottle_Warn_Level = 1
+        DisplayNotification("Oxygen System: 75 % of Bottle Capacity Remaining!","Nominal",10)
+    end
+    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.50 and Bottle_Warn_Level < 2 then
+        DisplayNotification("Oxygen System: 50 % of Bottle Capacity Remaining!","Caution",10)
+        Bottle_Warn_Level = 2
+    end
+    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.25 and Bottle_Warn_Level < 3 then
+        DisplayNotification("Oxygen System: 25 % of Bottle Capacity Remaining!","Warning",10)
+        Bottle_Warn_Level = 3
+    end
+    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.01 and Bottle_Warn_Level < 4 then
+        DisplayNotification("Oxygen System: Bottle is Empty!","Warning",20)
+        Bottle_Warn_Level = 4
+    end
+
     -- Refresh menu entries
     for i=2,#OxygenSystem_Menu_Items do
         OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
@@ -151,7 +179,7 @@ function OxygenSystem_Menu_Callbacks(itemref)
                 DebugLogOutput(OxygenSystem_Config_Vars[1][1]..": Decreased Flow Setting to "..Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2)..".")
             end
             if i == 11 then
-                if DRef_OnGround == 1 then DRef_Oxy_Remain = DRef_Oxy_Capacity DisplayNotification("Oxygen System: Bottle Refilled ("..DRef_Oxy_Capacity.." l)","Nominal",5) end
+                if DRef_OnGround == 1 then DRef_Oxy_Remain = DRef_Oxy_Capacity Bottle_Warn_Level = 0 DisplayNotification("Oxygen System: Bottle Refilled ("..DRef_Oxy_Capacity.." l)","Nominal",10) end
             end
             OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
         end

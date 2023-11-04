@@ -564,18 +564,6 @@ local Dref_List = {
 {"Dref[n]","sim/operation/failures/rel_apu"},	-- APU failure to start or run
 {"Dref[n]","sim/operation/failures/rel_apu_fire"},	-- APU catastrophic failure with fire
 }
---[[ Fixed datarefs that need constant monitoring ]]
-OnGround = find_dataref("sim/flightmodel/failures/onground_any") -- Repair function
-GroundSpeed = find_dataref("sim/flightmodel2/position/groundspeed") -- Repair function
---IsBurningFuel = find_dataref("sim/flightmodel2/engines/engine_is_burning_fuel") -- Inherited from util_ncheadset.lua
---NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines") -- Inherited from util_ncheadset.lua
-Baro_Pilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot") -- Barometer synchronization
-Baro_CoPilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot") -- Barometer synchronization
-Baro_Stby = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_stby") -- Barometer synchronization
---[[ Local variables ]]
-local Baro_Pilot_Old = Baro_Pilot
-local Baro_CoPilot_Old = Baro_CoPilot
-local Baro_Stby_Old = Baro_Stby
 --[[ Container Table for the Datarefs to be monitored. Datarefs are stored in subtables {dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local MiscUtils_Datarefs = {
 "DATAREF",
@@ -583,10 +571,47 @@ local MiscUtils_Datarefs = {
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local MiscUtils_Menu_Items = {
 "Miscellaneous",  -- Menu title, index 1
-" ",        -- Item index: 2
-"Synchronize Baros",
--- "Decrement Noise Level (- "..(Table_ValGet(MiscUtils_Config_Vars,"NoiseCancelLevelDelta") * 100).." %)",   -- Item index: 7
+" ",        -- Index: 2
+"Synchronize Baros", -- Index: 3
+"[Separator]",       -- Index: 4
+"Next Livery",       -- Index: 5
+"Previous Livery",   -- Index: 6
+"[Separator]",       -- Index: 7
+"Synchronize Date",  -- Index: 8
+"Synchronize Time",  -- Index: 9
 }
+
+--[[
+
+DATAREFS
+
+]]
+simDR_GroundSpeed = find_dataref("sim/flightmodel2/position/groundspeed") -- For repair function
+simDR_OnGround = find_dataref("sim/flightmodel/failures/onground_any") -- For repair function
+simDR_Baro_Pilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot") -- Barometer synchronization
+simDR_Baro_CoPilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot") -- Barometer synchronization
+simDR_Baro_Stby = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_stby") -- Barometer synchronization
+simDR_Livery_Path = find_dataref("sim/aircraft/view/acf_livery_path") -- Livery switcher
+simDR_Date = find_dataref("sim/time/local_date_days")
+simDR_Time_Local = find_dataref("sim/time/zulu_time_sec")
+--[[
+
+COMMANDS
+
+]]
+simCMD_Livery_Next = find_command("sim/operation/next_livery")
+simCMD_Livery_Prev = find_command("sim/operation/prev_livery")
+simCMD_Reload_Scenery = find_command("sim/operation/reload_scenery")
+--[[
+
+VARIABLES
+
+]]
+--[[ Local variables ]]
+local Baro_Pilot_Old = simDR_Baro_Pilot
+local Baro_CoPilot_Old = simDR_Baro_CoPilot
+local Baro_Stby_Old = simDR_Baro_Stby
+local Livery = {Current="",Old=""}
 --[[ Menu variables for FFI ]]
 local MiscUtils_Menu_ID = nil
 local MiscUtils_Menu_Pointer = ffi.new("const char")
@@ -604,32 +629,38 @@ function AllEnginesRunning()
 end
 --[[ Synchronize baros ]]
 function Sync_Baros()
-    if Baro_Pilot ~= Baro_Pilot_Old then
-        Baro_CoPilot = Baro_Pilot
-        Baro_CoPilot_Old = Baro_CoPilot
-        Baro_Stby = Baro_Pilot
-        Baro_Stby_Old = Baro_Stby
-        Baro_Pilot_Old = Baro_Pilot
+    if simDR_Baro_Pilot ~= Baro_Pilot_Old then
+        simDR_Baro_CoPilot = simDR_Baro_Pilot
+        Baro_CoPilot_Old = simDR_Baro_CoPilot
+        simDR_Baro_Stby = simDR_Baro_Pilot
+        Baro_Stby_Old = simDR_Baro_Stby
+        Baro_Pilot_Old = simDR_Baro_Pilot
     end
-    if Baro_CoPilot ~= Baro_CoPilot_Old then
-        Baro_Pilot = Baro_CoPilot
-        Baro_Pilot_Old = Baro_Pilot
-        Baro_Stby = Baro_CoPilot
-        Baro_Stby_Old = Baro_Stby
-        Baro_CoPilot_Old = Baro_CoPilot
+    if simDR_Baro_CoPilot ~= Baro_CoPilot_Old then
+        simDR_Baro_Pilot = simDR_Baro_CoPilot
+        Baro_Pilot_Old = simDR_Baro_Pilot
+        simDR_Baro_Stby = simDR_Baro_CoPilot
+        Baro_Stby_Old = simDR_Baro_Stby
+        Baro_CoPilot_Old = simDR_Baro_CoPilot
     end
-    if Baro_Stby ~= Baro_Stby_Old then
-        Baro_Pilot = Baro_Stby
-        Baro_Pilot_Old = Baro_Pilot
-        Baro_CoPilot = Baro_Stby
-        Baro_CoPilot_Old = Baro_CoPilot
-        Baro_Stby_Old = Baro_Stby
+    if simDR_Baro_Stby ~= Baro_Stby_Old then
+        simDR_Baro_Pilot = simDR_Baro_Stby
+        Baro_Pilot_Old = simDR_Baro_Pilot
+        simDR_Baro_CoPilot = simDR_Baro_Stby
+        Baro_CoPilot_Old = simDR_Baro_CoPilot
+        Baro_Stby_Old = simDR_Baro_Stby
     end
 end
 --[[ Main timer ]]
 function MiscUtils_MainTimer()
     MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
     if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
+    if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
+    if Livery.Old ~= Livery.Current then
+        DisplayNotification("Switched to livery: "..Livery.Current,"Nominal",5)
+        Livery.Old = Livery.Current
+    end
+    --print((os.date("%H")*3600)+(os.date("%M")*60)+(os.date("%S")))
 end
 --[[
 
@@ -641,7 +672,7 @@ function MiscUtils_Menu_Callbacks(itemref)
     for i=2,#MiscUtils_Menu_Items do
         if itemref == MiscUtils_Menu_Items[i] then
             if i == 2 then
-                if (OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Dataref_Write(MiscUtils_Datarefs,4,"All") DisplayNotification("All aircraft damage repaired!","Success",5) end
+                if (simDR_OnGround == 1 and simDR_GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Dataref_Write(MiscUtils_Datarefs,4,"All") DisplayNotification("All aircraft damage repaired!","Success",5) end
             end
             if i == 3 then
                 if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 0 then
@@ -651,6 +682,21 @@ function MiscUtils_Menu_Callbacks(itemref)
                 end
                 Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
             end
+            if i == 5 then
+                simCMD_Livery_Next:once()
+            end
+            if i == 6 then
+                simCMD_Livery_Prev:once()
+            end
+            if i == 8 then
+                DisplayNotification("Synchronizing XP Date ("..simDR_Date..") to System Date ("..(os.date("%j") - 1)..") and Reloading Scenery...","Nominal",5)
+                simDR_Date = (os.date("%j") - 1) -- X-Plane starts its year's days at zero
+                simCMD_Reload_Scenery:once()
+            end
+            if i == 9 then
+                DisplayNotification("Synchronizing XP Local Time ("..simDR_Time_Local..") to System Time ("..((os.date("%H")*3600)+(os.date("%M")*60)+os.date("%S"))..")...","Nominal",5)
+                simDR_Time_Local = (os.date("%H")*3600) + (os.date("%M")*60) + os.date("%S")
+            end
             MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
         end
     end
@@ -658,7 +704,7 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function MiscUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if (OnGround == 1 and GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable)
+        if (simDR_OnGround == 1 and simDR_GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable)
         else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Can Not Repair]",intable) end
     end
     if index == 3 then

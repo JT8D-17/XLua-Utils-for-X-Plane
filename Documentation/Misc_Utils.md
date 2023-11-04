@@ -1,6 +1,6 @@
 ## XLuaUtils Miscellaneous Utilities
 
-This document contains information about miscellaneous small utilities contained within XLuaUtils.
+This document contains information about XLuaUtil's collection of miscellaneous small utilities.
 
 [Back to Readme.md](../README.md) 
 
@@ -18,8 +18,14 @@ This document contains information about miscellaneous small utilities contained
 
 ![XLuaUtils Misc Menu](Images/XLuaUtils_Misc.jpg  "XLuaUtils Misc Menu")
 
-- _"Repair All Damage"_ resets all 500+ of X-Plane's failure datarefs to a value of zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this. If the aircraft can not be repaired, the menu entry will read _"[Can Not Repair]"_.
-- _"Synchronize Baros"_, when enabled, will synchronize the pilot, co-pilot and standby barometers when either of these are adjusted.
+Menu Item|Function
+-|-
+Repair All Damage|This resets the value of all X-Plane's failure datarefs (>500) to zero (from a value of six, indicating a failure). Aircraft must be standing still on the ground with all engines off in order to use this. If the aircraft can not be repaired, the menu entry will read _"[Can Not Repair]"_.
+Synchronize Baros|When enabled, synchronizes the pilot's, co-pilot's and standby altimeter when any of them are changed
+Next Livery|Switches to the next livery for the current aircraft
+Previous Livery|Switches to the previous livery for the current aircraft
+Synchronize Date|Synchronizes X-Plane's day and month to the system's day and month. Does not consider the year!
+Synchronize Time|Synchronizes X-Plane's local time to the system's local time
 
 &nbsp;
 
@@ -28,15 +34,19 @@ This document contains information about miscellaneous small utilities contained
 &nbsp;
 
 <a name="2"></a>
-### 2. Configuration via Preferences.cfg
+### 2. Configuration
 
-These are the persistence module parameters which are stored in lines prefixed with "MISC_UTILS" in _"preferences.cfg"_:
+The miscellaneous utilities can be configured in _"plugins/xlua/scripts/xluautils/preferences.cfg"_. Relevant lines:
 
-- `MainTimerInterval:string,1:number`   
-Update interval of the main timer for the miscellaneous utilities (in seconds; default: 1)
+```
+MISC_UTILS,MainTimerInterval:string,1:number
+MISC_UTILS,SyncBaros:string,1:number
+```
 
-- `SyncBaros:string,0:number`
-Synchronize barometric settings between altimeters disabled/enabled  (0/1; default: 0)
+Parameter|Value Range|Description
+-|-|-
+MainTimerInterval|> 0|Sets the refresh interval, in seconds, for the main timer used by misc utilities. Should be greater than zero.
+SyncBaros|0 or 1|1: Barometer synchronization (see "Menu" above) is enabled
 
 &nbsp;
 

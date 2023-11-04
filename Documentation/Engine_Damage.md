@@ -241,7 +241,7 @@ ENGINEDAMAGE,Notify_Time:string,30:number
 
 Parameter|Value Range|Description
 -|-|-
-MainTimerInterval|> 0|Sets the refresh interval for Engine Damage's main timer. Should be greater than zero. **Warning:** The lower the interval, the more frequent the failure chance calculation and thus the higher the chance of engine failure!
+MainTimerInterval|> 0|Sets the refresh interval, in seconds, for Engine Damage's main timer. Should be greater than zero. **Warning:** The lower the interval, the more frequent the failure chance calculation and thus the higher the chance of engine failure!
 Notify_Pin|1 or 0|Same as the menu's "Pin Messages" item
 Notify_Time|> 0|Sets how long a notification will be displayed if "Pin Messages" is *not* enabled
 

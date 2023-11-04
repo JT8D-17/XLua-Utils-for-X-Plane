@@ -18,8 +18,8 @@ local Persistence_Config_Vars = {
 {"Autoload",0},
 {"AutoloadDelay",5},
 {"Autosave",0},
-{"AutosaveInterval",30},
-{"AutosaveIntervalDelta",15},
+{"AutosaveInterval",120},
+{"AutosaveIntervalDelta",30},
 {"AutosaveDelay",10},
 {"SaveOnExit",0},
 }
