@@ -30,6 +30,7 @@ local EngineDamage_Profile = {
 {"DMG_N2",0,-1,"%",1.5,400,10,0.75},
 {"DMG_OIL_P",0,-1,"psi",1.5,600,10,0.75},
 {"DMG_OIL_T",0,-1,"°C",1.5,600,10,0.75},
+{"DMG_RPM_P",0,-1,"1/min",1.5,240,15,0.75},
 {"DMG_TRQ",0,-1,"Nm",1.5,50,15,0.75},
 {"RandomizeLimit",0.98,1.04},       -- Randomization range for limit values
 {"RandomizeDamage",0.98,1.02},       -- Randomization range for incurred damage
@@ -45,6 +46,7 @@ local Dref_List_Cont = {
 {"Eng_N2","sim/flightmodel2/engines/N2_percent"}, -- %
 {"Eng_OIL_P","sim/cockpit2/engine/indicators/oil_pressure_psi"}, -- psi
 {"Eng_OIL_T","sim/cockpit2/engine/indicators/oil_temperature_deg_C"}, -- deg C
+{"Eng_RPM_P","sim/cockpit2/engine/indicators/prop_speed_rsc"}, -- rad/sec
 {"Eng_TRQ","sim/flightmodel/engine/ENGN_driv_TRQ"}, -- Nm
 {"Fail_CHT_1","sim/operation/failures/rel_engfir0"}, -- 0: Normal, 6: Failed
 {"Fail_CHT_2","sim/operation/failures/rel_engfir1"}, -- 0: Normal, 6: Failed
@@ -102,6 +104,14 @@ local Dref_List_Cont = {
 {"Fail_OIL_T_6","sim/operation/failures/rel_engfir5"}, -- 0: Normal, 6: Failed
 {"Fail_OIL_T_7","sim/operation/failures/rel_engfir6"}, -- 0: Normal, 6: Failed
 {"Fail_OIL_T_8","sim/operation/failures/rel_engfir7"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_1","sim/operation/failures/rel_prpsep0"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_2","sim/operation/failures/rel_prpsep1"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_3","sim/operation/failures/rel_prpsep2"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_4","sim/operation/failures/rel_prpsep3"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_5","sim/operation/failures/rel_prpsep4"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_6","sim/operation/failures/rel_prpsep5"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_7","sim/operation/failures/rel_prpsep6"}, -- 0: Normal, 6: Failed
+{"Fail_RPM_P_8","sim/operation/failures/rel_prpsep7"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_1","sim/operation/failures/rel_pshaft0"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_2","sim/operation/failures/rel_pshaft1"}, -- 0: Normal, 6: Failed
 {"Fail_TRQ_3","sim/operation/failures/rel_pshaft2"}, -- 0: Normal, 6: Failed
@@ -124,6 +134,8 @@ local Dref_List_Once = {
 {"Limit_N2","sim/aircraft/limits/red_hi_N2"},     -- Maximum N2
 {"Limit_OIL_P","sim/aircraft/engine/acf_max_OILP"},     -- Maximum oil pressure in psi
 {"Limit_OIL_T","sim/aircraft/engine/acf_max_OILT"},     -- Maximum oil temperature in °C
+--{"Limit_RPM_E","sim/aircraft/engine/acf_RSC_redline_eng"}, -- Maximum engine speed, rad/sec
+{"Limit_RPM_P","sim/aircraft/controls/acf_RSC_redline_prp"}, -- Maximum prop speed, rad/sec
 {"Limit_TRQ","sim/aircraft/limits/red_hi_TRQ"},     -- Maximum torque in Nm or %
 {"Max_TRQ","sim/aircraft/controls/acf_trq_max_eng"},     -- Maximum torque in Nm
 {"Unit_CHT_C","sim/aircraft/engine/acf_CHT_is_C"}, -- Unit for the CHT limit
@@ -153,17 +165,18 @@ local EngineDamage_Menu_Items = {
 "N2",                       -- Item index: 10
 "OIL_P",                     -- Item index: 11
 "OIL_T",                     -- Item index: 12
-"TRQ",                      -- Item index: 13
-"[Separator]",              -- Item index: 14
-"Disable All",              -- Item index: 15
-"Repair Engine(s)",         -- Item index: 16
+"RPM_P",                     -- Item index: 13
+"TRQ",                      -- Item index: 14
+"[Separator]",              -- Item index: 15
+"Disable All",              -- Item index: 16
+"Repair Engine(s)",         -- Item index: 17
 }
 --[[ Menu variables for FFI ]]
 local EngineDamage_Menu_ID = nil
 local EngineDamage_Menu_Pointer = ffi.new("const char")
 --[[ Other variables ]]
 local EngineData={} -- Engine data container
-local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,OIL_P=0,OIL_T=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_MP={},F_N1={},F_N2={},F_OIL_P={},F_OIL_T={},F_TRQ={}} -- Helper to only display notifications upon changes
+local Notifications_OldStatus={CHT=0,EGT=0,ITT=0,MP=0,N1=0,N2=0,OIL_P=0,OIL_T=0,RPM_P=0,TRQ=0,F_CHT={},F_EGT={},F_ITT={},F_MP={},F_N1={},F_N2={},F_OIL_P={},F_OIL_T={},F_RPM_P={},F_TRQ={}} -- Helper to only display notifications upon changes
 local Notification_ID = {Stress="",Fail=""}
 --[[
 
@@ -185,6 +198,7 @@ function EngineDamage_DebugWindow_Init()
         if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
         if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_P") end
         if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_T") end
+        if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."RPM_P") end
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
     end
 end
@@ -209,6 +223,18 @@ local function EngineDamage_Randomize(target,input)
     output = input * output
     return output
 end
+--[[ Unit converter ]]
+local function EngineDamage_UnitConverter(in_value,in_unit,out_unit)
+    local out_value = 0
+    if in_unit == "°C" and out_unit == "°F" then out_value = (in_value * 1.8) + 32 end
+    if in_unit == "°F" and out_unit == "°C" then out_value = (in_value - 32) / 1.8 end
+    if in_unit == "lb-ft" and out_unit == "Nm" then out_value = in_value * 1.35582 end
+    if in_unit == "Nm" and out_unit == "lb-ft" then out_value = in_value / 1.35582 end
+    if in_unit == "rad/sec" and out_unit == "RPM" then out_value = in_value * 60 / (2 * math.pi) end
+    if in_unit == "RPM" and out_unit == "rad/sec" then out_value = in_value / 60 * (2 * math.pi) end
+    if in_unit == out_unit then out_value = in_value end
+    return out_value
+end
 --[[ Gathers information about the aircraft's engine type and auto-actiavtes suitable damage datarefs ]]
 function EngineDamage_ProfileAircraft()
     -- Loop through available engines
@@ -223,6 +249,7 @@ function EngineDamage_ProfileAircraft()
             {"N2","%",-1,-1,-1,-1,0,0,0,0},
             {"OIL_P","psi",-1,-1,-1,-1,0,0,0,0},
             {"OIL_T","°C",-1,-1,-1,-1,0,0,0,0},
+            {"RPM_P","1/min",-1,-1,-1,-1,0,0,0,0},
             {"TRQ","Nm",-1,-1,-1,-1,0,0,0,0},
         }
         -- Loop through engine data table and see if the parameters in its subtables can be populated
@@ -245,7 +272,11 @@ function EngineDamage_ProfileAircraft()
                     end
                     Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,3)) -- Assign the user override
                 else
-                    Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1)) -- Assign the dataref limit
+                    if EngineData[i][j][1] == "RPM_P" then
+                        Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1),"rad/sec","RPM")) -- Convert rad/sec to RPM
+                    else
+                        Table_ValSet(EngineData[i],EngineData[i][j][1],nil,3,Table_ValGet(EngineDamage_Drefs_Once,"Limit_"..EngineData[i][j][1],4,1)) -- Assign the dataref limit
+                    end
                 end
                 -- Use value #6 as temporary storage for the randomized damage tolerance
                 Table_ValSet(EngineData[i],EngineData[i][j][1],nil,6,math.floor(EngineDamage_Randomize("RandomizeLimit",Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,6))))
@@ -278,16 +309,6 @@ local function EngineDamage_RandomIntfromRange(engineindex,paramindex)
     randomnumber = math.random(0,math.ceil((((1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,3)) - (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))) / 100) * (Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,8) / Table_ValGet(EngineData[engineindex],EngineData[engineindex][paramindex][1],nil,5) * 100) + (1 / Table_ValGet(EngineDamage_Profile,"FailureChance",nil,2))))
     return randomnumber
 end
---[[ Unit converter ]]
-local function EngineDamage_UnitConverter(in_value,in_unit,out_unit)
-    local out_value = 0
-    if in_unit == "°C" and out_unit == "°F" then out_value = (in_value * 1.8) + 32 end
-    if in_unit == "°F" and out_unit == "°C" then out_value = (in_value - 32) / 1.8 end
-    if in_unit == "lb-ft" and out_unit == "Nm" then out_value = in_value * 1.35582 end
-    if in_unit == "Nm" and out_unit == "lb-ft" then out_value = in_value / 1.35582 end
-    if in_unit == out_unit then out_value = in_value end
-    return out_value
-end
 --[[ Checks an engine component for being above a limit and accumulates stress on the engine ]]
 local function EngineDamage_CheckStress()
     for i=1,#EngineData do -- Loop through all engines
@@ -318,6 +339,10 @@ local function EngineDamage_CheckStress()
                     if EngineData[i][j][1] == "OIL_T" then
                         if Table_ValGet(EngineDamage_Drefs_Once,"Unit_OIL_T_C",4,1) == 0 then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°F",EngineData[i][j][2])
                         else datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"°C",EngineData[i][j][2]) end
+                    end
+                    -- Handle RPM_P dataref unit and engine profile unit
+                    if EngineData[i][j][1] == "RPM_P" then
+                        datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"rad/sec","RPM")
                     end
                     -- Handle TRQ dataref unit and engine profile unit
                     if EngineData[i][j][1] == "TRQ" then
@@ -432,6 +457,7 @@ function EngineDamage_Profile_Read(inputfile)
         file:close()
         if counter > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
+        EngineDamage_HasProfile = 0
         LogOutput("FILE NOT FOUND: Engine Profile")
     end
 end
@@ -473,6 +499,8 @@ function EngineDamage_Notifications()
     if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) < Notifications_OldStatus.OIL_P then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by P_Oil: Off") DisplayNotification("Engine damage by P_Oil: Off","Nominal",5)  Notifications_OldStatus.OIL_P = Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) > Notifications_OldStatus.OIL_T then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by T_Oil: On") DisplayNotification("Engine damage by T_Oil: On","Caution",5)  Notifications_OldStatus.OIL_T = Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) < Notifications_OldStatus.OIL_T then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by T_Oil: Off") DisplayNotification("Engine damage by T_Oil: Off","Nominal",5)  Notifications_OldStatus.OIL_T = Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) > Notifications_OldStatus.RPM_P then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by RPM: On") DisplayNotification("Engine damage by RPM: On","Caution",5)  Notifications_OldStatus.RPM_P = Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) end
+    if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) < Notifications_OldStatus.RPM_P then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by RPM: Off") DisplayNotification("Engine damage by RPM: Off","Nominal",5)  Notifications_OldStatus.RPM_P = Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) > Notifications_OldStatus.TRQ then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by TRQ: On") DisplayNotification("Engine damage by TRQ: On","Caution",5)  Notifications_OldStatus.TRQ = Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) end
     if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) < Notifications_OldStatus.TRQ then DebugLogOutput(EngineDamage_Profile[1][1]..": Engine damage by TRQ: Off") DisplayNotification("Engine damage by TRQ: Off","Nominal",5)  Notifications_OldStatus.TRQ = Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) end
 end
@@ -486,7 +514,7 @@ function EngineDamage_Menu_Callbacks(itemref)
     for i=2,#EngineDamage_Menu_Items do
         if itemref == EngineDamage_Menu_Items[i] then
             if i == 2 then
-                if EngineDamage_HasProfile == 0 then EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File) EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,2) end
+                if EngineDamage_HasProfile == 0 then EngineDamage_FirstRun() end
                 if EngineDamage_HasProfile == 1 then EngineDamage_Reload() end
             end
             if i == 3 then
@@ -525,10 +553,14 @@ function EngineDamage_Menu_Callbacks(itemref)
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
             if i == 13 then
+                if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_RPM_P",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_RPM_P",nil,2,0) end
+                EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
+            end
+            if i == 14 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 15 then
+            if i == 16 then
                 Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,5)
                 Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,6)
                 Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,7)
@@ -537,12 +569,13 @@ function EngineDamage_Menu_Callbacks(itemref)
                 Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,10)
                 Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,11)
                 Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,12)
-                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,13)
+                Table_ValSet(EngineDamage_Profile,"DMG_RPM_P",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,13)
+                Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,14)
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
                 DisplayNotification("All engine damage sources have been disabled!","Nominal",10)
             end
-            if i == 16 then
+            if i == 17 then
                 EngineDamage_RepairAll()
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
@@ -602,22 +635,36 @@ function EngineDamage_Menu_Watchdog(intable,index)
         if Table_ValGet(EngineData[1],"OIL_T",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"OIL_T",nil,3)).." "..Table_ValGet(EngineData[1],"OIL_T",nil,2)..")",intable) end
     end
     if index == 13 then
+        if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
+        else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(EngineData[1],"RPM_P",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"RPM_P",nil,3)).." "..Table_ValGet(EngineData[1],"RPM_P",nil,2)..")",intable) end
+    end
+    if index == 14 then
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
-        --print(Table_ValGet(EngineData[1],"TRQ",nil,3))
         if Table_ValGet(EngineData[1],"TRQ",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"TRQ",nil,3)).." "..Table_ValGet(EngineData[1],"TRQ",nil,2)..")",intable) end
     end
     --print(index)
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function EngineDamage_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#EngineDamage_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
+--[[ Registration routine for the menu ]]
+function EngineDamage_Menu_Register()
+    if XPLM ~= nil and EngineDamage_Menu_ID == nil then
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,EngineDamage_Menu_Items[1],ffi.cast("void *","None"),1)
-        EngineDamage_Menu_ID = XPLM.XPLMCreateMenu(EngineDamage_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) EngineDamage_Menu_Callbacks(inItemRef) end,ffi.cast("void *",EngineDamage_Menu_Pointer))
-        for i=2,#EngineDamage_Menu_Items do
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,EngineDamage_Menu_Items[1],ffi.cast("void *","None"),1)
+        EngineDamage_Menu_ID = XPLM.XPLMCreateMenu(EngineDamage_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) EngineDamage_Menu_Callbacks(inItemRef) end,ffi.cast("void *",EngineDamage_Menu_Pointer))
+        EngineDamage_Menu_Build()
+        LogOutput(EngineDamage_Config_Vars[1][1].." Menu registered!")
+    end
+end
+--[[ Initialization routine for the menu ]]
+function EngineDamage_Menu_Build()
+    XPLM.XPLMClearAllMenuItems(EngineDamage_Menu_ID)
+    local Menu_Indices = {}
+    local endindex = 2
+    if EngineDamage_HasProfile == 1 then endindex = #EngineDamage_Menu_Items end
+    for i=2,endindex do Menu_Indices[i] = 0 end
+    if EngineDamage_Menu_ID ~= nil then
+        for i=2,endindex do
             if EngineDamage_Menu_Items[i] ~= "[Separator]" then
                 EngineDamage_Menu_Pointer = EngineDamage_Menu_Items[i]
                 Menu_Indices[i] = XPLM.XPLMAppendMenuItem(EngineDamage_Menu_ID,EngineDamage_Menu_Items[i],ffi.cast("void *",EngineDamage_Menu_Pointer),1)
@@ -625,12 +672,12 @@ function EngineDamage_Menu_Build(ParentMenuID)
                 XPLM.XPLMAppendMenuSeparator(EngineDamage_Menu_ID)
             end
         end
-        for i=2,#EngineDamage_Menu_Items do
+        for i=2,endindex do
             if EngineDamage_Menu_Items[i] ~= "[Separator]" then
                 EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
             end
         end
-        LogOutput(EngineDamage_Config_Vars[1][1].." Menu initialized!")
+        LogOutput(EngineDamage_Config_Vars[1][1].." Menu built!")
     end
 end
 --[[
@@ -649,39 +696,45 @@ end
 INITIALIZATION
 
 ]]
---[[ First start of the engine damage module ]]
+--[[ Some common start routines ]]
+function EngineDamage_Start()
+    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
+    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
+    if EngineDamage_HasProfile == 1 then
+        EngineDamage_ProfileAircraft()
+        EngineDamage_Notifications()
+        run_at_interval(EngineDamage_MainTimer,Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2))
+        if is_timer_scheduled(EngineDamage_MainTimer) then DisplayNotification("Engine Damage: Monitoring Started","Nominal",5) end
+    end
+end
+--[[ Module is run for the very first time ]]
 function EngineDamage_FirstRun()
-    Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
     --[[if FileExists(XLuaUtils_Path..EngineDamage_Profile_File) then
         LogOutput(EngineDamage_Config_Vars[1][1]..": Existing engine profile found, skipping creation of a new one!")
     else
         EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
     end]]
-    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
-    DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
-    DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
-    EngineDamage_Menu_Build(XLuaUtils_Menu_ID)
+    EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
+    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
+    EngineDamage_Menu_Build()
+    EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,2)
+    Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
     LogOutput(EngineDamage_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes engine damage at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function EngineDamage_Init()
     math.randomseed(os.time()) -- Generate random seed for random number generator
-    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
     Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with current values
     Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
-    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
-    EngineDamage_Notifications()
-    EngineDamage_ProfileAircraft()
-    run_at_interval(EngineDamage_MainTimer,Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2))
+    EngineDamage_Start()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Initialized!")
 end
---[[ Reloads the engine damage configuration ]]
+--[[ Module reload ]]
 function EngineDamage_Reload()
-    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
-    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
-    EngineDamage_ProfileAircraft()
-    EngineDamage_Notifications()
+    if is_timer_scheduled(EngineDamage_MainTimer) then stop_timer(EngineDamage_MainTimer) DisplayNotification("Engine Damage: Monitoring Stopped","Nominal",5) end -- Clean up old timer
+    EngineDamage_Start()
+    EngineDamage_Menu_Build()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Reloaded!")
 end

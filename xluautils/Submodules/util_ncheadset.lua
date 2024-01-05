@@ -92,11 +92,13 @@ function NCHeadset_MainTimer()
         NCHeadset_On()
         HeadSetStatus_Old = 1
         DebugLogOutput(NCHeadset_Config_Vars[1][1]..": On")
+        DisplayNotification("Noise Cancelling Headset: On","Nominal",5)
     end
     if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 and HeadSetStatus_Old == 1 then
         NCHeadset_Off()
         HeadSetStatus_Old = 0
         DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Off")
+        DisplayNotification("Noise Cancelling Headset: Off","Nominal",5)
     end
 end
 --[[
@@ -111,9 +113,10 @@ function NCHeadset_Menu_Callbacks(itemref)
             if i == 2 then
                 if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,1)
                 elseif Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 then if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) end Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,0) end
+                Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
             end
             if i == 3 then
-                if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,1) else Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) end
+                if Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 0 then Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,1) DisplayNotification("Noise Cancelling Headset: Automation On","Nominal",5) else Table_ValSet(NCHeadset_Config_Vars,"Automation",nil,2,0) DisplayNotification("Noise Cancelling Headset: Automation Off","Nominal",5) end
                 Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
                 DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Set Automation to "..Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2))
             end
@@ -160,28 +163,38 @@ function NCHeadset_Menu_Watchdog(intable,index)
         elseif Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then Menu_ChangeItemPrefix(NCHeadset_Menu_ID,index,"[On] ",intable) end
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function NCHeadset_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#NCHeadset_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
+--[[ Registration routine for the menu ]]
+function NCHeadset_Menu_Register()
+    if XPLM ~= nil and NCHeadset_Menu_ID == nil then
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,NCHeadset_Menu_Items[1],ffi.cast("void *","None"),1)
-        NCHeadset_Menu_ID = XPLM.XPLMCreateMenu(NCHeadset_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) NCHeadset_Menu_Callbacks(inItemRef) end,ffi.cast("void *",NCHeadset_Menu_Pointer))
-        for i=2,#NCHeadset_Menu_Items do
-            if NCHeadset_Menu_Items[i] ~= "[Separator]" then
-                NCHeadset_Menu_Pointer = NCHeadset_Menu_Items[i]
-                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(NCHeadset_Menu_ID,NCHeadset_Menu_Items[i],ffi.cast("void *",NCHeadset_Menu_Pointer),1)
-            else
-                XPLM.XPLMAppendMenuSeparator(NCHeadset_Menu_ID)
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,NCHeadset_Menu_Items[1],ffi.cast("void *","None"),1)
+        NCHeadset_Menu_ID = XPLM.XPLMCreateMenu(NCHeadset_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) NCHeadset_Menu_Callbacks(inItemRef) end,ffi.cast("void *",NCHeadset_Menu_Pointer))
+        NCHeadset_Menu_Build()
+        LogOutput(NCHeadset_Config_Vars[1][1].." Menu registered!")
+    end
+end
+--[[ Initialization routine for the menu. ]]
+function NCHeadset_Menu_Build()
+    XPLM.XPLMClearAllMenuItems(NCHeadset_Menu_ID)
+    local Menu_Indices = {}
+    if XLuaUtils_HasConfig == 1 then
+        for i=2,#NCHeadset_Menu_Items do Menu_Indices[i] = 0 end
+        if NCHeadset_Menu_ID ~= nil then
+            for i=2,#NCHeadset_Menu_Items do
+                if NCHeadset_Menu_Items[i] ~= "[Separator]" then
+                    NCHeadset_Menu_Pointer = NCHeadset_Menu_Items[i]
+                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(NCHeadset_Menu_ID,NCHeadset_Menu_Items[i],ffi.cast("void *",NCHeadset_Menu_Pointer),1)
+                else
+                    XPLM.XPLMAppendMenuSeparator(NCHeadset_Menu_ID)
+                end
             end
-        end
-        for i=2,#NCHeadset_Menu_Items do
-            if NCHeadset_Menu_Items[i] ~= "[Separator]" then
-                NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
+            for i=2,#NCHeadset_Menu_Items do
+                if NCHeadset_Menu_Items[i] ~= "[Separator]" then
+                    NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
+                end
             end
+            LogOutput(NCHeadset_Config_Vars[1][1].." Menu built!")
         end
-        LogOutput(NCHeadset_Config_Vars[1][1].." Menu initialized!")
     end
 end
 --[[
@@ -189,15 +202,15 @@ end
 INITIALIZATION
 
 ]]
---[[ First start of the NCHeadset module ]]
+--[[ Module is run for the very first time ]]
 function NCHeadset_FirstRun()
     Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    NCHeadset_Menu_Build(XLuaUtils_Menu_ID)
+    NCHeadset_Menu_Build()
     LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes NCHeadset at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function NCHeadset_Init()
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
@@ -206,9 +219,9 @@ function NCHeadset_Init()
     run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
     LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end
---[[ Reloads the NCHeadset configuration ]]
+--[[ Module reload ]]
 function NCHeadset_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
-    --NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,8)
+    NCHeadset_Menu_Build()
     LogOutput(NCHeadset_Config_Vars[1][1]..": Reloaded!")
 end

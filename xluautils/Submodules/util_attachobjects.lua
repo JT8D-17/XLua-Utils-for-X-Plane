@@ -394,7 +394,7 @@ end
 RUNTIME FUNCTIONS
 
 ]]
---[[ Main timer for the engine damage logic ]]
+--[[ Main timer for the attach object logic ]]
 function AttachObject_MainTimer()
     AttachObject_CheckVisibility()
 end
@@ -427,7 +427,7 @@ function AttachObject_Startup()
     AttachObject_Menu_Watchdog(AttachObj_Menu_Items,3)
     run_at_interval(AttachObject_MainTimer,Table_ValGet(AttachObj_Config_Vars,"MainTimerInterval",nil,2))
 end
---[[ First start of the engine damage module ]]
+--[[ First start of the attach object module ]]
 function AttachObject_FirstRun()
     AttachObject_Config_Write() -- Write new skeleton config file
     if FileExists(XLuaUtils_Path..AttachObj_Config_File) then AttachObj_HasConfig = 1 end -- Check if config file exists
@@ -437,13 +437,17 @@ function AttachObject_FirstRun()
     --AttachObj_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(AttachObj_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes engine damage at every startup ]]
+--[[ Initializes attach object at every startup ]]
 function AttachObject_Init()
     if FileExists(XLuaUtils_Path..AttachObj_Config_File) then -- Check if config file exists
         AttachObj_HasConfig = 1
         AttachObject_Startup()
     end
     LogOutput(AttachObj_Config_Vars[1][1]..": Initialized!")
+end
+--[[ Initializes the utility's menu ]]
+function AttachObject_Menu_Init()
+    if AttachObj_Menu_ID == nil then AttachObject_Menu_Build(XLuaUtils_Menu_ID) end -- Build the menu
 end
 --[[ Reloads the Persistence configuration ]]
 function AttachObject_Reload()

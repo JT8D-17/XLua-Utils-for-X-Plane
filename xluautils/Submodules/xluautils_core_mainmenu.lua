@@ -19,17 +19,14 @@ function Main_Menu_Callbacks(itemref)
             if i == 2 then
                 if XLuaUtils_HasConfig == 0 then
                     LogOutput("FIRST TIME INITIALIZATION START")
-                    Persistence_FirstRun() -- Generates config files for the persistence module
-                    NCHeadset_FirstRun()   -- Generates/appends config file for the ncheadset module
-                    EngineDamage_FirstRun() -- Generates the config file for the engine damage module
+                    SubModules_FirstRun()
+                    DisplayNotification("XLuaUtils Initialization Complete","Nominal",5)
                     LogOutput("FIRST TIME INITIALIZATION END")
                 elseif XLuaUtils_HasConfig == 1 then
-                    LogOutput("SUBMODULE RELOAD START")
-                    Persistence_Reload() -- Reloads the persistence module
-                    NCHeadset_Reload()  -- Reloads the ncheadset module
-                    EngineDamage_Reload() -- Reloads the engine damage module
-                    Debug_Window_Reload() -- Reloads the debug window module
-                    LogOutput("SUBMODULE RELOAD END")
+                    LogOutput("SUBMODULES RELOAD START")
+                    SubModules_Reload()
+                    DisplayNotification("XLuaUtils Submodules Reloaded","Nominal",5)
+                    LogOutput("SUBMODULES RELOAD END")
                 end
             end
             Main_Menu_Watchdog(Main_Menu_Items,i)

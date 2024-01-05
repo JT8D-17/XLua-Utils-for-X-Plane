@@ -712,28 +712,38 @@ function MiscUtils_Menu_Watchdog(intable,index)
         else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Off]",intable) end
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function MiscUtils_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#MiscUtils_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
+--[[ Registration routine for the menu ]]
+function MiscUtils_Menu_Register()
+    if XPLM ~= nil and MiscUtils_Menu_ID == nil then
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,MiscUtils_Menu_Items[1],ffi.cast("void *","None"),1)
-        MiscUtils_Menu_ID = XPLM.XPLMCreateMenu(MiscUtils_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) MiscUtils_Menu_Callbacks(inItemRef) end,ffi.cast("void *",MiscUtils_Menu_Pointer))
-        for i=2,#MiscUtils_Menu_Items do
-            if MiscUtils_Menu_Items[i] ~= "[Separator]" then
-                MiscUtils_Menu_Pointer = MiscUtils_Menu_Items[i]
-                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(MiscUtils_Menu_ID,MiscUtils_Menu_Items[i],ffi.cast("void *",MiscUtils_Menu_Pointer),1)
-            else
-                XPLM.XPLMAppendMenuSeparator(MiscUtils_Menu_ID)
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,MiscUtils_Menu_Items[1],ffi.cast("void *","None"),1)
+        MiscUtils_Menu_ID = XPLM.XPLMCreateMenu(MiscUtils_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) MiscUtils_Menu_Callbacks(inItemRef) end,ffi.cast("void *",MiscUtils_Menu_Pointer))
+        MiscUtils_Menu_Build()
+        LogOutput(MiscUtils_Config_Vars[1][1].." Menu registered!")
+    end
+end
+--[[ Initialization routine for the menu. ]]
+function MiscUtils_Menu_Build()
+    XPLM.XPLMClearAllMenuItems(MiscUtils_Menu_ID)
+    local Menu_Indices = {}
+    if XLuaUtils_HasConfig == 1 then
+        for i=2,#MiscUtils_Menu_Items do Menu_Indices[i] = 0 end
+        if MiscUtils_Menu_ID ~= nil then
+            for i=2,#MiscUtils_Menu_Items do
+                if MiscUtils_Menu_Items[i] ~= "[Separator]" then
+                    MiscUtils_Menu_Pointer = MiscUtils_Menu_Items[i]
+                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(MiscUtils_Menu_ID,MiscUtils_Menu_Items[i],ffi.cast("void *",MiscUtils_Menu_Pointer),1)
+                else
+                    XPLM.XPLMAppendMenuSeparator(MiscUtils_Menu_ID)
+                end
             end
-        end
-        for i=2,#MiscUtils_Menu_Items do
-            if MiscUtils_Menu_Items[i] ~= "[Separator]" then
-                MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
+            for i=2,#MiscUtils_Menu_Items do
+                if MiscUtils_Menu_Items[i] ~= "[Separator]" then
+                    MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
+                end
             end
+            LogOutput(MiscUtils_Config_Vars[1][1].." Menu built!")
         end
-        LogOutput(MiscUtils_Config_Vars[1][1].." Menu initialized!")
     end
 end
 --[[
@@ -741,15 +751,15 @@ end
 INITIALIZATION
 
 ]]
---[[ First start of the misc utils module ]]
+--[[ Module is run for the very first time ]]
 function MiscUtils_FirstRun()
     Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
     Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    MiscUtils_Menu_Init(XLuaUtils_Menu_ID)
+    MiscUtils_Menu_Build()
     LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes the misc utils module at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function MiscUtils_Init()
     Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
@@ -758,4 +768,8 @@ function MiscUtils_Init()
     for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][4][1] = 0 end -- Zero all datarefs
     run_at_interval(MiscUtils_MainTimer,Table_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
     LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
+end
+--[[ Module reload ]]
+function MiscUtils_Reload()
+    MiscUtils_Menu_Build()
 end

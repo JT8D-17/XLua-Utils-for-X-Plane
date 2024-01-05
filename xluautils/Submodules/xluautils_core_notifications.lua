@@ -21,6 +21,7 @@ local Notification_Stack = { } -- Subtable format: {string,color string} Color s
 local Notification_Stack_Buffer = { } -- Temporary; ignore
 local Notification_Stack_ToDelete = { } -- Temporary; ignore
 local NotifyWindow_ID = nil
+Notification_RefTime = find_dataref("sim/time/total_running_time_sec")
 --[[
 
 FUNCTIONS
@@ -28,7 +29,7 @@ FUNCTIONS
 ]]
 --[[ Function to display a notification. Parameters: inputstring, "Nominal"/"Success"/"Caution"/"Warning", displaytime in seconds (negative number produces a pinned notification; number must be unique!) ]]
 function DisplayNotification(inputstring,colorkey,displaytime)
-    if displaytime > 0 then displaytime = os.time() + displaytime end
+    if displaytime > 0 then displaytime = Notification_RefTime + displaytime end
     Notification_Stack[#Notification_Stack+1] = {inputstring,colorkey,displaytime}
 end
 --[[ Check if a notification with a unique ID exists ]]
@@ -41,7 +42,7 @@ end
 function RemoveNotification(inID)
     for i=1,#Notification_Stack do
         if Notification_Stack[i][3] == inID then
-            Notification_Stack[i][3] = os.time()
+            Notification_Stack[i][3] = Notification_RefTime
         end
     end
 end
@@ -54,10 +55,10 @@ end
 function UpdateNotificationWindowBuffer()
     Notification_Stack_Buffer = { }
     for i=1,#Notification_Stack do
-        if Notification_Stack[i][3] <= 0 or os.time() < Notification_Stack[i][3] then
+        if Notification_Stack[i][3] <= 0 or Notification_RefTime < Notification_Stack[i][3] then
             Notification_Stack_Buffer[#Notification_Stack_Buffer+1] = Notification_Stack[i] --{Notification_Stack[i][1],Notification_Stack[i][2],"xx"}
         --else
-            --print("Remove: "..Notification_Stack[i][3].." --> "..os.time())
+            --print("Remove: "..Notification_Stack[i][3].." --> "..Notification_RefTime)
         end
     end
     Notification_Stack = Notification_Stack_Buffer
@@ -92,7 +93,7 @@ function Notify_Window_Draw(inWindowID,inRefcon)
     local buffer = ffi.new("char[1024]")
     for i = 1,#Notification_Stack_Buffer do
         local time_remaining = "Pin"
-        if Notification_Stack_Buffer[i][3] >= 0 then time_remaining = string.format("%02d",Notification_Stack[i][3] - os.time()) end
+        if Notification_Stack_Buffer[i][3] >= 0 then time_remaining = string.format("%02d",Notification_Stack[i][3] - Notification_RefTime) end
         if string.len(Notification_Stack_Buffer[i][1]) > Window_LineProps[2] then buffer = "("..time_remaining..") "..string.sub(Notification_Stack_Buffer[i][1],1,Window_LineProps[2]) else buffer = "("..time_remaining..") "..Notification_Stack_Buffer[i][1] end
         if Notification_Stack_Buffer[i][2] == "Nominal" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[1]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end
         if Notification_Stack_Buffer[i][2] == "Success" then XPLM.XPLMDrawString(ffi.new("float[3]",Window_StringColors[2]),(Window_Coords[1]+5),(Window_Coords[2]-((i+1)*Window_LineProps[1])),ffi.cast("char *",buffer),nil,Window_FontID) end

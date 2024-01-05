@@ -53,23 +53,68 @@ TIMERS
 --run_timer(func,10,5) -- Runs func after delay seconds, then every interval seconds after that.
 --stop_timer(func) -- This ensures that func does not run again until you re­schedule it; any scheduled runs from previous calls are canceled.
 --is_timer_scheduled(func) -- This returns true if the timer function will run at any time in the future. It returns false if the timer isn’t scheduled or if func has never been used as a timer. 
+--[[
+
+MENUS
+
+]]
+--[[ Registers the submodule/utility menus ]]
+function Menus_Init()
+    Main_Menu_Init() -- Only triggers the menu watchdog
+
+    AttachObject_Menu_Init()
+
+    Automix_Menu_Register()
+    EngineDamage_Menu_Register()
+    NCHeadset_Menu_Register()
+    MiscUtils_Menu_Register()
+
+
+    OxygenSystem_Menu_Init()
+    Persistence_Menu_Init()
+end
+--[[
+
+SUBMODULE/UTILITY CALLBACKS
+
+]]
+--[[ Calls first run routines from submodules/utilities ]]
+function SubModules_FirstRun()
+    Persistence_FirstRun() -- Generates config files for the persistence module
+    NCHeadset_FirstRun()   -- Generates/appends config file for the ncheadset module
+    Menus_Init()
+end
+--[[ Calls reload routines from submodules/utilities ]]
+function SubModules_Reload()
+    Persistence_Reload() -- Reloads the persistence module
+
+    MiscUtils_Reload()  -- Reloads the misc utilities module
+    NCHeadset_Reload()  -- Reloads the ncheadset module
+    Debug_Window_Reload() -- Reloads the debug window module
+    Menus_Init()
+end
+--[[ Calls unload routines from submodules/utilities ]]
+function SubModules_Unload()
+    Persistence_Unload()
+    NCHeadset_Off()
+    Debug_Unload()
+    Notify_Window_Unload()
+    Main_Menu_Unload()
+    AttachObject_Unload()
+    Automix_Unload()
+end
 --[[ 
 
-X-PLANE WRAPPERS
+X-PLANE CALLBACKS
 
 ]]
 -- 1: Aircraft loading
 --[[function aircraft_load()
 end]]
 function aircraft_unload()
-    Persistence_Unload()
-    NCHeadset_Off()
-    LogOutput("AIRCRAFT UNLOAD")
-    Debug_Unload()
-    Notify_Window_Unload()
-    Main_Menu_Unload()
-    AttachObject_Unload()
-    Automix_Unload()
+    LogOutput("AIRCRAFT UNLOAD DETECTED")
+    SubModules_Unload()
+    LogOutput("SUBMODULES UNLOADED")
 end
 -- 2: Flight start
 function flight_start()
@@ -97,17 +142,10 @@ function flight_start()
     OxygenSystem_Init() -- Initialize Oxygen System
     Debug_Menu_Build(XLuaUtils_Menu_ID)
     if XLuaUtils_HasConfig == 1 then
-        Main_Menu_Init() -- Only triggers the menu watchdog
-        Persistence_Menu_Build(XLuaUtils_Menu_ID) -- Persistence menu
+        Menus_Init()
         Persistence_Autoload()
         Persistence_AutosaveTimerCtrl()
-        NCHeadset_Menu_Build(XLuaUtils_Menu_ID)
-        Automix_Menu_Register(XLuaUtils_Menu_ID) -- Registers the automixture menu
-        EngineDamage_Menu_Build(XLuaUtils_Menu_ID)
-        AttachObject_Menu_Build(XLuaUtils_Menu_ID)
-        OxygenSystem_Menu_Build(XLuaUtils_Menu_ID)
     end
-    MiscUtils_Menu_Build(XLuaUtils_Menu_ID)
     if DebugIsEnabled() == 1 then Debug_Start() end
 end
 -- 3: Flight crash

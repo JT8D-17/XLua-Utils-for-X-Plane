@@ -264,7 +264,6 @@ function Persistence_FirstRun()
     end
     Preferences_Read(XLuaUtils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(XLuaUtils_Path.."datarefs.cfg")
-    Persistence_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(Persistence_Config_Vars[1][1]..": First Initialization Completed!")
 end
 --[[ Initializes persistence at every startup ]]
@@ -324,6 +323,10 @@ function Persistence_AutosaveTimerCtrl()
             Persistence_TimerStop()
         end
     end
+end
+--[[ Initializes the utility's menu ]]
+function Persistence_Menu_Init()
+    if Persistence_Menu_ID == nil then Persistence_Menu_Build(XLuaUtils_Menu_ID) end -- Build the menu
 end
 --[[ Unload logic for the persistence module ]]
 function Persistence_Unload()

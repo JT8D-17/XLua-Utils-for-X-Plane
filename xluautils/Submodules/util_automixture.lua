@@ -343,7 +343,7 @@ function Automix_Menu_Callbacks(itemref)
     for i=2,#Automix_Menu_Items do
         if itemref == Automix_Menu_Items[i] then
             if i == 2 then
-                if Automix_HasProfile == 0 then Automix_Profile_Write(XLuaUtils_Path..Automix_Profile_File) Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File) Automix_Menu_Handler() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile) end
+                if Automix_HasProfile == 0 then Automix_Profile_Write(XLuaUtils_Path..Automix_Profile_File) Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File) Automix_Menu_Build() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile) end
                 if Automix_HasProfile == 1 then Automix_Reload() end
             end
             if i == 4 then
@@ -426,22 +426,24 @@ function Automix_Menu_Watchdog(intable,index)
 end
 
 --[[ Registration routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function Automix_Menu_Register(ParentMenuID)
-    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 and XPLM ~= nil then -- Only initialize automixture menu if the engine is a reciprocating type
+function Automix_Menu_Register()
+    if Automix_Menu_ID == nil and Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 and XPLM ~= nil then -- Only initialize automixture menu if the engine is a reciprocating type
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
-        Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
-        Automix_Menu_Handler()
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
+        Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
+        Automix_Menu_Build()
         LogOutput(Automix_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Menu building routine ]]
-function Automix_Menu_Build(startindex,endindex)
+function Automix_Menu_Build()
     XPLM.XPLMClearAllMenuItems(Automix_Menu_ID)
     local Menu_Indices = {}
-    for i=startindex,endindex do Menu_Indices[i] = 0 end
+    local endindex = 2
+    if Automix_HasProfile == 1 then endindex = #Automix_Menu_Items end
+    for i=2,endindex do Menu_Indices[i] = 0 end
     if Automix_Menu_ID ~= nil then
-        for i=startindex,endindex do
+        for i=2,endindex do
             if Automix_Menu_Items[i] ~= "[Separator]" then
                 Automix_Menu_Pointer = Automix_Menu_Items[i]
                 Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Automix_Menu_ID,Automix_Menu_Items[i],ffi.cast("void *",Automix_Menu_Pointer),1)
@@ -449,17 +451,13 @@ function Automix_Menu_Build(startindex,endindex)
                 XPLM.XPLMAppendMenuSeparator(Automix_Menu_ID)
             end
         end
-        for i=startindex,endindex do
+        for i=2,endindex do
             if Automix_Menu_Items[i] ~= "[Separator]" then
                 Automix_Menu_Watchdog(Automix_Menu_Items,i)
             end
         end
         LogOutput(Automix_Config_Vars[1][1].." Menu built!")
     end
-end
---[[ Handles building the automixture menu depending on presence of a config file or not ]]
-function Automix_Menu_Handler()
-    if Automix_HasProfile == 0 then Automix_Menu_Build(2,2) elseif Automix_HasProfile == 1 then Automix_Menu_Build(2,#Automix_Menu_Items) end
 end
 --[[
 
@@ -508,16 +506,16 @@ end
 INITIALIZATION
 
 ]]
---[[ First start of the automixture module ]]
+--[[ Module is run for the very first time ]]
 function Automix_FirstRun()
     Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
     Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
-    Automix_Menu_Handler()
+    Automix_Menu_Build()
     LogOutput(Automix_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes automixture at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function Automix_Init()
     -- Read datarefs that are only read once
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
@@ -532,17 +530,16 @@ function Automix_Init()
         LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
     end
 end
-
---[[ Reloads the Persistence configuration ]]
+--[[ Module reload ]]
 function Automix_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
     Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
     Automix_Profile_Apply()
     Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
-    Automix_Menu_Handler()
+    Automix_Menu_Build()
     LogOutput(Automix_Config_Vars[1][1]..": Reloaded!")
 end
---[[ Unload logic for the persistence module ]]
+--[[ Module unload ]]
 function Automix_Unload()
     Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
 end

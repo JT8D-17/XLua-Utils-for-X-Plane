@@ -108,28 +108,27 @@ function OxygenSystem_MainTimer()
         Hypoxia_Stage = 2
         DisplayNotification("Oxygen System: Pilot Impaired From Hypoxia!","Warning",10)
     end
-    -- Write remaining oxygen in bottle to persistence table
-    if DRef_Oxy_ValvePos == 1 then Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain) end
-    -- Inform about oxygen bottle levels
-
-
-    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.75 and Bottle_Warn_Level < 1 then
-        Bottle_Warn_Level = 1
-        DisplayNotification("Oxygen System: 75 % of Bottle Capacity Remaining!","Nominal",10)
+    -- Things to do when the oxygen valve is open
+    if DRef_Oxy_ValvePos == 1 then
+        Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain)  -- Write remaining oxygen in bottle to persistence table
+        -- Inform about oxygen bottle levels
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.75 and Bottle_Warn_Level < 1 then
+            Bottle_Warn_Level = 1
+            DisplayNotification("Oxygen System: 75 % of Bottle Capacity Remaining!","Nominal",10)
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.50 and Bottle_Warn_Level < 2 then
+            DisplayNotification("Oxygen System: 50 % of Bottle Capacity Remaining!","Caution",10)
+            Bottle_Warn_Level = 2
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.25 and Bottle_Warn_Level < 3 then
+            DisplayNotification("Oxygen System: 25 % of Bottle Capacity Remaining!","Warning",10)
+            Bottle_Warn_Level = 3
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.01 and Bottle_Warn_Level < 4 then
+            DisplayNotification("Oxygen System: Bottle is Empty!","Warning",20)
+            Bottle_Warn_Level = 4
+        end
     end
-    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.50 and Bottle_Warn_Level < 2 then
-        DisplayNotification("Oxygen System: 50 % of Bottle Capacity Remaining!","Caution",10)
-        Bottle_Warn_Level = 2
-    end
-    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.25 and Bottle_Warn_Level < 3 then
-        DisplayNotification("Oxygen System: 25 % of Bottle Capacity Remaining!","Warning",10)
-        Bottle_Warn_Level = 3
-    end
-    if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.01 and Bottle_Warn_Level < 4 then
-        DisplayNotification("Oxygen System: Bottle is Empty!","Warning",20)
-        Bottle_Warn_Level = 4
-    end
-
     -- Refresh menu entries
     for i=2,#OxygenSystem_Menu_Items do
         OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
@@ -247,7 +246,6 @@ INITIALIZATION
 function OxygenSystem_FirstRun()
     Preferences_Write(OxygenSystem_Config_Vars,XLuaUtils_PrefsFile)
     Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
-    OxygenSystem_Menu_Build(XLuaUtils_Menu_ID)
     LogOutput(OxygenSystem_Config_Vars[1][1]..": First Run!")
 end
 --[[ Initializes OxygenSystem at every startup ]]
@@ -256,6 +254,10 @@ function OxygenSystem_Init()
     OxygenSystem_WriteSaved()
     run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
     LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
+end
+--[[ Initializes the utility's menu ]]
+function OxygenSystem_Menu_Init()
+    if OxygenSystem_Menu_ID == nil then OxygenSystem_Menu_Build(XLuaUtils_Menu_ID) end -- Build the menu
 end
 --[[ Reloads the Oxygen System configuration ]]
 function OxygenSystem_Reload()
