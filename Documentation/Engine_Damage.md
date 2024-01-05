@@ -44,7 +44,8 @@ The supported engine parameters for "Engine Damage" are:
 - first spool (or prop) rotation speed (N1)
 - second spool (or engine) rotation speed (N2)
 - oil pressure (OIL_P)
-- oil temmperature (OIL_T)
+- oil temperature (OIL_T)
+- propeller RPM (RPM_P)
 - Torque (TRQ)
 
 Any of these can be enabled at any time. However, there should be a sensible limit set in the _.acf_ file (and detected from a dataref) or set in the engine profile.
@@ -99,6 +100,7 @@ The failure mode depends on the engine parameter that caused the failure. Suppor
 - Engine fire (CHT, EGT, ITT, oil temperature)
 - Loss of power (N1, N2)
 - Oil pump failure (oil pressure)
+- Propeller detachment (propeller RPM)
 - Shaft breakage (torque)
 
 A notification will be displayed for 60 seconds (default) when an engine fails.
@@ -152,6 +154,7 @@ These units may be used for manual limits for "DMG_" properties in _engine_damag
 - MP: inHg
 - N1, N2: %
 - OIL_P: psi
+- RPM_P: 1/min
 - TRQ: %, Nm, lb-ft
 
 If no manual limit is specified, the unit will be determined by the dataref.  

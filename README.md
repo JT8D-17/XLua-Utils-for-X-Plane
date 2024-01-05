@@ -23,6 +23,7 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 5.5 [Automixture Controls](#5.5)   
 5.6 [Attach Objects](#5.6)   
 5.7 [Engine Damage](#5.7)   
+5.8 [Oxygen System](#5.8)   
 6. [License](#6.0)
 
 &nbsp;
@@ -50,7 +51,7 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 
 ### 2.2 Aircraft with an XLua plugin
 
-- Copy the _"xlua_utils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
+- Copy the _"xluautils"_ folder into _"[Aircraft's main folder]/plugins/xlua/scripts"_
 
 ### 2.3 Post-Installation
 
@@ -101,14 +102,12 @@ After a successful installation, the main X-Plane menu bar contains a menu with 
 
 ![XLuaUtils Main Menu](Documentation/Images/XLuaUtils_Menu.jpg  "XLuaUtils Main Menu")
 
-- _"Initialize XLuaUtils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule hooked into XLuaUtils' initialization and preferences system (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 4).   
+- _"Initialize XLuaUtils"_ will generate a _preferences.cfg_ file containing the initial values of any submodule making use of XLuaUtils' preferences system (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 4).   
 Note that some XLuaUtils elements or submodules do not initially save their state and will require changing their settings before they will do so.   
  _"Reload XLuaUtils Preferences"_ will replace _"Initialize XLuaUtils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
 - The _"Debug"_ submenu is always visible and contains controls for debug-level logging (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 3)  and the debug window ([Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 7).
-
-- The _"Miscellaneous"_ menu is a container for miscellaneous built-in utilities (see [section 5.4](#5.4) below) that are always available.
 
 &nbsp;
 
@@ -141,11 +140,7 @@ See [Documentation/NCHeadset.md](Documentation/NCHeadset.md) for more informatio
 <a name="5.4"></a>
 ### 5.4 Miscellaneous Utilities
 
-Various smaller utilities not warranting separate menus. This menu item is always available.
-
-Current features:
-- Repair All Damage
-- Synchronize Baros
+Various smaller utilities.
 
 See [Documentation/Misc_Utils.md](Documentation/Misc_Utils.md) for more information. 
 
@@ -201,6 +196,20 @@ The engine damage utility will add consequences to exceeding operational limitat
 These limitations depend on engine type (e.g. torque and CHT for props, ITT and EGT for jets, etc.) and are either derived from the aircraft's ACF file or by user-specific thresholds.
 
 See [Documentation/Engine_Damage.md](Documentation/Engine_Damage.md) for more information. 
+
+&nbsp;
+
+[Back to table of contents](#toc)
+
+&nbsp;
+
+<a name="5.8"></a>
+### 5.8 Oxygen System
+ 
+Provides a supplemental oxygen system (or an override for a present oxygen system) without having to edit an aircraft's PlaneMaker model.   
+Has an automation mode and provides warnings about pilot hypoxia.
+
+See [Documentation/Oxygen_System.md](Documentation/Oxygen_System.md) for more information. 
 
 &nbsp;
 
