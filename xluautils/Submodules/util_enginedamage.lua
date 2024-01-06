@@ -682,10 +682,10 @@ function EngineDamage_Menu_Build()
 end
 --[[
 
-RUNTIME FUNCTIONS
+RUNTIME CALLBACKS
 
 ]]
---[[ Main timer for the engine damage logic ]]
+--[[ Module Main Timer ]]
 function EngineDamage_MainTimer()
     if DebugIsEnabled() == 1 then EngineDamage_DebugWindow_Update() end
     Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values

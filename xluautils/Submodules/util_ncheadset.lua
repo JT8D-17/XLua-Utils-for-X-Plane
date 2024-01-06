@@ -80,27 +80,6 @@ function NCHeadset_Off()
         Dataref_Write(NCHeadset_Datarefs,5,"All")
     end
 end
---[[ Main timer for the NC headset logic ]]
-function NCHeadset_MainTimer()
-    -- Picks the dataref feeding the IsInside variable based on fmod compliance as determined by the user
-    if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
-    -- Headset automation control - Puts on headset when all engines are started
-    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 1) and IsInside == 1 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,1) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
-    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 0) or IsInside == 0 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,0) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
-    -- Headset On/Off handling
-    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 and HeadSetStatus_Old == 0 then
-        NCHeadset_On()
-        HeadSetStatus_Old = 1
-        DebugLogOutput(NCHeadset_Config_Vars[1][1]..": On")
-        DisplayNotification("Noise Cancelling Headset: On","Nominal",5)
-    end
-    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 and HeadSetStatus_Old == 1 then
-        NCHeadset_Off()
-        HeadSetStatus_Old = 0
-        DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Off")
-        DisplayNotification("Noise Cancelling Headset: Off","Nominal",5)
-    end
-end
 --[[
 
 MENU
@@ -173,7 +152,7 @@ function NCHeadset_Menu_Register()
         LogOutput(NCHeadset_Config_Vars[1][1].." Menu registered!")
     end
 end
---[[ Initialization routine for the menu. ]]
+--[[ Initialization routine for the menu ]]
 function NCHeadset_Menu_Build()
     XPLM.XPLMClearAllMenuItems(NCHeadset_Menu_ID)
     local Menu_Indices = {}
@@ -199,13 +178,38 @@ function NCHeadset_Menu_Build()
 end
 --[[
 
+RUNTIME CALLBACKS
+
+]]
+--[[ Module Main Timer ]]
+function NCHeadset_MainTimer()
+    -- Picks the dataref feeding the IsInside variable based on fmod compliance as determined by the user
+    if Table_ValGet(NCHeadset_Config_Vars,"FModCompliant",nil,2) == 1 then IsInside = IsInside_fmod else IsInside = IsInside_old end
+    -- Headset automation control - Puts on headset when all engines are started
+    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 1) and IsInside == 1 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,1) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
+    if (Table_ValGet(NCHeadset_Config_Vars,"Automation",nil,2) == 1 and AllEnginesRunning() == 0) or IsInside == 0 then Table_ValSet(NCHeadset_Config_Vars,"HeadsetOn",nil,2,0) NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,2) end
+    -- Headset On/Off handling
+    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 1 and HeadSetStatus_Old == 0 then
+        NCHeadset_On()
+        HeadSetStatus_Old = 1
+        DebugLogOutput(NCHeadset_Config_Vars[1][1]..": On")
+        DisplayNotification("Noise Cancelling Headset: On","Nominal",5)
+    end
+    if Table_ValGet(NCHeadset_Config_Vars,"HeadsetOn",nil,2) == 0 and HeadSetStatus_Old == 1 then
+        NCHeadset_Off()
+        HeadSetStatus_Old = 0
+        DebugLogOutput(NCHeadset_Config_Vars[1][1]..": Off")
+        DisplayNotification("Noise Cancelling Headset: Off","Nominal",5)
+    end
+end
+--[[
+
 INITIALIZATION
 
 ]]
 --[[ Module is run for the very first time ]]
 function NCHeadset_FirstRun()
     Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
-    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
     NCHeadset_Menu_Build()
     LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")

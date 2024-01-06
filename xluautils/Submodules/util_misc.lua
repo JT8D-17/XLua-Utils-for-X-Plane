@@ -651,17 +651,6 @@ function Sync_Baros()
         Baro_Stby_Old = simDR_Baro_Stby
     end
 end
---[[ Main timer ]]
-function MiscUtils_MainTimer()
-    MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
-    if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
-    if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
-    if Livery.Old ~= Livery.Current then
-        DisplayNotification("Switched to livery: "..Livery.Current,"Nominal",5)
-        Livery.Old = Livery.Current
-    end
-    --print((os.date("%H")*3600)+(os.date("%M")*60)+(os.date("%S")))
-end
 --[[
 
 MENU
@@ -722,7 +711,7 @@ function MiscUtils_Menu_Register()
         LogOutput(MiscUtils_Config_Vars[1][1].." Menu registered!")
     end
 end
---[[ Initialization routine for the menu. ]]
+--[[ Initialization routine for the menu ]]
 function MiscUtils_Menu_Build()
     XPLM.XPLMClearAllMenuItems(MiscUtils_Menu_ID)
     local Menu_Indices = {}
@@ -748,13 +737,28 @@ function MiscUtils_Menu_Build()
 end
 --[[
 
+RUNTIME CALLBACKS
+
+]]
+--[[ Module Main Timer ]]
+function MiscUtils_MainTimer()
+    MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
+    if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
+    if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
+    if Livery.Old ~= Livery.Current then
+        DisplayNotification("Switched to livery: "..Livery.Current,"Nominal",5)
+        Livery.Old = Livery.Current
+    end
+    --print((os.date("%H")*3600)+(os.date("%M")*60)+(os.date("%S")))
+end
+--[[
+
 INITIALIZATION
 
 ]]
 --[[ Module is run for the very first time ]]
 function MiscUtils_FirstRun()
     Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
-    Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
     MiscUtils_Menu_Build()
     LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")

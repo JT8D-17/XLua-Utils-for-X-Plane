@@ -425,7 +425,7 @@ function Automix_Menu_Watchdog(intable,index)
     end
 end
 
---[[ Registration routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
+--[[ Registration routine for the menu ]]
 function Automix_Menu_Register()
     if Automix_Menu_ID == nil and Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 and XPLM ~= nil then -- Only initialize automixture menu if the engine is a reciprocating type
         local Menu_Index = nil
@@ -461,10 +461,10 @@ function Automix_Menu_Build()
 end
 --[[
 
-RUNTIME FUNCTIONS
+RUNTIME CALLBACKS
 
 ]]
---[[ Main timer for the Automixture logic ]]
+--[[ Module Main Timer ]]
 function Automix_MainTimer()
     if Automix_HasProfile == 1 then -- Only update if an aircraft profile file is present
         if DebugIsEnabled() == 1 then Automix_DebugWindow_Update() end

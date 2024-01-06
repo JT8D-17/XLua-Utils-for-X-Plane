@@ -60,7 +60,6 @@ DRef_PilotAlt = find_dataref("sim/cockpit2/oxygen/indicators/pilot_felt_altitude
 FUNCTIONS
 
 ]]
-
 --[[ Apply oxygen system ]]
 function OxygenSystem_On()
     DRef_Oxy_ValvePos = 1
@@ -81,58 +80,6 @@ function OxygenSystem_WriteSaved()
     DRef_Oxy_FlowSetting = Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2)
     DRef_Oxy_NumUsers = Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2)
     if Table_ValGet(OxygenSystem_Config_Vars,"MasksOn",nil,2) == 1 then OxygenSystem_On() end
-end
-
---[[ Main timer for the oxygen system logic ]]
-function OxygenSystem_MainTimer()
-    -- Handle automatic donning and undonning of oxygen masks
-    if Table_ValGet(OxygenSystem_Config_Vars,"Automation",nil,2) == 1 then
-        if Dref_CabinAlt_Warn == 1 and DRef_Oxy_ValvePos == 0 then OxygenSystem_On() end
-        if Dref_CabinAlt_Warn == 0 and DRef_Oxy_ValvePos == 1 then OxygenSystem_Off() end
-        if DRef_Oxy_ValvePos == 1 then
-            if DRef_PilotAlt > Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,2) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting + 1
-            elseif DRef_PilotAlt < Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,3) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting - 1
-            end
-            if DRef_Oxy_FlowSetting < 0 then DRef_Oxy_FlowSetting = 0 end
-            if DRef_Oxy_FlowSetting > 8 then DRef_Oxy_FlowSetting = 8 end
-        end
-    end
-    -- Determine pilot pilot condition
-    if DRef_PilotAlt < Hypoxia_Stages_Alt[1] and Hypoxia_Stage ~= 0 then
-        Hypoxia_Stage = 0
-        DisplayNotification("Oxygen System: Pilot Is Fine!","Nominal",10)
-    elseif DRef_PilotAlt > Hypoxia_Stages_Alt[2] and DRef_PilotAlt < Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 1 then
-        Hypoxia_Stage = 1
-        DisplayNotification("Oxygen System: Pilot Feels Hypoxia!","Caution",10)
-    elseif DRef_PilotAlt > Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 2 then
-        Hypoxia_Stage = 2
-        DisplayNotification("Oxygen System: Pilot Impaired From Hypoxia!","Warning",10)
-    end
-    -- Things to do when the oxygen valve is open
-    if DRef_Oxy_ValvePos == 1 then
-        Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain)  -- Write remaining oxygen in bottle to persistence table
-        -- Inform about oxygen bottle levels
-        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.75 and Bottle_Warn_Level < 1 then
-            Bottle_Warn_Level = 1
-            DisplayNotification("Oxygen System: 75 % of Bottle Capacity Remaining!","Nominal",10)
-        end
-        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.50 and Bottle_Warn_Level < 2 then
-            DisplayNotification("Oxygen System: 50 % of Bottle Capacity Remaining!","Caution",10)
-            Bottle_Warn_Level = 2
-        end
-        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.25 and Bottle_Warn_Level < 3 then
-            DisplayNotification("Oxygen System: 25 % of Bottle Capacity Remaining!","Warning",10)
-            Bottle_Warn_Level = 3
-        end
-        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.01 and Bottle_Warn_Level < 4 then
-            DisplayNotification("Oxygen System: Bottle is Empty!","Warning",20)
-            Bottle_Warn_Level = 4
-        end
-    end
-    -- Refresh menu entries
-    for i=2,#OxygenSystem_Menu_Items do
-        OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
-    end
 end
 --[[
 
@@ -212,56 +159,117 @@ function OxygenSystem_Menu_Watchdog(intable,index)
         XPLM.XPLMSetMenuItemName(OxygenSystem_Menu_ID,11,"Remaining: "..string.format("%.1f",DRef_Oxy_Remain).."/"..string.format("%.1f",DRef_Oxy_Capacity).." l",1)
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLua Utils Menu! ]]
-function OxygenSystem_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#OxygenSystem_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
+--[[ Registration routine for the menu ]]
+function OxygenSystem_Menu_Register()
+    if XPLM ~= nil and OxygenSystem_Menu_ID == nil then
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,OxygenSystem_Menu_Items[1],ffi.cast("void *","None"),1)
-        OxygenSystem_Menu_ID = XPLM.XPLMCreateMenu(OxygenSystem_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) OxygenSystem_Menu_Callbacks(inItemRef) end,ffi.cast("void *",OxygenSystem_Menu_Pointer))
-        for i=2,#OxygenSystem_Menu_Items do
-            if OxygenSystem_Menu_Items[i] ~= "[Separator]" then
-                OxygenSystem_Menu_Pointer = OxygenSystem_Menu_Items[i]
-                Menu_Indices[i] = XPLM.XPLMAppendMenuItem(OxygenSystem_Menu_ID,OxygenSystem_Menu_Items[i],ffi.cast("void *",OxygenSystem_Menu_Pointer),1)
-            else
-                XPLM.XPLMAppendMenuSeparator(OxygenSystem_Menu_ID)
-            end
-        end
-        for i=2,#OxygenSystem_Menu_Items do
-            if OxygenSystem_Menu_Items[i] ~= "[Separator]" then
-                OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
-            end
-        end
-        LogOutput(OxygenSystem_Config_Vars[1][1].." Menu initialized!")
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,OxygenSystem_Menu_Items[1],ffi.cast("void *","None"),1)
+        OxygenSystem_Menu_ID = XPLM.XPLMCreateMenu(OxygenSystem_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) OxygenSystem_Menu_Callbacks(inItemRef) end,ffi.cast("void *",OxygenSystem_Menu_Pointer))
+        OxygenSystem_Menu_Build()
+        LogOutput(OxygenSystem_Config_Vars[1][1].." Menu registered!")
     end
 end
+--[[ Initialization routine for the menu ]]
+function OxygenSystem_Menu_Build()
+    XPLM.XPLMClearAllMenuItems(OxygenSystem_Menu_ID)
+    local Menu_Indices = {}
+    if XLuaUtils_HasConfig == 1 then
+        for i=2,#OxygenSystem_Menu_Items do Menu_Indices[i] = 0 end
+        if OxygenSystem_Menu_ID ~= nil then
+            for i=2,#OxygenSystem_Menu_Items do
+                if OxygenSystem_Menu_Items[i] ~= "[Separator]" then
+                    OxygenSystem_Menu_Pointer = OxygenSystem_Menu_Items[i]
+                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(OxygenSystem_Menu_ID,OxygenSystem_Menu_Items[i],ffi.cast("void *",OxygenSystem_Menu_Pointer),1)
+                else
+                    XPLM.XPLMAppendMenuSeparator(OxygenSystem_Menu_ID)
+                end
+            end
+            for i=2,#OxygenSystem_Menu_Items do
+                if OxygenSystem_Menu_Items[i] ~= "[Separator]" then
+                    OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
+                end
+            end
+            LogOutput(OxygenSystem_Config_Vars[1][1].." Menu built!")
+        end
+    end
+end
+--[[
 
+RUNTIME CALLBACKS
+
+]]
+--[[ Module Main Timer ]]
+function OxygenSystem_MainTimer()
+    -- Handle automatic donning and undonning of oxygen masks
+    if Table_ValGet(OxygenSystem_Config_Vars,"Automation",nil,2) == 1 then
+        if Dref_CabinAlt_Warn == 1 and DRef_Oxy_ValvePos == 0 then OxygenSystem_On() end
+        if Dref_CabinAlt_Warn == 0 and DRef_Oxy_ValvePos == 1 then OxygenSystem_Off() end
+        if DRef_Oxy_ValvePos == 1 then
+            if DRef_PilotAlt > Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,2) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting + 1
+            elseif DRef_PilotAlt < Table_ValGet(OxygenSystem_Config_Vars,"PilotAltitude",nil,3) then DRef_Oxy_FlowSetting = DRef_Oxy_FlowSetting - 1
+            end
+            if DRef_Oxy_FlowSetting < 0 then DRef_Oxy_FlowSetting = 0 end
+            if DRef_Oxy_FlowSetting > 8 then DRef_Oxy_FlowSetting = 8 end
+        end
+    end
+    -- Determine pilot pilot condition
+    if DRef_PilotAlt < Hypoxia_Stages_Alt[1] and Hypoxia_Stage ~= 0 then
+        Hypoxia_Stage = 0
+        DisplayNotification("Oxygen System: Pilot Is Fine!","Nominal",10)
+    elseif DRef_PilotAlt > Hypoxia_Stages_Alt[2] and DRef_PilotAlt < Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 1 then
+        Hypoxia_Stage = 1
+        DisplayNotification("Oxygen System: Pilot Feels Hypoxia!","Caution",10)
+    elseif DRef_PilotAlt > Hypoxia_Stages_Alt[3] and Hypoxia_Stage ~= 2 then
+        Hypoxia_Stage = 2
+        DisplayNotification("Oxygen System: Pilot Impaired From Hypoxia!","Warning",10)
+    end
+    -- Things to do when the oxygen valve is open
+    if DRef_Oxy_ValvePos == 1 then
+        Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain)  -- Write remaining oxygen in bottle to persistence table
+        -- Inform about oxygen bottle levels
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.75 and Bottle_Warn_Level < 1 then
+            Bottle_Warn_Level = 1
+            DisplayNotification("Oxygen System: 75 % of Bottle Capacity Remaining!","Nominal",10)
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.50 and Bottle_Warn_Level < 2 then
+            DisplayNotification("Oxygen System: 50 % of Bottle Capacity Remaining!","Caution",10)
+            Bottle_Warn_Level = 2
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.25 and Bottle_Warn_Level < 3 then
+            DisplayNotification("Oxygen System: 25 % of Bottle Capacity Remaining!","Warning",10)
+            Bottle_Warn_Level = 3
+        end
+        if (DRef_Oxy_Remain / DRef_Oxy_Capacity) <= 0.01 and Bottle_Warn_Level < 4 then
+            DisplayNotification("Oxygen System: Bottle is Empty!","Warning",20)
+            Bottle_Warn_Level = 4
+        end
+    end
+    -- Refresh menu entries
+    for i=2,#OxygenSystem_Menu_Items do
+        OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
+    end
+end
 --[[
 
 INITIALIZATION
 
 ]]
---[[ First start of the OxygenSystem module ]]
+--[[ Module is run for the very first time ]]
 function OxygenSystem_FirstRun()
     Preferences_Write(OxygenSystem_Config_Vars,XLuaUtils_PrefsFile)
-    Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
+    OxygenSystem_Menu_Build()
     LogOutput(OxygenSystem_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes OxygenSystem at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function OxygenSystem_Init()
     Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
     OxygenSystem_WriteSaved()
     run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
     LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
 end
---[[ Initializes the utility's menu ]]
-function OxygenSystem_Menu_Init()
-    if OxygenSystem_Menu_ID == nil then OxygenSystem_Menu_Build(XLuaUtils_Menu_ID) end -- Build the menu
-end
---[[ Reloads the Oxygen System configuration ]]
+--[[ Module reload ]]
 function OxygenSystem_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
-    --OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,8)
+    OxygenSystem_Menu_Build()
     LogOutput(OxygenSystem_Config_Vars[1][1]..": Reloaded!")
 end

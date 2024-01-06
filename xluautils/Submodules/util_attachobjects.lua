@@ -46,7 +46,7 @@ local AttachObj_Menu_Pointer = ffi.new("const char")
 --{"Pole_Test","plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj",0,0,0,0,0,0,"sim/flightmodel/weight/m_stations",0,"gt",600},
 --{"Pole_Test2","plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj",-5,0,0,0,0,45,"sim/flightmodel/weight/m_stations",1,"gt",600},
 --}
-local AttachObj_Container = { } -- Container table for object data
+local AttachObj_Container = { }                                     -- Container table for object data
 local AttachObj_Inst                                                -- Placeholder for instance array
 local AttachObj_InstRefs = { }                                      -- Instance reference table
 local AttachObj_DrawInfo = ffi.new("XPLMDrawInfo_t[?]",1)           -- Creates an information array depending on the length of the input table
@@ -337,11 +337,8 @@ function AttachObject_Menu_Callbacks(itemref)
     for i=2,#AttachObj_Menu_Items do
         if itemref == AttachObj_Menu_Items[i] then
             if i == 2 then
-                if AttachObj_HasConfig == 0 then
-                    AttachObject_FirstRun() -- Generates the config file for the attached objects module
-                elseif AttachObj_HasConfig == 1 then
-                    AttachObject_Reload() -- Reloads the config file for the attached objects module
-                end
+                if AttachObj_HasConfig == 0 then AttachObject_FirstRun() end -- Generates the config file for the attached objects module
+                if AttachObj_HasConfig == 1 then AttachObject_Reload() end -- Reloads the config file for the attached objects module
             end
             if i == 4 then
                 if Table_ValGet(AttachObj_Config_Vars,"HideObjs",nil,2) == 0 then Table_ValSet(AttachObj_Config_Vars,"HideObjs",nil,2,1) AttachObject_Hide_All() else Table_ValSet(AttachObj_Config_Vars,"HideObjs",nil,2,0) end
@@ -355,8 +352,8 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function AttachObject_Menu_Watchdog(intable,index)
     if index == 2 then
-        if AttachObj_HasConfig == 0 then Menu_ChangeItemPrefix(AttachObj_Menu_ID,index,"Initialize",intable)
-        elseif AttachObj_HasConfig == 1 then Menu_ChangeItemPrefix(AttachObj_Menu_ID,index,"Reload Config",intable) end
+        if AttachObj_HasConfig == 0 then Menu_ChangeItemPrefix(AttachObj_Menu_ID,index,"Generate Config File",intable)
+        elseif AttachObj_HasConfig == 1 then Menu_ChangeItemPrefix(AttachObj_Menu_ID,index,"Reload Config File",intable) end
     end
     if index == 3 then
         Menu_ChangeItemPrefix(AttachObj_Menu_ID,index,"Objs: "..#AttachObj_InstRefs.." (Vis.: "..")",intable)
@@ -365,15 +362,25 @@ function AttachObject_Menu_Watchdog(intable,index)
         if Table_ValGet(AttachObj_Config_Vars,"HideObjs",nil,2) == 1 then Menu_CheckItem(AttachObj_Menu_ID,index,"Activate") else Menu_CheckItem(AttachObj_Menu_ID,index,"Deactivate") end
     end
 end
---[[ Initialization routine for the menu. WARNING: Takes the menu ID of the main XLuaUtils Menu! ]]
-function AttachObject_Menu_Build(ParentMenuID)
-    local Menu_Indices = {}
-    for i=2,#AttachObj_Menu_Items do Menu_Indices[i] = 0 end
-    if XPLM ~= nil then
+--[[ Registration routine for the menu ]]
+function AttachObject_Menu_Register()
+    if XPLM ~= nil and AttachObj_Menu_ID == nil then
         local Menu_Index = nil
-        Menu_Index = XPLM.XPLMAppendMenuItem(ParentMenuID,AttachObj_Menu_Items[1],ffi.cast("void *","None"),1)
-        AttachObj_Menu_ID = XPLM.XPLMCreateMenu(AttachObj_Menu_Items[1],ParentMenuID,Menu_Index,function(inMenuRef,inItemRef) AttachObject_Menu_Callbacks(inItemRef) end,ffi.cast("void *",AttachObj_Menu_Pointer))
-        for i=2,#AttachObj_Menu_Items do
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,AttachObj_Menu_Items[1],ffi.cast("void *","None"),1)
+        AttachObj_Menu_ID = XPLM.XPLMCreateMenu(AttachObj_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) AttachObject_Menu_Callbacks(inItemRef) end,ffi.cast("void *",AttachObj_Menu_Pointer))
+        AttachObject_Menu_Build()
+        LogOutput(AttachObj_Config_Vars[1][1].." Menu registered!")
+    end
+end
+--[[ Initialization routine for the menu ]]
+function AttachObject_Menu_Build()
+    XPLM.XPLMClearAllMenuItems(AttachObj_Menu_ID)
+    local Menu_Indices = {}
+    local endindex = 2
+    if AttachObj_HasConfig == 1 then endindex = #AttachObj_Menu_Items end
+    for i=2,endindex do Menu_Indices[i] = 0 end
+    if AttachObj_Menu_ID ~= nil then
+        for i=2,endindex do
             if AttachObj_Menu_Items[i] ~= "[Separator]" then
                 AttachObj_Menu_Pointer = AttachObj_Menu_Items[i]
                 Menu_Indices[i] = XPLM.XPLMAppendMenuItem(AttachObj_Menu_ID,AttachObj_Menu_Items[i],ffi.cast("void *",AttachObj_Menu_Pointer),1)
@@ -381,20 +388,20 @@ function AttachObject_Menu_Build(ParentMenuID)
                 XPLM.XPLMAppendMenuSeparator(AttachObj_Menu_ID)
             end
         end
-        for i=2,#AttachObj_Menu_Items do
+        for i=2,endindex do
             if AttachObj_Menu_Items[i] ~= "[Separator]" then
                 AttachObject_Menu_Watchdog(AttachObj_Menu_Items,i)
             end
         end
-        LogOutput(AttachObj_Config_Vars[1][1].." Menu initialized!")
+        LogOutput(AttachObj_Config_Vars[1][1].." Menu built!")
     end
 end
 --[[
 
-RUNTIME FUNCTIONS
+RUNTIME CALLBACKS
 
 ]]
---[[ Main timer for the attach object logic ]]
+--[[ Module Main Timer ]]
 function AttachObject_MainTimer()
     AttachObject_CheckVisibility()
 end
@@ -416,7 +423,7 @@ INITIALIZATION
 
 ]]
 --[[ Collection of all functions relevant during initialization or reloading ]]
-function AttachObject_Startup()
+function AttachObject_Start()
     AttachObject_Config_Read()
     AttachObject_Init_CopyDrefTable()
     DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
@@ -427,34 +434,31 @@ function AttachObject_Startup()
     AttachObject_Menu_Watchdog(AttachObj_Menu_Items,3)
     run_at_interval(AttachObject_MainTimer,Table_ValGet(AttachObj_Config_Vars,"MainTimerInterval",nil,2))
 end
---[[ First start of the attach object module ]]
+--[[ Module is run for the very first time ]]
 function AttachObject_FirstRun()
     AttachObject_Config_Write() -- Write new skeleton config file
     if FileExists(XLuaUtils_Path..AttachObj_Config_File) then AttachObj_HasConfig = 1 end -- Check if config file exists
     --Preferences_Write(AttachObj_Config_Vars,XLuaUtils_PrefsFile)
     --Preferences_Read(XLuaUtils_PrefsFile,AttachObj_Config_Vars)
     --DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
-    --AttachObj_Menu_Build(XLuaUtils_Menu_ID)
+    AttachObject_Menu_Build()
+    AttachObject_Menu_Watchdog(AttachObj_Menu_Items,2)
     LogOutput(AttachObj_Config_Vars[1][1]..": First Run!")
 end
---[[ Initializes attach object at every startup ]]
+--[[ Module initialization at every Xlua Utils start ]]
 function AttachObject_Init()
     if FileExists(XLuaUtils_Path..AttachObj_Config_File) then -- Check if config file exists
         AttachObj_HasConfig = 1
-        AttachObject_Startup()
+        AttachObject_Start()
     end
     LogOutput(AttachObj_Config_Vars[1][1]..": Initialized!")
 end
---[[ Initializes the utility's menu ]]
-function AttachObject_Menu_Init()
-    if AttachObj_Menu_ID == nil then AttachObject_Menu_Build(XLuaUtils_Menu_ID) end -- Build the menu
-end
---[[ Reloads the Persistence configuration ]]
+--[[ Module reload ]]
 function AttachObject_Reload()
     AttachObj_AllowDrawing = 0
     if is_timer_scheduled(AttachObject_MainTimer) then stop_timer(AttachObject_MainTimer) end
     AttachObject_Unload()
     AttachObj_Container = { }
-    AttachObject_Startup()
+    AttachObject_Start()
     LogOutput(AttachObj_Config_Vars[1][1]..": Reloaded!")
 end

@@ -10,7 +10,7 @@ This document contains information about XLuaUtils' persistence utility.
 ### Table of Contents
 1. [Caveats/Known Issues](#1)   
 2. [Files](#2)   
-3. [Populating Datarefs.cfg](#3)  
+3. [Populating Persistence_datarefs.cfg](#3)  
 4. [Menu/Functionality](#4)   
 5. [Configuration via Preferences.cfg](#5)   
 
@@ -40,7 +40,7 @@ In general, the simpler the addon, the higher the chance of success for a 100% c
 <a name="2"></a>
 ### 2. Files 
 
-Relevant files to this module are stored in _"xluautils"_ and are _"preferences.cfg"_, storing configuration data, _"datarefs.cfg"_, a manually populated list of datarefs and _"persistence_save.txt"_, the save file containing the dataref values.
+Relevant files to this module are stored in _"xluautils"_ and are _"preferences.cfg"_, storing configuration data, _"persistence_datarefs.cfg"_, a manually populated list of datarefs and _"persistence_save.txt"_, the save file containing the dataref values.
 
 &nbsp;
 
@@ -49,22 +49,22 @@ Relevant files to this module are stored in _"xluautils"_ and are _"preferences.
 &nbsp;
 
 <a name="3"></a>
-### 3. Populating Datarefs.cfg
+### 3. Populating Persistence_Datarefs.cfg
 
-An empty _"Datarefs.cfg"_ is generated at XLuaUtils initialization (see chapter [5.1](#5.1) if none is present.   
+An empty _"Persistence_datarefs.cfg"_ is generated at XLuaUtils initialization (see chapter [5.1](#5.1) if none is present.   
 
-- _"Datarefs.cfg"_ is a regular text file and can be opened with any text editor like Notepad (apps like MS Word are not recommended though).
-- The header section of _"datarefs.cfg"_ contains information on how to find datarefs used by the current aircraft.
+- _"Persistence_datarefs.cfg"_ is a regular text file and can be opened with any text editor like Notepad (apps like MS Word are not recommended though).
+- The header section of _"persistence_datarefs.cfg"_ contains information on how to find datarefs used by the current aircraft.
 - The best techniques for finding datarefs used by the aircraft are using [DataRefTool](https://datareftool.com/) to filter datarefs that recently changed due to user input, analyzing cockpit related _.obj_ files in the _"objects"_ folder of the aircraft and finding relevant datarefs in the _"...cockpit.obj"_ file in the aircraft's root folder by searching for a switch's tooltip.
 - Custom datarefs created by third party add-ons are supported.
-- Invalid datarefs that can not be found in X-Plane are discarded during the initial parsing of _"dataref.cfg"_ and will not be used, so there is minimal risk of crashing X-Plane.
+- Invalid datarefs that can not be found in X-Plane are discarded during the initial parsing of _"persistence_datarefs.cfg"_ and will not be used, so there is minimal risk of crashing X-Plane.
 - Only the name of the dataref is required, even if it is an array.
 - Commands are not supported. This should be kept in mind when analyzing _"...cockpit.obj"_ files.
-- There is no limit to the number of datarefs in _"datarefs.cfg"_.
+- There is no limit to the number of datarefs in _"persistence_datarefs.cfg"_.
 - Comments are denoted with a hash sign ("#") at the beginning of a line.
 - Dataref order may matter if the aircraft's systems logic dictates one.
 
-Example _"datarefs.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Persistence"_. These may be used as a starting point or template. Contributions are welcome.
+Example _"persistence_datarefs.cfg"_ files for some add-on aircraft can be found in _"xluautils/Config Files/Persistence"_. These may be used as a starting point or template. Contributions are welcome.
 
 &nbsp;
 
@@ -101,7 +101,7 @@ This only displays the current autosave interval and does not constitute an inte
 - _"Decrement Autosave Interval (- n s)"_   
 Decrements the autosave interval by a certain amount of time which can be adjusted in _"preferences.cfg"_ (see below).
 - _"Reload Config & Dataref File (Drefs: n)"_    
-Reads persistence module related data from_"preferences.cfg"_, parses _"datarefs.cfg"_ and then reads the current values of all tracked datarefs. The menu entry will display the amount of currently tracked datarefs.
+Reads persistence module related data from_"preferences.cfg"_, parses _"persistence_datarefs.cfg"_ and then reads the current values of all tracked datarefs. The menu entry will display the amount of currently tracked datarefs.
 
 &nbsp;
 
