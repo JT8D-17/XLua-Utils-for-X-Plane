@@ -49,18 +49,9 @@ local Dref_List_Cont = {
 {"Eng_Mixt","sim/cockpit2/engine/actuators/mixture_ratio"}, -- ratio
 {"Eng_RPM","sim/cockpit2/engine/indicators/engine_speed_rpm"}, -- RPM
 }
---[[ List of one-shot updated datarefs used by this module ]]
-local Dref_List_Once = {
-{"Eng_Num","sim/aircraft/engine/acf_num_engines"}, -- Number of engines
-{"Type_Eng","sim/aircraft/prop/acf_en_type"}, -- Engine type 0 = recip carb, 1 = recip injected, 3 = electric, 5 = single spool jet, 6 = rocket, 7 = multi spool jet, 9 = free turboprop, 10 = fixed turboprop
-}
 --[[ Container table for continuously monitored datarefs, which are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
 local Automix_Drefs_Cont = {
 "DREFS_CONT",
-}
---[[ Container table for continuously monitored datarefs, which are stored in subtables {alias,dataref,type,{dataref value(s) storage 1 as specified by dataref length}, {dataref value(s) storage 2 as specified by dataref length}, dataref handler} ]]
-local Automix_Drefs_Once = {
-"DREFS_ONCE",
 }
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local Automix_Menu_Items = {
@@ -89,17 +80,24 @@ AFR_Tgt = { },  -- Target air-fuel ratio
 }
 --[[
 
+DATAREFS
+
+]]
+Automix_EngineType = find_dataref("sim/aircraft/prop/acf_en_type[0]") -- Engine type 0 = recip carb, 1 = recip injected, 3 = electric, 5 = single spool jet, 6 = rocket, 7 = multi spool jet, 9 = free turboprop, 10 = fixed turboprop
+Automix_NumEngines = find_dataref("sim/aircraft/engine/acf_num_engines") -- Number of engines
+--[[
+
 DEBUG WINDOW
 
 ]]
 --[[ Adds things to the debug window ]]
 function Automix_DebugWindow_Init()
-    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture if the engine is a reciprocating type
+    if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
         Debug_Window_AddLine("AM_Spacer"," ")
         Debug_Window_AddLine("AM_Header","===== Automixture =====")
         Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
         Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Profile,"Gas_Constant",nil,2).." J / kg*K")
-        for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+        for i=1,Automix_NumEngines do
             Debug_Window_AddLine("AM_E"..i.."L0","Engine "..i..":") -- Reserving a line in the debug window only requires an ID.
             Debug_Window_AddLine("AM_E"..i.."MM")
             Debug_Window_AddLine("AM_E"..i.."L1")
@@ -112,7 +110,7 @@ function Automix_DebugWindow_Init()
 end
 --[[ Updates the debug window ]]
 function Automix_DebugWindow_Update()
-    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+    for i=1,Automix_NumEngines do
         Debug_Window_ReplaceLine("AM_E"..i.."MM","  Mode: "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1)) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
         Debug_Window_ReplaceLine("AM_E"..i.."L1","  p_in: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i)).." inHg = "..string.format("%.3f",Automix_Vars.p_in[i]).." N/m²")
         Debug_Window_ReplaceLine("AM_E"..i.."L2","  N_e: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i)).." 1/min = "..string.format("%.3f",Automix_Vars.N_e[i]).." 1/s")
@@ -296,7 +294,7 @@ function Automix_Profile_Apply()
     Automix_Vars.V_d = Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2) / 1000 -- Displacement: l to m³
     Automix_Vars.R_spec = Table_ValGet(Automix_Profile,"Gas_Constant",nil,2) -- J / kg K
     -- Create table with temporary variables for each engine
-    for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+    for i=1,Automix_NumEngines do
         Automix_Vars.p_in[i] = 0
         Automix_Vars.N_e[i] = 0
         Automix_Vars.T_in[i] = 0
@@ -307,7 +305,7 @@ function Automix_Profile_Apply()
 end
 --[[ Sets the mxiture lever animations from the menu ]]
 function Automix_Menu_To_Anim(mixmode)
-    for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
+    for i=0,(Automix_NumEngines-1) do
         if mixmode == "IdleCutoff" then
             DRef_MixtureLeversAnim[i] = 0 -- Idle cutoff
             DRef_ManualToggle = 0
@@ -427,7 +425,7 @@ end
 
 --[[ Registration routine for the menu ]]
 function Automix_Menu_Register()
-    if Automix_Menu_ID == nil and Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 and XPLM ~= nil then -- Only initialize automixture menu if the engine is a reciprocating type
+    if XPLM ~= nil and Automix_Menu_ID == nil and Automix_EngineType < 2 then -- Only initialize automixture menu if the engine is a reciprocating type
         local Menu_Index = nil
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,Automix_Menu_Items[1],ffi.cast("void *","None"),1)
         Automix_Menu_ID = XPLM.XPLMCreateMenu(Automix_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) Automix_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Automix_Menu_Pointer))
@@ -472,7 +470,7 @@ function Automix_MainTimer()
         --[[ Calculate mass flow per engine
         Source: Equation 3.14 from: Fantenberg, E. "Estimation of Air Mass Flow in Engines with Variable Valve Timing",Linköping, 2018
         ]]
-        for i=1,Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1) do
+        for i=1,Automix_NumEngines do
             Automix_Vars.p_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i) * 3386.388333333334 -- inHG to N/m²
             Automix_Vars.N_e[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i) / 60 -- 1/min to 1 / s
             Automix_Vars.T_in[i] = Table_ValGet(Automix_Drefs_Cont,"Eng_Carb",4,i) + 273.15 -- °C in K
@@ -509,17 +507,14 @@ INITIALIZATION
 --[[ Module is run for the very first time ]]
 function Automix_FirstRun()
     Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
-    DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
+    Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
     Automix_Menu_Build()
     LogOutput(Automix_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function Automix_Init()
-    -- Read datarefs that are only read once
-    DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
-    Dataref_Read(Automix_Drefs_Once,4,"All") -- Populate dataref container with current values
-    if Table_ValGet(Automix_Drefs_Once,"Type_Eng",4,1) < 2 then -- Only initialize automixture if the engine is a reciprocating type
+    if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
         Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
         DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
         Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
@@ -550,7 +545,7 @@ XLUA DATAREFS
 --[[ Mixture lever animation dataref ]]
 function MixtureLeverCallback()
     local average = 0
-    for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
+    for i=0,(Automix_NumEngines-1) do
         if DRef_ManualToggle == 0 then
             if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
                 DRef_MixtureLeversAnim[i] = 0 -- Idle cutoff
@@ -570,12 +565,12 @@ function MixtureLeverCallback()
         -- Adjust manipulator for both levers
         average = average + DRef_MixtureLeversAnim[i]
     end
-    DRef_MixtureLeversAllAnim = average / Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)
+    DRef_MixtureLeversAllAnim = average / Automix_NumEngines
 end
 DRef_MixtureLeversAnim = create_dataref("xluautils/automixture/mixture_lever_anim","array[8]",MixtureLeverCallback)
 --[[ All mixture lever animation dataref ]]
 function MixtureLeverAllCallback()
-    for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
+    for i=0,(Automix_NumEngines-1) do
         DRef_MixtureLeversAnim[i] = DRef_MixtureLeversAllAnim
         if DRef_ManualToggle == 0 then
             if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
@@ -599,7 +594,7 @@ DRef_MixtureLeversAllAnim = create_dataref("xluautils/automixture/mixture_lever_
 --[[ Manual mode toggle dataref ]]
 function ManualToggleCallback()
     if DRef_ManualToggle == 1 then
-        for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
+        for i=0,(Automix_NumEngines-1) do
             DebugLogOutput(Automix_Config_Vars[1][1]..": Enabled manual mixture mode for engine "..i)
             Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+2,"Manual")
             DisplayNotification("Automixture Mode: "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+2),"Nominal",4)
@@ -607,7 +602,7 @@ function ManualToggleCallback()
     end
     if DRef_ManualToggle == 0 then
         local average = 0
-        for i=0,(Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)-1) do
+        for i=0,(Automix_NumEngines-1) do
             DebugLogOutput(Automix_Config_Vars[1][1]..": Disabled manual mixture mode for engine "..i)
             if DRef_ManualToggle == 0 then
                 if DRef_MixtureLeversAnim[i] < Table_ValGet(Automix_Profile,"Lever_Detents",nil,2) then
@@ -629,7 +624,7 @@ function ManualToggleCallback()
             -- Adjust manipulator for both levers
             average = average + DRef_MixtureLeversAnim[i]
         end
-        DRef_MixtureLeversAllAnim = average / Table_ValGet(Automix_Drefs_Once,"Eng_Num",4,1)
+        DRef_MixtureLeversAllAnim = average / Automix_NumEngines
     end
 end
 DRef_ManualToggle = create_dataref("xluautils/automixture/toggle_manual_mode","number",ManualToggleCallback)
