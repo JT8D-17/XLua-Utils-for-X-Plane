@@ -724,6 +724,7 @@ end
 --[[ Module initialization at every Xlua Utils start ]]
 function EngineDamage_Init()
     math.randomseed(os.time()) -- Generate random seed for random number generator
+    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
     Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with current values

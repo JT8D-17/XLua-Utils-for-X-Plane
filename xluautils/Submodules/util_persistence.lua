@@ -315,7 +315,7 @@ INITIALIZATION
 function Persistence_FirstRun()
     Persistence_DrefFile_Write(XLuaUtils_Path.."persistence_datarefs.cfg")
     if FileExists(XLuaUtils_Path.."persistence_datarefs.cfg") then Persistence_HasDrefFile = 1 end
-    Preferences_Read(XLuaUtils_PrefsFile,Persistence_Config_Vars)
+    Preferences_Write(Persistence_Config_Vars,XLuaUtils_PrefsFile)
     Persistence_Menu_Build()
     Persistence_Menu_Watchdog(Persistence_Menu_Items,2)
     Persistence_Menu_Watchdog(Persistence_Menu_Items,12)

@@ -129,18 +129,15 @@ function flight_start()
     Debug_Menu_Build(XLuaUtils_Menu_ID) -- Build debugging menu, see xluautils_core_debugging.lua
     Notify_Window_Build()               -- Build notification window, see xluautils_core_notifications.lua
     Debug_Window_Build()                -- Build debugging window, see xluautils_core_debugging.lua
-
-    Persistence_Init() -- Initialize persistence module
-    Automix_Init() -- Initialize automixture
-    EngineDamage_Init() -- Initialize engine damage
-
-    AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
-    if XLuaUtils_HasConfig == 1 then -- If a general Xlua Utils preferences file is present
+    if XLuaUtils_HasConfig == 1 then -- Check if a general Xlua Utils preferences file is present
         Menus_Init()            -- Always first!
-        MiscUtils_Init()        -- Initialize the Misc Utilities module
-        NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module
-        OxygenSystem_Init()     -- Initialize the Oxygen System module
-
+        AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
+        Automix_Init()          -- Initialize the Automixture module, see util_automixture.lua
+        EngineDamage_Init()     -- Initialize the Engine Damage module, see util_enginedamage.lua
+        MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
+        NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
+        OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
+        Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
     end
     if DebugIsEnabled() == 1 then Debug_Start() end -- Starts debugging, see below
 end

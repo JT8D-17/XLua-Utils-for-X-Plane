@@ -509,7 +509,6 @@ INITIALIZATION
 --[[ Module is run for the very first time ]]
 function Automix_FirstRun()
     Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
-    Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
     DrefTable_Read(Dref_List_Once,Automix_Drefs_Once)
     DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
     Automix_Menu_Build()
