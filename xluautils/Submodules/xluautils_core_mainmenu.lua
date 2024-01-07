@@ -19,12 +19,14 @@ function Main_Menu_Callbacks(itemref)
             if i == 2 then
                 if XLuaUtils_HasConfig == 0 then
                     LogOutput("FIRST TIME INITIALIZATION START")
-                    SubModules_FirstRun()
+                    Modules_FirstRun()
+                    if FileExists(XLuaUtils_PrefsFile) then XLuaUtils_HasConfig = 1 end
+                    Modules_Init()
                     DisplayNotification("XLuaUtils Initialization Complete","Nominal",5)
                     LogOutput("FIRST TIME INITIALIZATION END")
                 elseif XLuaUtils_HasConfig == 1 then
                     LogOutput("SUBMODULES RELOAD START")
-                    SubModules_Reload()
+                    Modules_Reload()
                     DisplayNotification("XLuaUtils Submodules Reloaded","Nominal",5)
                     LogOutput("SUBMODULES RELOAD END")
                 end

@@ -760,17 +760,20 @@ INITIALIZATION
 function MiscUtils_FirstRun()
     Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
     DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    MiscUtils_Menu_Build()
     LogOutput(MiscUtils_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function MiscUtils_Init()
     Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
-    DrefTable_Read(Dref_List,MiscUtils_Datarefs)
-    Dataref_Read(MiscUtils_Datarefs,5,"All") -- Populate dataref container with current values as defaults
-    Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values
-    for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][4][1] = 0 end -- Zero all datarefs
-    run_at_interval(MiscUtils_MainTimer,Table_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
+    if XLuaUtils_HasConfig == 1 then
+        DrefTable_Read(Dref_List,MiscUtils_Datarefs)
+        Dataref_Read(MiscUtils_Datarefs,5,"All") -- Populate dataref container with current values as defaults
+        Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values
+        for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][4][1] = 0 end -- Zero all datarefs
+        run_at_interval(MiscUtils_MainTimer,Table_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
+        if is_timer_scheduled(MiscUtils_MainTimer) then DisplayNotification("Misc Utils: Monitoring Started","Nominal",5) end
+        MiscUtils_Menu_Register()
+    end
     LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]

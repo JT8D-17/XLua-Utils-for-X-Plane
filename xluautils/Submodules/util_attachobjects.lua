@@ -291,7 +291,7 @@ function AttachObject_Hide_All()
     end
 end
 --[[ Unloads all objects by destroying their instances and unloading the OBJ files ]]
-function AttachObject_Unload()
+function AttachObject_Objs_Unload()
     for i=1,#AttachObj_InstRefs do
         if AttachObj_Inst[i] ~= nil and AttachObj_InstRefs[i] ~= nil then
             --print("Unloading object "..AttachObj_Container[i][1])
@@ -422,43 +422,47 @@ end
 INITIALIZATION
 
 ]]
---[[ Collection of all functions relevant during initialization or reloading ]]
+--[[ Common start items ]]
 function AttachObject_Start()
+    --Preferences_Read(XLuaUtils_PrefsFile,AttachObj_Config_Vars)
     AttachObject_Config_Read()
-    AttachObject_Init_CopyDrefTable()
-    DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
-    Dataref_Read(AttachObj_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-    AttachObject_Probe_Create()
-    AttachObject_Probe_Update(simDR_pos_local_x,simDR_pos_local_y,simDR_pos_local_z)
-    AttachObject_CreateInstances()
-    AttachObject_Menu_Watchdog(AttachObj_Menu_Items,3)
-    run_at_interval(AttachObject_MainTimer,Table_ValGet(AttachObj_Config_Vars,"MainTimerInterval",nil,2))
+    if AttachObj_HasConfig == 1 then
+        AttachObject_Init_CopyDrefTable()
+        DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
+        Dataref_Read(AttachObj_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
+        AttachObject_Probe_Create()
+        AttachObject_Probe_Update(simDR_pos_local_x,simDR_pos_local_y,simDR_pos_local_z)
+        AttachObject_CreateInstances()
+        AttachObject_Menu_Watchdog(AttachObj_Menu_Items,3)
+        run_at_interval(AttachObject_MainTimer,Table_ValGet(AttachObj_Config_Vars,"MainTimerInterval",nil,2))
+        if is_timer_scheduled(AttachObject_MainTimer) then DisplayNotification("Attach Object: Monitoring Started","Nominal",5) end
+    end
 end
 --[[ Module is run for the very first time ]]
 function AttachObject_FirstRun()
     AttachObject_Config_Write() -- Write new skeleton config file
     if FileExists(XLuaUtils_Path..AttachObj_Config_File) then AttachObj_HasConfig = 1 end -- Check if config file exists
-    --Preferences_Write(AttachObj_Config_Vars,XLuaUtils_PrefsFile)
-    --Preferences_Read(XLuaUtils_PrefsFile,AttachObj_Config_Vars)
-    --DrefTable_Read(Dref_List_Cont,AttachObj_Drefs_Cont)
+    AttachObject_Start()
     AttachObject_Menu_Build()
-    AttachObject_Menu_Watchdog(AttachObj_Menu_Items,2)
     LogOutput(AttachObj_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function AttachObject_Init()
-    if FileExists(XLuaUtils_Path..AttachObj_Config_File) then -- Check if config file exists
-        AttachObj_HasConfig = 1
-        AttachObject_Start()
-    end
+    AttachObject_Start()
+    AttachObject_Menu_Register()
     LogOutput(AttachObj_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]
 function AttachObject_Reload()
     AttachObj_AllowDrawing = 0
-    if is_timer_scheduled(AttachObject_MainTimer) then stop_timer(AttachObject_MainTimer) end
-    AttachObject_Unload()
+    if is_timer_scheduled(AttachObject_MainTimer) then stop_timer(AttachObject_MainTimer) DisplayNotification("Attach Object: Monitoring Stopped","Nominal",5) end
+    AttachObject_Objs_Unload()
     AttachObj_Container = { }
     AttachObject_Start()
+    AttachObject_Menu_Build()
     LogOutput(AttachObj_Config_Vars[1][1]..": Reloaded!")
+end
+--[[ Module unload ]]
+function AttachObject_Unload()
+    AttachObject_Objs_Unload()
 end

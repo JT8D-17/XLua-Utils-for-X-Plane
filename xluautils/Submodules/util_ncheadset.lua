@@ -211,16 +211,19 @@ INITIALIZATION
 function NCHeadset_FirstRun()
     Preferences_Write(NCHeadset_Config_Vars,XLuaUtils_PrefsFile)
     DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    NCHeadset_Menu_Build()
     LogOutput(NCHeadset_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function NCHeadset_Init()
     Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
-    DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-    Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
-    Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
-    run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
+    if XLuaUtils_HasConfig == 1 then
+        DrefTable_Read(Dref_List,NCHeadset_Datarefs)
+        Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
+        Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
+        run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
+        if is_timer_scheduled(NCHeadset_MainTimer) then DisplayNotification("Headset: Monitoring Started","Nominal",5) end
+        NCHeadset_Menu_Register()
+    end
     LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]

@@ -257,15 +257,18 @@ INITIALIZATION
 --[[ Module is run for the very first time ]]
 function OxygenSystem_FirstRun()
     Preferences_Write(OxygenSystem_Config_Vars,XLuaUtils_PrefsFile)
-    OxygenSystem_Menu_Build()
     LogOutput(OxygenSystem_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function OxygenSystem_Init()
     Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
-    OxygenSystem_WriteSaved()
-    run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
-    LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
+    if XLuaUtils_HasConfig == 1 then
+        OxygenSystem_WriteSaved()
+        run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
+        if is_timer_scheduled(OxygenSystem_MainTimer) then DisplayNotification("Oxygen System: Monitoring Started","Nominal",5) end
+        OxygenSystem_Menu_Register()
+        LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
+    end
 end
 --[[ Module reload ]]
 function OxygenSystem_Reload()

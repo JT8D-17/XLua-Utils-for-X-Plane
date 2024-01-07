@@ -302,8 +302,7 @@ function Persistence_TimerStart()
 end
 --[[ Stops the Autosave Timer ]]
 function Persistence_TimerStop()
-    stop_timer(Persistence_MainTimer)
-    DisplayNotification("Persistence: Autosave Timer Stopped","Nominal",5)
+    if is_timer_scheduled(Persistence_MainTimer) then stop_timer(Persistence_MainTimer) DisplayNotification("Persistence: Autosave Timer Stopped","Nominal",5) end
     LogOutput(Persistence_Config_Vars[1][1]..": Autosave Timer stopped.")
 end
 --[[
@@ -311,18 +310,8 @@ end
 INITIALIZATION
 
 ]]
---[[ Module is run for the very first time ]]
-function Persistence_FirstRun()
-    Persistence_DrefFile_Write(XLuaUtils_Path.."persistence_datarefs.cfg")
-    if FileExists(XLuaUtils_Path.."persistence_datarefs.cfg") then Persistence_HasDrefFile = 1 end
-    Preferences_Write(Persistence_Config_Vars,XLuaUtils_PrefsFile)
-    Persistence_Menu_Build()
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,2)
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
-    LogOutput(Persistence_Config_Vars[1][1]..": First Initialization Completed!")
-end
---[[ Module initialization at every Xlua Utils start ]]
-function Persistence_Init()
+--[[ Common start items ]]
+function Persistence_Start()
     Preferences_Read(XLuaUtils_PrefsFile,Persistence_Config_Vars)
     Persistence_DrefFile_Read(XLuaUtils_Path.."persistence_datarefs.cfg")
     if Persistence_HasDrefFile == 1 then
@@ -330,14 +319,27 @@ function Persistence_Init()
         Persistence_Autoload()
         Persistence_TimerStart()
     end
+end
+--[[ Module is run for the very first time ]]
+function Persistence_FirstRun()
+    Persistence_DrefFile_Write(XLuaUtils_Path.."persistence_datarefs.cfg")
+    Preferences_Write(Persistence_Config_Vars,XLuaUtils_PrefsFile)
+    Persistence_Start()
+    Persistence_Menu_Build()
+    LogOutput(Persistence_Config_Vars[1][1]..": First Initialization Completed!")
+end
+--[[ Module initialization at every Xlua Utils start ]]
+function Persistence_Init()
+    Persistence_Start()
+    Persistence_Menu_Register()
     LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Reloads the Persistence configuration ]]
 function Persistence_Reload()
-    Persistence_Init()
+    Persistence_TimerStop()
+    Persistence_TimerStart()
+    Persistence_Start()
     Persistence_Menu_Build()
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,2)
-    Persistence_Menu_Watchdog(Persistence_Menu_Items,12)
     LogOutput(Persistence_Config_Vars[1][1]..": Reloaded!")
 end
 --[[ Module unload ]]

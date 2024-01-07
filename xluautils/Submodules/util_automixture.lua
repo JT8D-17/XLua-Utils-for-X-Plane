@@ -327,7 +327,7 @@ function Automix_Menu_To_Anim(mixmode)
         end
         Table_ValSet(Automix_Config_Vars,"MixtureMode",nil,i+2,mixmode)
         DebugLogOutput(Automix_Config_Vars[1][1]..": Set automixture mode for engine "..i.." to "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+2))
-        DisplayNotification("Automixture mode for engine "..i..": "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+2),"Nominal",4)
+        DisplayNotification("Automixture: Mode for engine "..i.." is "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+2),"Nominal",4)
         --print("Engine "..i.." mixture mode is "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+2))
     end
 end
@@ -341,7 +341,7 @@ function Automix_Menu_Callbacks(itemref)
     for i=2,#Automix_Menu_Items do
         if itemref == Automix_Menu_Items[i] then
             if i == 2 then
-                if Automix_HasProfile == 0 then Automix_Profile_Write(XLuaUtils_Path..Automix_Profile_File) Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File) Automix_Menu_Build() Automix_Menu_Watchdog(Automix_Menu_Items,2) Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile) end
+                if Automix_HasProfile == 0 then Automix_FirstRun() end
                 if Automix_HasProfile == 1 then Automix_Reload() end
             end
             if i == 4 then
@@ -504,38 +504,47 @@ end
 INITIALIZATION
 
 ]]
+--[[ Common start items ]]
+function Automix_Start()
+    Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
+    Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
+    if XLuaUtils_HasConfig == 1 and Automix_HasProfile == 1 then
+        DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
+        Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
+        Automix_Profile_Apply()
+        run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
+        if is_timer_scheduled(Automix_MainTimer) then DisplayNotification("Automixture: Monitoring Started","Nominal",5) end
+    end
+end
 --[[ Module is run for the very first time ]]
 function Automix_FirstRun()
+    Automix_Profile_Write(XLuaUtils_Path..Automix_Profile_File)
     Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
-    DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
-    Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
+    Automix_Start()
     Automix_Menu_Build()
     LogOutput(Automix_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function Automix_Init()
     if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
-        Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
-        DrefTable_Read(Dref_List_Cont,Automix_Drefs_Cont)
-        Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
-        Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
-        Automix_Profile_Apply()
-        run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
+        Automix_Start()
+        Automix_Menu_Register()
         LogOutput(Automix_Config_Vars[1][1]..": Initialized!")
     end
 end
 --[[ Module reload ]]
 function Automix_Reload()
-    Preferences_Read(XLuaUtils_PrefsFile,Automix_Config_Vars)
-    Automix_Profile_Read(XLuaUtils_Path..Automix_Profile_File)
-    Automix_Profile_Apply()
-    Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
-    Automix_Menu_Build()
-    LogOutput(Automix_Config_Vars[1][1]..": Reloaded!")
+    if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
+        if is_timer_scheduled(Automix_MainTimer) then stop_timer(Automix_MainTimer) DisplayNotification("Automixture: Monitoring Stopped","Nominal",5) end -- Clean up old timer
+        Automix_Start()
+        Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
+        Automix_Menu_Build()
+        LogOutput(Automix_Config_Vars[1][1]..": Reloaded!")
+    end
 end
 --[[ Module unload ]]
 function Automix_Unload()
-    Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
+    --Preferences_Write(Automix_Config_Vars,XLuaUtils_PrefsFile)
 end
 --[[
 

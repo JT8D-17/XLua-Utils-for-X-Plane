@@ -163,9 +163,9 @@ local EngineDamage_Menu_Items = {
 "MP",                       -- Item index: 8
 "N1",                       -- Item index: 9
 "N2",                       -- Item index: 10
-"OIL_P",                     -- Item index: 11
-"OIL_T",                     -- Item index: 12
-"RPM_P",                     -- Item index: 13
+"OIL_P",                    -- Item index: 11
+"OIL_T",                    -- Item index: 12
+"RPM_P",                    -- Item index: 13
 "TRQ",                      -- Item index: 14
 "[Separator]",              -- Item index: 15
 "Disable All",              -- Item index: 16
@@ -696,11 +696,16 @@ end
 INITIALIZATION
 
 ]]
---[[ Some common start routines ]]
+--[[ Common start items ]]
 function EngineDamage_Start()
     Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
     EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
     if EngineDamage_HasProfile == 1 then
+        math.randomseed(os.time()) -- Generate random seed for random number generator
+        DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
+        DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
+        Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with current values
+        Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
         EngineDamage_ProfileAircraft()
         EngineDamage_Notifications()
         run_at_interval(EngineDamage_MainTimer,Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2))
@@ -709,27 +714,16 @@ function EngineDamage_Start()
 end
 --[[ Module is run for the very first time ]]
 function EngineDamage_FirstRun()
-    --[[if FileExists(XLuaUtils_Path..EngineDamage_Profile_File) then
-        LogOutput(EngineDamage_Config_Vars[1][1]..": Existing engine profile found, skipping creation of a new one!")
-    else
-        EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
-    end]]
     EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
-    EngineDamage_Profile_Read(XLuaUtils_Path..EngineDamage_Profile_File)
-    EngineDamage_Menu_Build()
-    EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,2)
     Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
+    EngineDamage_Start()
+    EngineDamage_Menu_Build()
     LogOutput(EngineDamage_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function EngineDamage_Init()
-    math.randomseed(os.time()) -- Generate random seed for random number generator
-    Preferences_Read(XLuaUtils_PrefsFile,EngineDamage_Config_Vars)
-    DrefTable_Read(Dref_List_Once,EngineDamage_Drefs_Once)
-    DrefTable_Read(Dref_List_Cont,EngineDamage_Drefs_Cont)
-    Dataref_Read(EngineDamage_Drefs_Once,4,"All") -- Populate dataref container with current values
-    Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
     EngineDamage_Start()
+    EngineDamage_Menu_Register()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]

@@ -54,34 +54,29 @@ TIMERS
 --is_timer_scheduled(func) -- This returns true if the timer function will run at any time in the future. It returns false if the timer isn’t scheduled or if func has never been used as a timer. 
 --[[
 
-MENUS
-
-]]
---[[ Registers the submodule/utility menus ]]
-function Menus_Init()
-    Main_Menu_Init() -- Only triggers the menu watchdog
-    AttachObject_Menu_Register()
-    Automix_Menu_Register()
-    EngineDamage_Menu_Register()
-    NCHeadset_Menu_Register()
-    MiscUtils_Menu_Register()
-    OxygenSystem_Menu_Register()
-    Persistence_Menu_Register()
-end
---[[
-
 MODULE/UTILITY CALLBACKS
 
 ]]
 --[[ Modules/Utilities are run for the very first time - called from xluautils_core_mainmenu.lua ]]
-function SubModules_FirstRun()
+function Modules_FirstRun()
     MiscUtils_FirstRun()
     NCHeadset_FirstRun()
     OxygenSystem_FirstRun()
     Menus_Init()
 end
+--[[ Modules/Utilities are initialized - called from xluautils_core_mainmenu.lua or below ]]
+function Modules_Init()
+    Main_Menu_Init()        -- Only triggers the menu watchdog
+    AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
+    Automix_Init()          -- Initialize the Automixture module, see util_automixture.lua
+    EngineDamage_Init()     -- Initialize the Engine Damage module, see util_enginedamage.lua
+    MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
+    NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
+    OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
+    Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
+end
 --[[ Modules/Utilities are reloaded - called from xluautils_core_mainmenu.lua ]]
-function SubModules_Reload()
+function Modules_Reload()
     NCHeadset_Reload()  -- Reloads the ncheadset module
     MiscUtils_Reload()  -- Reloads the misc utilities module
     OxygenSystem_Reload() -- Reloads the oxygen system module
@@ -89,7 +84,7 @@ function SubModules_Reload()
     Menus_Init()
 end
 --[[ Modules/Utilities are unloaded - called from aircraft_unload() below ]]
-function SubModules_Unload()
+function Modules_Unload()
     Persistence_Unload()
     NCHeadset_Off()
     Debug_Unload()
@@ -108,7 +103,7 @@ X-PLANE CALLBACKS
 end]]
 function aircraft_unload()
     LogOutput("AIRCRAFT UNLOAD DETECTED")
-    SubModules_Unload()
+    Modules_Unload()
     LogOutput("SUBMODULES UNLOADED")
 end
 -- 2: Flight start
@@ -129,16 +124,7 @@ function flight_start()
     Debug_Menu_Build(XLuaUtils_Menu_ID) -- Build debugging menu, see xluautils_core_debugging.lua
     Notify_Window_Build()               -- Build notification window, see xluautils_core_notifications.lua
     Debug_Window_Build()                -- Build debugging window, see xluautils_core_debugging.lua
-    if XLuaUtils_HasConfig == 1 then -- Check if a general Xlua Utils preferences file is present
-        Menus_Init()            -- Always first!
-        AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
-        Automix_Init()          -- Initialize the Automixture module, see util_automixture.lua
-        EngineDamage_Init()     -- Initialize the Engine Damage module, see util_enginedamage.lua
-        MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
-        NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
-        OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
-        Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
-    end
+    Modules_Init()                      -- Initialize modules, soo above
     if DebugIsEnabled() == 1 then Debug_Start() end -- Starts debugging, see below
 end
 -- 3: Flight crash
