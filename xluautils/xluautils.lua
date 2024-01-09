@@ -62,7 +62,6 @@ function Modules_FirstRun()
     MiscUtils_FirstRun()
     NCHeadset_FirstRun()
     OxygenSystem_FirstRun()
-    Menus_Init()
 end
 --[[ Modules/Utilities are initialized - called from xluautils_core_mainmenu.lua or below ]]
 function Modules_Init()
@@ -81,7 +80,6 @@ function Modules_Reload()
     MiscUtils_Reload()  -- Reloads the misc utilities module
     OxygenSystem_Reload() -- Reloads the oxygen system module
     Debug_Window_Reload() -- Reloads the debug window module
-    Menus_Init()
 end
 --[[ Modules/Utilities are unloaded - called from aircraft_unload() below ]]
 function Modules_Unload()

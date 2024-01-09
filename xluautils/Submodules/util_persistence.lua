@@ -330,8 +330,10 @@ function Persistence_FirstRun()
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function Persistence_Init()
-    Persistence_Start()
-    Persistence_Menu_Register()
+    if XLuaUtils_HasConfig == 1 then
+        Persistence_Start()
+        Persistence_Menu_Register()
+    end
     LogOutput(Persistence_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Reloads the Persistence configuration ]]

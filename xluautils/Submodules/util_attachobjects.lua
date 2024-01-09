@@ -448,8 +448,10 @@ function AttachObject_FirstRun()
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function AttachObject_Init()
-    AttachObject_Start()
-    AttachObject_Menu_Register()
+    if XLuaUtils_HasConfig == 1 then
+        AttachObject_Start()
+        AttachObject_Menu_Register()
+    end
     LogOutput(AttachObj_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]

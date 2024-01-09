@@ -722,8 +722,10 @@ function EngineDamage_FirstRun()
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function EngineDamage_Init()
-    EngineDamage_Start()
-    EngineDamage_Menu_Register()
+    if XLuaUtils_HasConfig == 1 then
+        EngineDamage_Start()
+        EngineDamage_Menu_Register()
+    end
     LogOutput(EngineDamage_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]
