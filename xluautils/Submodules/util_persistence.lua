@@ -241,9 +241,9 @@ function Persistence_Menu_Watchdog(intable,index)
     end
     if index == 11 or index == 13 then
         if Table_ValGet(Persistence_Config_Vars,"AutosaveInterval",nil,2) < 0 then Table_ValSet(Persistence_Config_Vars,"AutosaveInterval",nil,2,0) end
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,11,"Increment Autosave Interval (+ "..Table_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta",nil,2).." s)",1)
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,12,"Autosave Interval: "..Table_ValGet(Persistence_Config_Vars,"AutosaveInterval",nil,2).." s",1)
-        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,13,"Decrement Autosave Interval (- "..Table_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta",nil,2).." s)",1)
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,9,"Increment Autosave Interval (+ "..Table_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta",nil,2).." s)",1)
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,10,"Autosave Interval: "..Table_ValGet(Persistence_Config_Vars,"AutosaveInterval",nil,2).." s",1)
+        XPLM.XPLMSetMenuItemName(Persistence_Menu_ID,11,"Decrement Autosave Interval (- "..Table_ValGet(Persistence_Config_Vars,"AutosaveIntervalDelta",nil,2).." s)",1)
     end
 end
 --[[ Registration routine for the menu ]]
