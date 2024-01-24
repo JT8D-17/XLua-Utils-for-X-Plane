@@ -9,6 +9,11 @@ local MiscUtils_Config_Vars = {
 {"MISC_UTILS"},
 {"MainTimerInterval",1},
 {"SyncBaros",0},
+{"PowerMonitor",0},
+{"PowerMonitorDisplayTime",5},
+{"PowerMonitorScalar",1.0},
+{"PowerMonitorInputChange",0.005},
+{"PowerMonitorFuelUnit","kg"}, -- kg or lbs or gal_avgas or gal_jet or l_avgas or l_jet-a
 }
 --[[ List of Datarefs used by this module ]]
 local Dref_List = {
@@ -579,6 +584,8 @@ local MiscUtils_Menu_Items = {
 "[Separator]",       -- Index: 7
 "Synchronize Date",  -- Index: 8
 "Synchronize Time",  -- Index: 9
+"[Separator]",       -- Index: 10
+"Power Monitor",     -- Index: 11
 }
 
 --[[
@@ -586,14 +593,27 @@ local MiscUtils_Menu_Items = {
 DATAREFS
 
 ]]
-simDR_GroundSpeed = find_dataref("sim/flightmodel2/position/groundspeed") -- For repair function
-simDR_OnGround = find_dataref("sim/flightmodel/failures/onground_any") -- For repair function
-simDR_Baro_Pilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot") -- Barometer synchronization
 simDR_Baro_CoPilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot") -- Barometer synchronization
+simDR_Baro_Pilot = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot") -- Barometer synchronization
 simDR_Baro_Stby = find_dataref("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_stby") -- Barometer synchronization
+simDR_Date = find_dataref("sim/time/local_date_days")   -- Date synchronization
+simDR_EngineCHT = find_dataref("sim/cockpit2/engine/indicators/CHT_CYL_deg_C") -- Power monitor
+simDR_EngineFF = find_dataref("sim/cockpit2/engine/indicators/fuel_flow_kg_sec") -- Power monitor
+simDR_EngineRPM = find_dataref("sim/cockpit2/engine/indicators/engine_speed_rpm") -- Power monitor
+simDR_EngineRunning = find_dataref("sim/flightmodel/engine/ENGN_running") -- Power monitor
+simDR_EngineType = find_dataref("sim/aircraft/prop/acf_en_type") -- Power monitor
+simDR_GroundSpeed = find_dataref("sim/flightmodel2/position/groundspeed") -- For repair function
+simDR_Input_Mixture = find_dataref("sim/cockpit2/engine/actuators/mixture_ratio_all") -- Power monitor
+simDR_Input_Prop = find_dataref("sim/cockpit2/engine/actuators/prop_rotation_speed_rad_sec_all") -- Power monitor
+simDR_Input_Throttle = find_dataref("sim/cockpit2/engine/actuators/throttle_ratio_all") -- Power monitor
 simDR_Livery_Path = find_dataref("sim/aircraft/view/acf_livery_path") -- Livery switcher
-simDR_Date = find_dataref("sim/time/local_date_days")
-simDR_Time_Local = find_dataref("sim/time/zulu_time_sec")
+simDR_ManifoldPress = find_dataref("sim/cockpit2/engine/indicators/MPR_in_hg") -- Power monitor
+simDR_Num_Engines = find_dataref("sim/aircraft/engine/acf_num_engines") -- Power monitor
+simDR_OnGround = find_dataref("sim/flightmodel/failures/onground_any") -- For repair function
+simDR_Power_Current = find_dataref("sim/cockpit2/engine/indicators/power_watts") -- Power monitor
+simDR_Power_Max = find_dataref("sim/aircraft2/engine/max_power_limited_watts") -- Power monitor
+simDR_Time_Local = find_dataref("sim/time/zulu_time_sec") -- Time synchronization
+simDR_Time_Running = find_dataref("sim/time/total_running_time_sec") -- Power monitor
 --[[
 
 COMMANDS
@@ -612,6 +632,7 @@ local Baro_Pilot_Old = simDR_Baro_Pilot
 local Baro_CoPilot_Old = simDR_Baro_CoPilot
 local Baro_Stby_Old = simDR_Baro_Stby
 local Livery = {Current="",Old=""}
+local Power_Monitor_Vars = {Thr_Old=0,Mix_Old=0,Prp_Old=0,Num_Pwr=0,Notify_ID=-111111,Notify_String="",Notify_Time=0,S_Pwr="",S_BHP="",S_RPM="",S_MPR="",S_CHT="",S_FF=""}
 --[[ Menu variables for FFI ]]
 local MiscUtils_Menu_ID = nil
 local MiscUtils_Menu_Pointer = ffi.new("const char")
@@ -623,7 +644,7 @@ FUNCTIONS
 --[[ Determine number of engines running ]]
 function AllEnginesRunning()
     local j=0
-    for i=0,(NumEngines-1) do if IsBurningFuel[i] == 1 then j = j + 1 end end
+    for i=0,(NumEngines-1) do if simDR_EngineRunning[i] == 1 then j = j + 1 end end
     if j == NumEngines then return 1 end
     if j < NumEngines then return 0 end
 end
@@ -649,6 +670,77 @@ function Sync_Baros()
         simDR_Baro_CoPilot = simDR_Baro_Stby
         Baro_CoPilot_Old = simDR_Baro_CoPilot
         Baro_Stby_Old = simDR_Baro_Stby
+    end
+end
+--[[ Adds a string to a string variable ]]
+function PowerMonitor_AddString(target,instring,separator)
+    if separator == nil then separator = " " end
+    if target == "" then target = instring
+    else target = target..separator..instring end
+    return target
+end
+--[[ Monitors throttle, prop and mixture for changes ]]
+function Power_Monitor()
+    Power_Monitor_Vars.Notify_String = ""
+    Power_Monitor_Vars.S_Pwr = ""
+    Power_Monitor_Vars.S_BHP = ""
+    Power_Monitor_Vars.S_RPM = ""
+    Power_Monitor_Vars.S_MPR = ""
+    Power_Monitor_Vars.S_CHT = ""
+    Power_Monitor_Vars.S_FF = ""
+    -- Monitor the throttle, mixture and prop levers for changes
+    if math.abs(simDR_Input_Throttle - Power_Monitor_Vars.Thr_Old) > Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorInputChange",nil,2) or math.abs(simDR_Input_Mixture - Power_Monitor_Vars.Mix_Old) > Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorInputChange",nil,2) or math.abs(simDR_Input_Prop - Power_Monitor_Vars.Prp_Old) > Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorInputChange",nil,2) then
+        for i=0,(simDR_Num_Engines-1) do
+            if simDR_EngineRunning[i] == 1 then
+                -- Check if there already is a notification
+                if not CheckNotification(Power_Monitor_Vars.Notify_ID) then DisplayNotification("Power Monitor: Placeholder","Nominal",Power_Monitor_Vars.Notify_ID) end -- Create the notification if there is none
+                Power_Monitor_Vars.Notify_Time = simDR_Time_Running -- Update the creation time for the notification
+            end
+        end
+        -- Update the old variables
+        Power_Monitor_Vars.Thr_Old = simDR_Input_Throttle
+        Power_Monitor_Vars.Mix_Old = simDR_Input_Mixture
+        Power_Monitor_Vars.Prp_Old = simDR_Input_Prop
+    end
+    -- Loop through all engines
+    Power_Monitor_Vars.Num_Pwr = 0
+    for i=0,(simDR_Num_Engines-1) do
+        if simDR_EngineRunning[i] == 1 and simDR_Power_Current[i] > 0 then
+            Power_Monitor_Vars.Num_Pwr = Power_Monitor_Vars.Num_Pwr + 1
+            if simDR_EngineType[i] == 0 or simDR_EngineType[i] == 1 or simDR_EngineType[i] == 9 or simDR_EngineType[i] == 10 then -- Recip and turboprop engines only
+                local power = (simDR_Power_Current[i] / simDR_Power_Max)*100 -- Calculate engine power
+                if i > 0 then Power_Monitor_Vars.S_Pwr = PowerMonitor_AddString(Power_Monitor_Vars.S_Pwr,"",", ") end
+                Power_Monitor_Vars.S_Pwr = PowerMonitor_AddString(Power_Monitor_Vars.S_Pwr,string.format("%d",power),"") -- Add power percentage
+                if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorScalar",nil,2) ~= 1.0 then Power_Monitor_Vars.S_Pwr = PowerMonitor_AddString(Power_Monitor_Vars.S_Pwr," ("..string.format("%d",power * Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorScalar",nil,2))..")","") end -- Add a note about a scalar
+                Power_Monitor_Vars.S_BHP = PowerMonitor_AddString(Power_Monitor_Vars.S_BHP,string.format("%d",(simDR_Power_Current[i] * 0.00134102)),", ") -- Convert to horsepower
+                Power_Monitor_Vars.S_RPM = PowerMonitor_AddString(Power_Monitor_Vars.S_RPM,string.format("%d",simDR_EngineRPM[i]),", ")
+            end
+            if simDR_EngineType[i] == 0 or simDR_EngineType[i] == 1 then
+                Power_Monitor_Vars.S_MPR = PowerMonitor_AddString(Power_Monitor_Vars.S_MPR,string.format("%.2f",simDR_ManifoldPress[i]),", ")
+                Power_Monitor_Vars.S_CHT = PowerMonitor_AddString(Power_Monitor_Vars.S_CHT,string.format("%d",simDR_EngineCHT[i]),", ")
+            end
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "kg" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600),", ") end -- Convert kg/s to kg/h
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "lbs" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600 * 2.20462),", ") end -- Convert kg/s to kg/h to lbs/h
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "gal_avgas" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600 * 2.20462 / 5.87),", ") end -- Convert kg/s to kg/h to lbs/h to gal/h, conversion factor from x-plane
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "gal_jet-a" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600 * 2.20462 / 6.66),", ") end -- Convert kg/s to kg/h to lbs/h to gal/h
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "l_avgas" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600 / 0.719),", ") end -- Convert kg/s to kg/h to l/h
+            if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "l_jet-a" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,string.format("%.2f",simDR_EngineFF[i] * 3600 / 0.796),", ") end -- Convert kg/s to kg/h to l/h
+
+        end
+    end
+    if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "gal_avgas" or Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "gal_jet-a" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,"gal/h"," ")
+    elseif Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "l_avgas" or Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2) == "l_jet-a" then Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,"l/h"," ")
+    else Power_Monitor_Vars.S_FF = PowerMonitor_AddString(Power_Monitor_Vars.S_FF,Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorFuelUnit",nil,2).."\\h"," ") end
+
+    Power_Monitor_Vars.Notify_String = " "..Power_Monitor_Vars.S_Pwr.." % | "..Power_Monitor_Vars.S_BHP.." bhp | "..Power_Monitor_Vars.S_RPM.." RPM | "..Power_Monitor_Vars.S_MPR.." inHg | "..Power_Monitor_Vars.S_CHT.." °C/°F | "..Power_Monitor_Vars.S_FF
+    -- Do not display the power monitor notification when no throttle input has been detected after the time given by the configuration options
+    if CheckNotification(Power_Monitor_Vars.Notify_ID) then
+        UpdateNotification("Power Monitor:"..Power_Monitor_Vars.Notify_String,"Nominal",Power_Monitor_Vars.Notify_ID) -- Update the notification if it is being displayed
+        if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorDisplayTime",nil,2) > 0 then
+            if simDR_Time_Running > (Power_Monitor_Vars.Notify_Time + Table_ValGet(MiscUtils_Config_Vars,"PowerMonitorDisplayTime",nil,2)) or Power_Monitor_Vars.Notify_String == "" or Power_Monitor_Vars.Num_Pwr == 0 then RemoveNotification(Power_Monitor_Vars.Notify_ID) Power_Monitor_Vars.Notify_String = "" end
+        else
+            if Power_Monitor_Vars.Num_Pwr == 0 then RemoveNotification(Power_Monitor_Vars.Notify_ID) end
+        end
     end
 end
 --[[
@@ -686,6 +778,14 @@ function MiscUtils_Menu_Callbacks(itemref)
                 DisplayNotification("Synchronizing XP Local Time ("..simDR_Time_Local..") to System Time ("..((os.date("%H")*3600)+(os.date("%M")*60)+os.date("%S"))..")...","Nominal",5)
                 simDR_Time_Local = (os.date("%H")*3600) + (os.date("%M")*60) + os.date("%S")
             end
+            if i == 11 then
+                if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 0 then
+                    Table_ValSet(MiscUtils_Config_Vars,"PowerMonitor",nil,2,1) DebugLogOutput("Power monitor: On") DisplayNotification("Power Monitor enabled.","Nominal",5)
+                else
+                    Table_ValSet(MiscUtils_Config_Vars,"PowerMonitor",nil,2,0) DebugLogOutput("Power monitor: Off") DisplayNotification("Power Monitor disabled.","Nominal",5)
+                end
+                Preferences_Write(MiscUtils_Config_Vars,XLuaUtils_PrefsFile)
+            end
             MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
         end
     end
@@ -693,12 +793,13 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function MiscUtils_Menu_Watchdog(intable,index)
     if index == 2 then
-        if (simDR_OnGround == 1 and simDR_GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable)
-        else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Can Not Repair]",intable) end
+        if (simDR_OnGround == 1 and simDR_GroundSpeed < 0.1 and AllEnginesRunning() == 0) or DebugIsEnabled() == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"Repair All Damage",intable) else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Can Not Repair]",intable) end
     end
     if index == 3 then
-        if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[On]",intable)
-        else Menu_ChangeItemPrefix(MiscUtils_Menu_ID,index,"[Off]",intable) end
+        if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Menu_CheckItem(MiscUtils_Menu_ID,index,"Activate") else Menu_CheckItem(MiscUtils_Menu_ID,index,"Deactivate") end
+    end
+    if index == 11 then
+        if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 1 then Menu_CheckItem(MiscUtils_Menu_ID,index,"Activate") else Menu_CheckItem(MiscUtils_Menu_ID,index,"Deactivate") end
     end
 end
 --[[ Registration routine for the menu ]]
@@ -744,6 +845,7 @@ RUNTIME CALLBACKS
 function MiscUtils_MainTimer()
     MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
     if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
+    if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 1 then Power_Monitor() end
     if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
     if Livery.Old ~= Livery.Current then
         DisplayNotification("Switched to livery: "..Livery.Current,"Nominal",5)
@@ -778,5 +880,7 @@ function MiscUtils_Init()
 end
 --[[ Module reload ]]
 function MiscUtils_Reload()
+    Preferences_Read(XLuaUtils_PrefsFile,MiscUtils_Config_Vars)
     MiscUtils_Menu_Build()
+    LogOutput(MiscUtils_Config_Vars[1][1]..": Reloaded!")
 end

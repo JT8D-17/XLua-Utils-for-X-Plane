@@ -580,6 +580,7 @@ function EngineDamage_Menu_Callbacks(itemref)
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
             EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
+            if CheckNotification(Notification_ID.Stress) then RemoveNotification(Notification_ID.Stress) end
             EngineDamage_Notifications()
             if DebugIsEnabled() == 1 then Debug_Reload() end
         end

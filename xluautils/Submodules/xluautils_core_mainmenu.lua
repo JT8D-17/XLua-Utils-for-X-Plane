@@ -38,8 +38,8 @@ end
 --[[ Menu watchdog that is used to check an item or change its prefix ]]
 function Main_Menu_Watchdog(intable,index)
     if index == 2 then
-        if XLuaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XLuaUtils_Menu_ID,index,"Initialize XLua Utils",intable)
-        elseif XLuaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XLuaUtils_Menu_ID,index,"Reload XLua Utils Preferences",intable) end
+        if XLuaUtils_HasConfig == 0 then Menu_ChangeItemPrefix(XLuaUtils_Menu_ID,index,"Initialize XLuaUtils",intable)
+        elseif XLuaUtils_HasConfig == 1 then Menu_ChangeItemPrefix(XLuaUtils_Menu_ID,index,"Reload XLuaUtils Preferences",intable) end
     end
 end
 --[[ Build logic for the main menu ]]
