@@ -126,14 +126,14 @@ local Dref_List_Once = {
 {"Eng_Num","sim/aircraft/engine/acf_num_engines"}, -- Number of engines
 {"Type_Eng","sim/aircraft/prop/acf_en_type"}, -- Engine type 0 = recip carb, 1 = recip injected, 3 = electric, 5 = single spool jet, 6 = rocket, 7 = multi spool jet, 9 = free turboprop, 10 = fixed turboprop
 {"Type_Prop","sim/aircraft/prop/acf_prop_type"}, -- Propeller type, 0 = fixed pitch, 1 = variable pitch, 3 = main rotor, 5 = tail rotor, 9 == jet
-{"Limit_CHT","sim/aircraft/engine/acf_max_CHT"},     -- Maximum CHT
-{"Limit_EGT","sim/aircraft/engine/acf_max_EGT"},     -- Maximum EGT
-{"Limit_ITT","sim/aircraft/engine/acf_max_ITT"},     -- Maximum ITT
-{"Limit_MP","sim/aircraft/engine/acf_mpmax"},     -- Maximum manifold pressure
+{"Limit_CHT","sim/aircraft/limits/red_hi_CHT"},     -- Maximum CHT
+{"Limit_EGT","sim/aircraft/limits/red_hi_EGT"},     -- Maximum EGT
+{"Limit_ITT","sim/aircraft/limits/red_hi_ITT"},     -- Maximum ITT
+{"Limit_MP","sim/aircraft/limits/red_hi_MP"},     -- Maximum manifold pressure
 {"Limit_N1","sim/aircraft/limits/red_hi_N1"},     -- Maximum N1
 {"Limit_N2","sim/aircraft/limits/red_hi_N2"},     -- Maximum N2
-{"Limit_OIL_P","sim/aircraft/engine/acf_max_OILP"},     -- Maximum oil pressure in psi
-{"Limit_OIL_T","sim/aircraft/engine/acf_max_OILT"},     -- Maximum oil temperature in °C
+{"Limit_OIL_P","sim/aircraft/limits/red_hi_oilP"},     -- Maximum oil pressure in psi
+{"Limit_OIL_T","sim/aircraft/limits/red_hi_oilT"},     -- Maximum oil temperature in °C
 --{"Limit_RPM_E","sim/aircraft/engine/acf_RSC_redline_eng"}, -- Maximum engine speed, rad/sec
 {"Limit_RPM_P","sim/aircraft/controls/acf_RSC_redline_prp"}, -- Maximum prop speed, rad/sec
 {"Limit_TRQ","sim/aircraft/limits/red_hi_TRQ"},     -- Maximum torque in Nm or %
