@@ -710,7 +710,7 @@ function EngineDamage_Start()
         EngineDamage_ProfileAircraft()
         EngineDamage_Notifications()
         run_at_interval(EngineDamage_MainTimer,Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(EngineDamage_MainTimer) then DisplayNotification("Engine Damage: Monitoring Started","Nominal",5) end
+        if is_timer_scheduled(EngineDamage_MainTimer) then DisplayNotification("Engine Damage: Initialized","Nominal",5) end
     end
 end
 --[[ Module is run for the very first time ]]
@@ -731,7 +731,7 @@ function EngineDamage_Init()
 end
 --[[ Module reload ]]
 function EngineDamage_Reload()
-    if is_timer_scheduled(EngineDamage_MainTimer) then stop_timer(EngineDamage_MainTimer) DisplayNotification("Engine Damage: Monitoring Stopped","Nominal",5) end -- Clean up old timer
+    if is_timer_scheduled(EngineDamage_MainTimer) then stop_timer(EngineDamage_MainTimer) DisplayNotification("Engine Damage: Uninitialized","Nominal",5) end -- Clean up old timer
     EngineDamage_Start()
     EngineDamage_Menu_Build()
     LogOutput(EngineDamage_Config_Vars[1][1]..": Reloaded!")

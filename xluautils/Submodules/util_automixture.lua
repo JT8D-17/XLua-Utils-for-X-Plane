@@ -513,7 +513,7 @@ function Automix_Start()
         Dataref_Read(Automix_Drefs_Cont,4,"All") -- Populate dataref container with currrent values
         Automix_Profile_Apply()
         run_at_interval(Automix_MainTimer,Table_ValGet(Automix_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(Automix_MainTimer) then DisplayNotification("Automixture: Monitoring Started","Nominal",5) end
+        if is_timer_scheduled(Automix_MainTimer) then DisplayNotification("Automixture: Initialized","Nominal",5) end
     end
 end
 --[[ Module is run for the very first time ]]
@@ -535,7 +535,7 @@ end
 --[[ Module reload ]]
 function Automix_Reload()
     if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
-        if is_timer_scheduled(Automix_MainTimer) then stop_timer(Automix_MainTimer) DisplayNotification("Automixture: Monitoring Stopped","Nominal",5) end -- Clean up old timer
+        if is_timer_scheduled(Automix_MainTimer) then stop_timer(Automix_MainTimer) DisplayNotification("Automixture: Uninitialized","Nominal",5) end -- Clean up old timer
         Automix_Start()
         Automix_File_Modifier(Automix_Sort_By_Filename(Automix_Replacements_Temp))
         Automix_Menu_Build()

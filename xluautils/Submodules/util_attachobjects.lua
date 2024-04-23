@@ -435,7 +435,7 @@ function AttachObject_Start()
         AttachObject_CreateInstances()
         AttachObject_Menu_Watchdog(AttachObj_Menu_Items,3)
         run_at_interval(AttachObject_MainTimer,Table_ValGet(AttachObj_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(AttachObject_MainTimer) then DisplayNotification("Attach Object: Monitoring Started","Nominal",5) end
+        if is_timer_scheduled(AttachObject_MainTimer) then DisplayNotification("Attach Object: Initialized","Nominal",5) end
     end
 end
 --[[ Module is run for the very first time ]]
@@ -457,7 +457,7 @@ end
 --[[ Module reload ]]
 function AttachObject_Reload()
     AttachObj_AllowDrawing = 0
-    if is_timer_scheduled(AttachObject_MainTimer) then stop_timer(AttachObject_MainTimer) DisplayNotification("Attach Object: Monitoring Stopped","Nominal",5) end
+    if is_timer_scheduled(AttachObject_MainTimer) then stop_timer(AttachObject_MainTimer) DisplayNotification("Attach Object: Uninitialized","Nominal",5) end
     AttachObject_Objs_Unload()
     AttachObj_Container = { }
     AttachObject_Start()

@@ -265,7 +265,7 @@ function OxygenSystem_Init()
     if XLuaUtils_HasConfig == 1 then
         OxygenSystem_WriteSaved()
         run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(OxygenSystem_MainTimer) then DisplayNotification("Oxygen System: Monitoring Started","Nominal",5) end
+        if is_timer_scheduled(OxygenSystem_MainTimer) then DisplayNotification("Oxygen System: Initialized","Nominal",5) end
         OxygenSystem_Menu_Register()
         LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
     end

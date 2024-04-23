@@ -51,6 +51,13 @@ local Persistence_Menu_ID = nil
 local Persistence_Menu_Pointer = ffi.new("const char")
 --[[
 
+DATAREFS
+
+]]
+--[[ X-Plane datarefs that are used each and every time ]]
+simDR_Override_PlanePath = find_dataref("sim/operation/override/override_planepath[0]")
+--[[
+
 FUNCTIONS
 
 ]]
@@ -156,7 +163,13 @@ end
 --[[ Loads persistence data ]]
 function Persistence_Load()
     Persistence_SaveFile_Read(XLuaUtils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    if Persistence_HasSaveFile == 1 then Dataref_Write(Persistence_Datarefs,4,"All") LogOutput("Loaded Persistence Data at "..os.date("%X").." h") DisplayNotification("Persistence data loaded!","Success",3) end
+    if Persistence_HasSaveFile == 1 then
+        simDR_Override_PlanePath = 1 -- Override default position
+        Dataref_Write(Persistence_Datarefs,4,"All")
+        simDR_Override_PlanePath = 0 -- Override off
+        LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
+        DisplayNotification("Persistence data loaded!","Success",3)
+    end
     RemoveNotification(-99)
 end
 --[[ Checks if autoloading is active and starts a timer ]]

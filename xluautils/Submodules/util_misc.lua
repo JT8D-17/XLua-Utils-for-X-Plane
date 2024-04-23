@@ -848,7 +848,7 @@ function MiscUtils_MainTimer()
     if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 1 then Power_Monitor() end
     if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
     if Livery.Old ~= Livery.Current then
-        DisplayNotification("Switched to livery: "..Livery.Current,"Nominal",5)
+        DisplayNotification("Using livery: "..Livery.Current,"Nominal",5)
         Livery.Old = Livery.Current
     end
     --print((os.date("%H")*3600)+(os.date("%M")*60)+(os.date("%S")))
@@ -873,7 +873,7 @@ function MiscUtils_Init()
         Dataref_Read(MiscUtils_Datarefs,4,"All") -- Populate dataref container with current values
         for i=2,#MiscUtils_Datarefs do MiscUtils_Datarefs[i][4][1] = 0 end -- Zero all datarefs
         run_at_interval(MiscUtils_MainTimer,Table_ValGet(MiscUtils_Config_Vars,"MainTimerInterval")) -- Timer to monitor airplane status
-        if is_timer_scheduled(MiscUtils_MainTimer) then DisplayNotification("Misc Utils: Monitoring Started","Nominal",5) end
+        if is_timer_scheduled(MiscUtils_MainTimer) then DisplayNotification("Misc Utils: Initialized","Nominal",5) end
         MiscUtils_Menu_Register()
     end
     LogOutput(MiscUtils_Config_Vars[1][1]..": Initialized!")
