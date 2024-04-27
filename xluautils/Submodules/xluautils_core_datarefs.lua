@@ -22,7 +22,7 @@ function Dataref_InitContainer(inputdrefline,outputtable)
     else
         if XPLM.XPLMCanWriteDataRef(dataref) == 0 then -- Check if dataref is writable
             --print("Dataref "..inputdrefline[2].." discarded: Not writable.")
-            LogOutput("WARNING: Dataref "..inputdrefline[2].." is not writable!")
+            DebugLogOutput("WARNING: Dataref "..inputdrefline[2].." is not writable!")
         end
         -- Types: 1 - Integer, 2 - Float, 4 - Double, 7 - Unspecified numerical, 8 - Float array, 16 - Integer array, 32 - Data array
         -- Create subtable for dataref
