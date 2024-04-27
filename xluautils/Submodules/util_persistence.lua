@@ -80,7 +80,7 @@ function Persistence_DrefFile_Read(inputfile)
             end
         end
         file:close()
-        if #temptable > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) RegenerateDrefTable(temptable,Persistence_Datarefs) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if #temptable > 1 then DebugLogOutput("FILE READ SUCCESS: "..inputfile) RegenerateDrefTable(temptable,Persistence_Datarefs) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: Persistence Dataref File")
     end
@@ -113,7 +113,7 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
             end
         end
         file:close()
-        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if i ~= nil and i > 0 then DebugLogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: Persistence Save File")
         Persistence_HasSaveFile = 0
@@ -136,7 +136,7 @@ function Persistence_DrefFile_Write(outputfile)
     file:write("# Datarefs are read in the order they appear in in this file, so mind any possible sequencing issues!\n")
     file:write("# If a dataref can not be found upon reading this file, it will not be tracked!\n")
     file:write("#\n")
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Dataref File") else LogOutput("FILE WRITE ERROR: Persistence Dataref File") end
+    if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Persistence Dataref File") else LogOutput("FILE WRITE ERROR: Persistence Dataref File") end
     file:close()
 end
 --[[ Persistence dataref save file write ]]
@@ -150,7 +150,7 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
     for i=2,#inputtable do
         file:write(inputtable[i][2]..":"..type(inputtable[i][4][1])..":"..table.concat(inputtable[i][4],",").."\n")
     end
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
+    if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
     file:close()
 end
 

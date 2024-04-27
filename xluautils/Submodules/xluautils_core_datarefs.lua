@@ -52,6 +52,14 @@ function Dataref_InitContainer(inputdrefline,outputtable)
                 outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
             end
         end
+        if XPLM.XPLMGetDataRefTypes(dataref) == 24 then
+            local size = XPLM.XPLMGetDatavf(dataref,nil,0,0) -- Get size of dataref
+            local value = ffi.new("float["..size.."]") -- Define float array
+            XPLM.XPLMGetDatavf(dataref,ffi.cast("int *",value),0,size) -- Get float array values from dataref
+            for i = 0,(size-1) do
+                outputtable[#outputtable][4][i+1] = value[i] -- Write dataref values to value subtable for dataref
+            end
+        end
         if XPLM.XPLMGetDataRefTypes(dataref) == 32 then
             local size = XPLM.XPLMGetDatab(dataref,nil,0,0) -- Get size of dataref
             local value = ffi.new("char["..size.."]") -- Define character array
@@ -102,6 +110,14 @@ local function Dataref_Access_Read(intable,index,subtable)
             intable[index][subtable][i+1] = value[i] -- Write dataref values to value subtable for dataref
         end
     end
+    if intable[index][3] == 24 then
+        local size = XPLM.XPLMGetDatavf(intable[index][6],nil,0,0) -- Get size of dataref
+        local value = ffi.new("float["..size.."]") -- Define float array
+        XPLM.XPLMGetDatavf(intable[index][6],ffi.cast("int *",value),0,size) -- Get float array values from dataref
+        for i = 0,(size-1) do
+            intable[index][subtable][i+1] = value[i] -- Write dataref values to value subtable for dataref
+        end
+    end
     if intable[index][3] == 32 then
         local size = XPLM.XPLMGetDatab(intable[index][6],nil,0,0) -- Get size of dataref
         local value = ffi.new("char["..size.."]") -- Define character array
@@ -135,6 +151,15 @@ local function Dataref_Access_Write(intable,index,subtable)
             value[(l-1)] = intable[index][subtable][l]
         end
         XPLM.XPLMSetDatavi(intable[index][6],ffi.cast("int *",value),0,size)
+    end
+    if intable[index][3] == 24 then
+        local size = XPLM.XPLMGetDatavf(intable[index][6],nil,0,0) -- Get size of dataref
+        local value = ffi.new("float["..size.."]") -- Define float array
+        for l=1,#intable[index][subtable] do
+            --print(intable[index][subtable][l])
+            value[(l-1)] = intable[index][subtable][l]
+        end
+        XPLM.XPLMSetDatavf(intable[index][6],ffi.cast("float *",value),0,size)
     end
     if intable[index][3] == 32 then
         local size = XPLM.XPLMGetDatab(intable[index][6],nil,0,0) -- Get size of dataref
