@@ -95,21 +95,22 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
         for line in file:lines() do
             if string.match(line,"^[^#]") then
                 local splitline = SplitString(line,"([^:]+)")
-                --splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
-                for j=2,#outputtable do
-                    if splitline[1] == outputtable[j][2] then
-                        local splitvalues = SplitString(splitline[3],"([^,]+)")
-                        --PrintToConsole(table.concat(splitvalues,","))
-                        for k=1,#splitvalues do
-                            if splitline[2] == "string" then outputtable[j][4][k] = tostring(splitvalues[k]) end
-                            if splitline[2] == "number" then outputtable[j][4][k] = tonumber(splitvalues[k]) end
-                            --PrintToConsole(type(outputtable[j][4][k]))
+                if splitline[2] ~= "nil" then -- Insurance against malformed types
+                    --splitline[1] = TrimEndWhitespace(splitline[1]) -- Trims the end whitespace from a string
+                    for j=2,#outputtable do
+                        if splitline[1] == outputtable[j][2] then
+                            local splitvalues = SplitString(splitline[3],"([^,]+)")
+                            --PrintToConsole(table.concat(splitvalues,","))
+                            for k=1,#splitvalues do
+                                if splitline[2] == "string" then outputtable[j][4][k] = tostring(splitvalues[k]) end
+                                if splitline[2] == "number" then outputtable[j][4][k] = tonumber(splitvalues[k]) end
+                                --PrintToConsole(type(outputtable[j][4][k]))
+                            end
+                            --PrintToConsole(table.concat(outputtable[j][4],","))
+                            i=i+1
                         end
-                        --PrintToConsole(table.concat(outputtable[j][4],","))
-                        i=i+1
                     end
                 end
-
             end
         end
         file:close()
@@ -149,6 +150,7 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
     file:write("#\n")
     for i=2,#inputtable do
         file:write(inputtable[i][2]..":"..type(inputtable[i][4][1])..":"..table.concat(inputtable[i][4],",").."\n")
+        print(inputtable[i][2]..":"..type(inputtable[i][4][1]))
     end
     if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
     file:close()
