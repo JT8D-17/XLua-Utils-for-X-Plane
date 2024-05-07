@@ -97,15 +97,11 @@ CUSTOM COMMANDS
 
 ]]
 --[[ Custom commands from modules MUST sadly(!) be initialized here instead of in the module ]]
-
-
-function Commands_Init()
-    -- From util_persistence.lua
-    function CMD_Handler_Persistence_Load(phase,duration) if phase == 0 then Persistence_Load() end end
-    create_command("xlua/xluautils/persistence_load","XLuaUtils: Loads aircraft persistence",CMD_Handler_Persistence_Load)
-    function CMD_Handler_Persistence_Save(phase,duration) if phase == 0 then Persistence_Save() end end
-    create_command("xlua/xluautils/persistence_save","XLuaUtils: Saves aircraft persistence",CMD_Handler_Persistence_Save)
-end
+-- From util_persistence.lua
+function CMD_Handler_Persistence_Load(phase,duration) if phase == 0 then Persistence_Load() end end
+CMD_Persistence_Load = create_command("xlua/xluautils/persistence_load","XLuaUtils: Loads aircraft persistence",CMD_Handler_Persistence_Load)
+function CMD_Handler_Persistence_Save(phase,duration) if phase == 0 then Persistence_Save() end end
+CMD_Persistence_Save = create_command("xlua/xluautils/persistence_save","XLuaUtils: Saves aircraft persistence",CMD_Handler_Persistence_Save)
 --[[ 
 
 X-PLANE CALLBACKS
@@ -138,7 +134,6 @@ function flight_start()
     Notify_Window_Build()               -- Build notification window, see xluautils_core_notifications.lua
     Debug_Window_Build()                -- Build debugging window, see xluautils_core_debugging.lua
     Modules_Init()                      -- Initialize modules, see above
-    Commands_Init()                     -- Initialize custom commands from modules, see above
     if DebugIsEnabled() == 1 then Debug_Start() end -- Starts debugging, see below
 end
 -- 3: Flight crash

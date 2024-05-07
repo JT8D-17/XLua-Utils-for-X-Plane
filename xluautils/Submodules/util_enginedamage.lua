@@ -351,7 +351,7 @@ local function EngineDamage_CheckStress()
                         if Table_ValGet(EngineDamage_Drefs_Once,"Limit_TRQ",4,1) > 200 and EngineData[i][j][2] == "lb-ft" then datarefval = EngineDamage_UnitConverter(Table_ValGet(EngineDamage_Drefs_Cont,"Eng_"..EngineData[i][j][1],4,i),"Nm","lb-ft") end
                     end
                     -- Calculate the stress rate
-                    if datarefval > EngineData[i][j][3] then
+                    if datarefval > (EngineData[i][j][3] * 1.01) then -- 1 % buffer for fairness
                         -- Display notification
                         if not CheckNotification(Notification_ID.Stress) then
                             DisplayNotification("Engine "..i.." is accumulating stress from "..EngineData[i][j][1].."! ("..string.format("%.2f",(Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) / Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5)) * 100).." %)","Warning",Notification_ID.Stress)
