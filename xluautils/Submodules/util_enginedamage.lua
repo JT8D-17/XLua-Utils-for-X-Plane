@@ -12,7 +12,7 @@ VARIABLES
 ]]
 local EngineDamage_Profile_File = "engine_profile.cfg"
 local EngineDamage_HasProfile = 0 -- Used by util_enginedamage.lua
---[[ Table that contains the configuration Variables for the NC Headset module ]]
+--[[ Table that contains the configuration variables for the Engine Damage module ]]
 local EngineDamage_Config_Vars = {
 {"ENGINEDAMAGE"},
 {"MainTimerInterval",1},    -- Main timer interval, in seconds
@@ -408,6 +408,9 @@ local function EngineDamage_CheckStress()
                     end
                     if CheckNotification(Notification_ID.Stress) then RemoveNotification(Notification_ID.Stress) end
                 end
+            else
+                if CheckNotification(Notification_ID.Stress) then RemoveNotification(Notification_ID.Stress) end
+                if Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8) > 0 then Table_ValSet(EngineData[i],EngineData[i][j][1],nil,8,0) end
             end
         end
     end

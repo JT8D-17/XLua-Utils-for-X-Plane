@@ -41,6 +41,7 @@ dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_attachobjects.lua")  -- UTILITY
 dofile("Submodules/util_oxygensystem.lua")  -- UTILITY
+dofile("Submodules/util_sticktrim.lua")  -- UTILITY
 dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
 --[[
 
@@ -72,6 +73,7 @@ function Modules_Init()
     MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
     NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
     OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
+    StickTrim_Init()        -- Initialize then Stick Trim module, see util_sticktrim.lua
     Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
 end
 --[[ Modules/Utilities are reloaded - called from xluautils_core_mainmenu.lua ]]
