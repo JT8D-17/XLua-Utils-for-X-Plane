@@ -150,7 +150,7 @@ function Persistence_SaveFile_Write(outputfile,inputtable)
     file:write("#\n")
     for i=2,#inputtable do
         file:write(inputtable[i][2]..":"..type(inputtable[i][4][1])..":"..table.concat(inputtable[i][4],",").."\n")
-        print(inputtable[i][2]..":"..type(inputtable[i][4][1]))
+        --print(inputtable[i][2]..":"..type(inputtable[i][4][1]))
     end
     if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Persistence Save File") else LogOutput("FILE WRITE ERROR: Persistence Save File") end
     file:close()

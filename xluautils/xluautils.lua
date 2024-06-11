@@ -42,7 +42,7 @@ dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_attachobjects.lua")  -- UTILITY
 dofile("Submodules/util_oxygensystem.lua")  -- UTILITY
 dofile("Submodules/util_sticktrim.lua")  -- UTILITY
-dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
+--dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
 --[[
 
 TIMERS
