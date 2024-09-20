@@ -42,7 +42,7 @@ Reloading the aircraft or its Lua scripts, or an X-Plane program crash with the 
 <a name="3"></a>
 ### 3. Menu/Functionality
 
-The _"Headset"_ submenu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
+The _"Headset"_ sub-menu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
 
 ![XLuaUtils NCHeadset Menu](Images/XLuaUtils_NCHeadset.jpg  "XLuaUtils NCHeadset Menu")
 
@@ -89,7 +89,7 @@ Timer interval for headset automation checks (in seconds; default: 1)
 Use Fmod soundscape to determine if user is inside the aircraft disabled/enabled  (0/1; default: 1)
 
 When altering these parameters, only adjust the numbers and nothing else.   
-Changes to _"preferences.txt"_ can be applied immediately with the _"Reload XLuaUtils Preferences"_ from the _"XLuaUtils"_ menu.
+Changes to _"preferences.cfg"_ can be applied immediately with the _"Reload XLuaUtils Preferences"_ from the _"XLuaUtils"_ menu.
 
 &nbsp;
 

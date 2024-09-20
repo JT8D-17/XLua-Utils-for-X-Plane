@@ -63,7 +63,7 @@ I may also have overdone the randomization, but I like randomization too much as
 #### 2.3 Base values
 
 The red line limit for a supported parameter, supplied by the dataref or override value, serves as a baseline with a given normal durability, in seconds. For example, the engine stress at a redline value for N1 at 100% can be tolerated for 300 seconds (or 5 minutes) before failure. This value pair (engine parameter and associated time) is used as the lower limit by "Engine Damage".   
-As this would make things too predictable and not dynamic enough, a second value pair is used in the form of a scalar for the redline value and a second time parameter, which, for example, scales a 100% N1 redline by 1.25 to obtain 125 % N1. At this N1, the engine would last, say, 10 seconds. This engine parameeter - time value pair is used as the upper limit by "Engine Damage"   
+As this would make things too predictable and not dynamic enough, a second value pair is used in the form of a scalar for the redline value and a second time parameter, which, for example, scales a 100% N1 redline by 1.25 to obtain 125 % N1. At this N1, the engine would last, say, 10 seconds. This engine parameter - time value pair is used as the upper limit by "Engine Damage"   
 Engine damage interpolates between these two value pairs to obtain the time the engine lasts at the current value. To stick with the example, a N1 of 110 % would yield around 200 seconds of time to failure.  
 
 &nbsp;
@@ -144,7 +144,7 @@ Example _"engine_profile.cfg"_ files for some aircraft can be found in _"xluauti
 |4|[See table below]|The unit used for the manual limit (value 3). See table below for supported units.|
 |5|> 1.0|Scalar for the parameter limit at index 3 to obtain the upper limit (see section "Base values")|
 |6|> 0|Time (in seconds) for which the engine can take stress when this engine parameter is at the lower limit specified at index 3|
-|7|> 0 and < [time at upper limit]|Time (in seconds) for which the engine can take stress when this engine parameter is at the upper limit calulated from index 3 and 4|
+|7|> 0 and < [time at upper limit]|Time (in seconds) for which the engine can take stress when this engine parameter is at the upper limit calculated from index 3 and 4|
 |8|> 0|The current engine stress accumulation rate is scaled by this value when engine stress is decreasing|
 
 &nbsp;
@@ -169,7 +169,7 @@ Mistyped or unsupported units will be ignored.
 
 |Value Index|Value (Range)|Description|
 |-|-|-|
-|1|"Randomize[Limit/Damage]"|Line identifier. "Limit" randomizes the engine parameter's limitss, while "Damage" (at the moment) randomizes an engine parameter's stress recession rate|
+|1|"Randomize[Limit/Damage]"|Line identifier. "Limit" randomizes the engine parameter's limits, while "Damage" (at the moment) randomizes an engine parameter's stress recession rate|
 |2|< 1.0|Lower end of the Limit/Damage randomization range|
 |3|> 1.0|Upper end of the Limit/Damage randomization range|
 
@@ -195,7 +195,7 @@ The "FailureChance" line controls the failure chance for this aircraft's engines
 <a name="4"></a>
 ### 4. Menu
 
-The _"Engine Damage"_ submenu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
+The _"Engine Damage"_ sub-menu is available when a _"persistence.cfg"_ file was found during XLuaUtils' initialization.
 
 ![XLuaUtils Engine Damage Menu](Images/XLuaUtils_EngineDamage.jpg  "XLuaUtils Engine Damage Menu")
 

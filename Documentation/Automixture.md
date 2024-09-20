@@ -31,7 +31,7 @@ While this method is not the most accurate one as it is very simplified and has 
 
 #### 1.2 Object file editing
 
-While the core automixture logic may run "underneath the cowling" of any piston aircraft, users may also wish to replicate the visual and interactive mixture lever behavior of the actual aircraft. The problem with this is that the model files of the aircraft that requires this automixture utility have most likely not been set up for this. The mixture levers usually only work as standard levers without any detents of any kind.
+While the core automixture logic may run "underneath the cowling" of any piston aircraft, users may also wish to replicate the visual and interactive mixture lever behaviour of the actual aircraft. The problem with this is that the model files of the aircraft that requires this automixture utility have most likely not been set up for this. The mixture levers usually only work as standard levers without any detents of any kind.
 
 To work around this, the automixture utility is equipped with an object file editing capability. Because X-Plane's object files are nothing but text files, they can be read, edited and saved with the appropriate Lua instructions. An aircraft reload will then instantly reflect the implemented changes. Object replacement is completely optional and the associated information is read from the automixture config file.
 

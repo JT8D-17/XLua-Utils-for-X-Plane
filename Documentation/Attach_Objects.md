@@ -18,7 +18,7 @@ This document contains information about XLuaUtils' object attachment utility.
 <a name="1"></a>
 ### 1. Functionality
 
-The object attachment utility reads object information, consisting of object file path, object coordinates and rotation information, visibility and atttachment information from a configuration file and places them in the 3D scene. For this, X-Plane's [object instancing system](https://developer.x-plane.com/sdk/XPLMInstance/) is being used.   
+The object attachment utility reads object information, consisting of object file path, object coordinates and rotation information, visibility and attachment information from a configuration file and places them in the 3D scene. For this, X-Plane's [object instancing system](https://developer.x-plane.com/sdk/XPLMInstance/) is being used.   
 Each object's position is updated every frame.    
 If the object is set to be attached to the user aircraft (e.g. external loads), the object's defined position relative to the aircraft's coordinate system  is [transformed into the OpenGL coordinate system](https://forums.x-plane.org/index.php?/forums/topic/276602-solution-aircraft-coordinates-to-world-coordinates/) to properly render it on screen.   
 If the object is set to be attached to the ground (e.g. ground equipment), it will stick to the position relative to the aircraft that it initially spawns at or when it becomes visible.   
@@ -86,7 +86,7 @@ Each object requires its own line. Depending on some parameters, these lines can
 |8|[numerical]|Y (vertical) axis rotation relative to the aircraft's origin. Positive value: Clockwise, when seen from top|
 |9|[numerical]|Z (longitudinal) axis rotation relative to the aircraft's origin. Positive value: Right, when seen from the tail|
 |10|[dataref]|The dataref that is used for controlling this object's visibility. Find it with [DataRefTool](https://datareftool.com/) or in [X-Plane folder]/Resources/plugins/datarefs.txt|
-|11|[numerical] or "skip"|If the dataref is an array type (has more than 1 member), provide the index of the dataref's member here. E.g. when trying to use "sim/flightmodel2/engines/engine_is_burning_fuel[2]", this value here would be "2". Use "skip" if the dfataref is not an array|
+|11|[numerical] or "skip"|If the dataref is an array type (has more than 1 member), provide the index of the dataref's member here. E.g. when trying to use "sim/flightmodel2/engines/engine_is_burning_fuel[2]", this value here would be "2". Use "skip" if the dataref is not an array|
 |12|"gt" or "lt" or "eq"|Comparison operator for the dataref. "gt" = "greater than", "lt" = "lower than", "eq" = equal|
 |13|[numerical]|Value the dataref is compared against. In the provided example, the GPU object is displayed when "sim/cockpit/electrical/gpu_on" equals 1|
 |14|0 or 1|Flag that determines if the object is to stick to the ground. Objects that stick to the ground will *not* move with the airplane! 1 = Stick to ground|

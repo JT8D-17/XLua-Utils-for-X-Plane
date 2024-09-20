@@ -109,7 +109,7 @@ MISC_UTILS,PowerMonitorFuelUnit:string,kg:string
 Parameter|Value Range|Description
 -|-|-
 PowerMonitor|0 or 1|1: Power Monitor is enabled.
-PowerMonitorDisplayTime|<1 or >1|>1: The Power Monitor notification will stay visbile for this amount of time after no throttle, mixture or prop change has been detected.<br><1: The Power Monitor notification is permenetly open as long as the engine produces positive power.  
+PowerMonitorDisplayTime|<1 or >1|>1: The Power Monitor notification will stay visible for this amount of time after no throttle, mixture or prop change has been detected.<br><1: The Power Monitor notification is permanently open as long as the engine produces positive power.  
 PowerMonitorScalar|<1.0 or >1.0|Enables a scaled output of the engine power percentage when smaller or greater than 1.0. May be useful in some scenarios.
 PowerMonitorInputChange|0 to 1|The delta that the throttle, mixture or power lever must move in order to trigger the Power Monitor notification.
 PowerMonitorFuelUnit|kg<br>lbs<br>gal_avgas<br>gal_jet-a<br>l_avgas<br>l_jet-a|Outputs the fuel flow in the specified format.<br>Fuel flow is always [unit] per hour.<br>Conversion factors: 2.20462 lbs/kg, Avgas: 5.87 lbs/gal (per X-Plane) and 0.719 kg/l, Jet-A: 6.66 lbs/gal and 0.796 kg/l.

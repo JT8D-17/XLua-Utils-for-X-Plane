@@ -22,8 +22,8 @@ This document contains information about some XLuaUtils features useful for XLua
 <a name="1"></a>
 ### 1 Limitations
 
-- As XLua namespaces are completely local, reading variables from other scripts is not possible.   
-If you want to use any of XLuaUtils' functions in airplane related scripts, add them as a submodule at the end of the "submodules" section in `xluautils.lua`.
+- As XLua name spaces are completely local, reading variables from other scripts is not possible.   
+If you want to use any of XLuaUtils' functions in airplane related scripts, add them as a sub-module at the end of the "sub-modules" section in `xluautils.lua`.
 - Any XLua limitations apply, especially regarding table scope in XLua 1.1 or newer. Any table must be - and is being - treated as local.
 - XLuaUtils' capabilities do not encompass the full extent of X-Plane's API (yet?).
 
@@ -47,7 +47,7 @@ Complete path of the XLuaUtils root folder.
 - `XLuaUtils_PrefsFile`   
 Complete path to the XLuaUtils preferences file, including filename.
 
-These variables are available in all of XLuaUtils' submodules.
+These variables are available in all of XLuaUtils' sub-modules.
 
 &nbsp;
 
@@ -86,18 +86,18 @@ Information that is not necessary for day-to-day usage can be printed to the dev
 <a name="4"></a>
 ### 4 Preferences
 
-XLuaUtils can store configuration data for itself and any utility implemented as a submodule in a preferences file. This file is located in the _"XLuaUtils"_ folder by default and named _"preferences.cfg"_.   
+XLuaUtils can store configuration data for itself and any utility implemented as a sub-module in a preferences file. This file is located in the _"XLuaUtils"_ folder by default and named _"preferences.cfg"_.   
 Configuring a module to use the preferences handling system and interacting with a preferences file and table is explained below.
 
 #### 4.1 Preferences Table Format
 
-Preferences information for XLuaUtils or any of its submodules is stored in specifically structured Lua tables. Any submodule wishing to use the preferences system must use a table configured as per the following example.   
-Note that, as of XLua 1.1 (or higher), a preference table has to be defined as local and are contrained to the XLuaUtils submodule in which they are declared.
+Preferences information for XLuaUtils or any of its sub-modules is stored in specifically structured Lua tables. Any sub-module wishing to use the preferences system must use a table configured as per the following example.   
+Note that, as of XLua 1.1 (or higher), a preference table has to be defined as local and are constrained to the XLuaUtils sub-module in which they are declared.
 
 	local MyConfigTable = {
-	{"EXAMPLE"}, -- A unique identifier string indicating the owner of values stored in the perferences file.
-	{"MyParameter",12}, -- A subtable with a setting parameter. The first value of this table must always be a unique string identifying the parameter.
-	{"MyOtherParameter",50,20,"Yes"}, -- Parameter subtables support numbers and strings, but no further subtables.
+	{"EXAMPLE"}, -- A unique identifier string indicating the owner of values stored in the preferences file.
+	{"MyParameter",12}, -- A sub-table with a setting parameter. The first value of this table must always be a unique string identifying the parameter.
+	{"MyOtherParameter",50,20,"Yes"}, -- Parameter sub-tables support numbers and strings, but no further sub-tables.
 	}
 
 #### 4.2 Reading/Writing From/To The Preferences File
@@ -111,11 +111,11 @@ The writing process is selective, i.e. any data present in _"outputfile"_ that i
 
 #### 4.3 Preference Table Interaction
 
-Reading a value from a preferences table is done with `Preferences_ValGet(inputtable,item,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a subtable and _"subitem"_ is the index of a value in the subtable.   
+Reading a value from a preferences table is done with `Preferences_ValGet(inputtable,item,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a sub-table and _"subitem"_ is the index of a value in the sub-table.   
 _"Subitem"_ may be omitted, which will pick the value after the identifier string (index 2).   
 Using the example table above,  `Preferences_ValGet(MyConfigTable,"MyOtherParameter",4)` would return `"Yes"`.
 
-Writing a value to a preferences table is done with `Preferences_ValSet(inputtable,item,newvalue,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a subtable, _"newvalue"_ is the value to be written and _"subitem"_ is the index of a value in the subtable.   
+Writing a value to a preferences table is done with `Preferences_ValSet(inputtable,item,newvalue,subitem)`, where _"inputtable"_ is the table that preferences data is stored in, _"item"_ is the identifier string of a sub-table, _"newvalue"_ is the value to be written and _"subitem"_ is the index of a value in the sub-table.   
 Using the example table above,  `Preferences_ValSet(MyConfigTable,"MyOtherParameter","No",4)` would set the  `"Yes"` at index 4 to `"No"`.
 
 Reference: `XLuaUtils/Submodules/xluautils_core_common.lua`   
@@ -204,7 +204,7 @@ Toggling the window's visibility is done with "[Open/Close] Debug Window" in the
  Adds a line with the following parameters:
  _"id"_: A unique ID for the line, e.g. "Greeting". **Passing an ID is mandatory!**   
 _"string"_: The string to be displayed, e.g. "Hi there"   
-_"colorkey"_: A key for the color the text is to be displayed in. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
+_"colorkey"_: A key for the colour the text is to be displayed in. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
 
 - `Debug_Window_RemoveLine(id)`   
 Removes the line by its ID.
@@ -213,7 +213,7 @@ Removes the line by its ID.
 Replaces a line by its ID. **Use this to update a line in the debug window from a flight or timer loop.**   
 _"id"_: The unique ID of the item to be replaced.   
 _"string"_: The new string for the item.   
- _"colorkey"_: The color of the item. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
+ _"colorkey"_: The colour of the item. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
 
 Reference: `XLuaUtils/Submodules/xluautils_core_debugging.lua`   
 Reference: `XLuaUtils/Examples/DebugWindow.lua`
@@ -227,12 +227,12 @@ Reference: `XLuaUtils/Examples/DebugWindow.lua`
 <a name="8"></a>
 ### 8 Dataref Handlers
 
-XLuaUtils enables handling datarefs from an input ttable containing a list of datarefs. A table of input datarefs can be checked for validity and transferred into a container table which holds various information about each dataref. Said container table can then be used for further manipulation or storage in a save file.
+XLuaUtils enables handling datarefs from an input table containing a list of datarefs. A table of input datarefs can be checked for validity and transferred into a container table which holds various information about each dataref. Said container table can then be used for further manipulation or storage in a save file.
 
 #### 8.1 Dataref Tables
 
-To facilitate handling of datarefs, a simple **input table** is used in which each element consists of a subtable with an alias string (used for easier lookup in the code) followed by the dataref stated as a string. If a specific alias for a dataref is not required, "Dref[n]" can be assigned to generate an alias from the table element's index. See below for an example. All types of X-Plane datarefs are supported.   
-Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are contrained to the XLuaUtils submodule in which they are declared.
+To facilitate handling of datarefs, a simple **input table** is used in which each element consists of a sub-table with an alias string (used for easier lookup in the code) followed by the dataref stated as a string. If a specific alias for a dataref is not required, "Dref[n]" can be assigned to generate an alias from the table element's index. See below for an example. All types of X-Plane datarefs are supported.   
+Note that, as of XLua 1.1 (or higher), these dataref tables have to be defined as local and are constrained to the XLuaUtils sub-module in which they are declared.
 
 	local mydreflist={
 	{"Volume_Fan","sim/operation/sound/fan_volume_ratio"}, -- Actual X-Plane dataref, will be found and stored for use later on
@@ -256,17 +256,17 @@ A successfully populated container table with the input dataref examples above h
 	{"Dref3","sim/operation/sound/interior_volume_ratio",2,{1},{},cdata<void *>: 0x08e40480}
 	}
 
-There are two subtables for storing dataref values at table index 4 and 5. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
-The length of these subtables corresponds to the length of the dataref and supports array type datarefs.
+There are two sub-tables for storing dataref values at table index 4 and 5. This can be used to, for example, store default dataref values at X-Plane session start and restore them later on or for storing historic dataref values to determine a dataref delta over time.   
+The length of these sub-tables corresponds to the length of the dataref and supports array type datarefs.
 
 #### 8.2 Reading/Writing from/to Datarefs
 
-The function `Dataref_Read(intable,subtable,filter)` reads the value of one or all datarefs in a container table from X-Plane. The parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be stored in (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and update each dataref from X-Plane.   
+The function `Dataref_Read(intable,subtable,filter)` reads the value of one or all datarefs in a container table from X-Plane. The parameter _"intable"_ defines the dataref container table to be used, _"sub-table"_ defines the sub table that the dataref's value(s) is/are to be stored in (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and update each dataref from X-Plane.   
 Using the example table above, the function call to update the entire dataref table using storage position 1 at table element index 4 would be: `Dataref_Read(mydrefcontainer,4,"All")`
 
 Manipulation of the dataref values stored inside the container table is not covered here.
 
-Writing back values from the container table to X-Plane's corresponding datarefs is done with `Dataref_Write(intable,subtable,filter)`, where the parameter _"intable"_ defines the dataref container table to be used, _"subtable"_ defines the sub table that the dataref's value(s) is/are to be read from (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and write each dataref to X-Plane.    
+Writing back values from the container table to X-Plane's corresponding datarefs is done with `Dataref_Write(intable,subtable,filter)`, where the parameter _"intable"_ defines the dataref container table to be used, _"sub-table"_ defines the sub table that the dataref's value(s) is/are to be read from (either index 4 or 5) and _"filter"_ may either be the alias of a specific dataref in the container table or "All" to iterate over the entire container table and write each dataref to X-Plane.    
 Again using the example container table above, writing to X-Plane from storage position 2 (table element index 5)  and only updating _"Dref3"_ (the alias of _"sim/operation/sound/interior_volume_ratio"_, see above) would be:
 `Dataref_Read(mydrefcontainer,5,"Dref3")`
 
