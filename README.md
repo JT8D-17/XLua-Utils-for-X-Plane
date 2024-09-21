@@ -24,6 +24,7 @@ The persistence and noise-cancelling headset modules, as well as some miscellane
 5.6 [Attach Objects](#5.6)   
 5.7 [Engine Damage](#5.7)   
 5.8 [Oxygen System](#5.8)   
+5.9 [Stick Trim](#5.9)   
 6. [License](#6.0)
 
 &nbsp;
@@ -210,6 +211,19 @@ Provides a supplemental oxygen system (or an override for a present oxygen syste
 Has an automation mode and provides warnings about pilot hypoxia.
 
 See [Documentation/Oxygen_System.md](Documentation/Oxygen_System.md) for more information. 
+
+&nbsp;
+
+[Back to table of contents](#toc)
+
+&nbsp;
+
+<a name="5.9"></a>
+### 5.9 Stick Trim
+ 
+Allows trimming ailerons, elevators and optionally rudders (or cyclic and pedals in helicopters) with stick/yoke and rudder input.
+
+See [Documentation/Stick_Trim.md](Documentation/Strick_Trim.md) for more information. 
 
 &nbsp;
 
