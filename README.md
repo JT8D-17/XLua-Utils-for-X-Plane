@@ -223,7 +223,7 @@ See [Documentation/Oxygen_System.md](Documentation/Oxygen_System.md) for more in
  
 Allows trimming ailerons, elevators and optionally rudders (or cyclic and pedals in helicopters) with stick/yoke and rudder input.
 
-See [Documentation/Stick_Trim.md](Documentation/Strick_Trim.md) for more information. 
+See [Documentation/Stick_Trim.md](Documentation/Stick_Trim.md) for more information. 
 
 &nbsp;
 
