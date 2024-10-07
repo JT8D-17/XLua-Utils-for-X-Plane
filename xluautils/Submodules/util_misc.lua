@@ -845,7 +845,7 @@ RUNTIME CALLBACKS
 function MiscUtils_MainTimer()
     MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,2)
     if Table_ValGet(MiscUtils_Config_Vars,"SyncBaros",nil,2) == 1 then Sync_Baros() end
-    if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 1 then Power_Monitor() end
+    if Table_ValGet(MiscUtils_Config_Vars,"PowerMonitor",nil,2) == 1 then Power_Monitor() elseif CheckNotification(Power_Monitor_Vars.Notify_ID) then RemoveNotification(Power_Monitor_Vars.Notify_ID) end
     if simDR_Livery_Path:match("liveries/(.*)/") == nil then Livery.Current = "Default" else Livery.Current = simDR_Livery_Path:match("liveries/(.*)/") end
     if Livery.Old ~= Livery.Current then
         DisplayNotification("Using livery: "..Livery.Current,"Nominal",5)
