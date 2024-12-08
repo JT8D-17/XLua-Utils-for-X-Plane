@@ -434,7 +434,7 @@ function EngineDamage_Profile_Read(inputfile)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
         EngineDamage_HasProfile = 1
-        LogOutput("FILE READ START: Engine Profile")
+        DebugLogOutput("FILE READ START: Engine Profile")
         local temptable = {}
         local counter = 0
         --local drefline = { }
@@ -458,7 +458,7 @@ function EngineDamage_Profile_Read(inputfile)
             end
         end
         file:close()
-        if counter > 1 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if counter > 1 then DebugLogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         EngineDamage_HasProfile = 0
         LogOutput("FILE NOT FOUND: Engine Profile")
@@ -466,7 +466,7 @@ function EngineDamage_Profile_Read(inputfile)
 end
 --[[ Engine profile write ]]
 function EngineDamage_Profile_Write(outputfile)
-    LogOutput("FILE WRITE START: Engine Profile")
+    DebugLogOutput("FILE WRITE START: Engine Profile")
     local file = io.open(outputfile, "w")
     file:write("# XLua Utils engine profile generated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
@@ -481,7 +481,7 @@ function EngineDamage_Profile_Write(outputfile)
     for i=1,#EngineDamage_Profile do
         file:write(table.concat(EngineDamage_Profile[i],",").."\n")
     end
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Engine Profile") else LogOutput("FILE WRITE ERROR: Engine Profile") end
+    if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Engine Profile") else LogOutput("FILE WRITE ERROR: Engine Profile") end
     file:close()
 end
 --[[ Handles notifications ]]
@@ -657,7 +657,7 @@ function EngineDamage_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,EngineDamage_Menu_Items[1],ffi.cast("void *","None"),1)
         EngineDamage_Menu_ID = XPLM.XPLMCreateMenu(EngineDamage_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) EngineDamage_Menu_Callbacks(inItemRef) end,ffi.cast("void *",EngineDamage_Menu_Pointer))
         EngineDamage_Menu_Build()
-        LogOutput(EngineDamage_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(EngineDamage_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -681,7 +681,7 @@ function EngineDamage_Menu_Build()
                 EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,i)
             end
         end
-        LogOutput(EngineDamage_Config_Vars[1][1].." Menu built!")
+        DebugLogOutput(EngineDamage_Config_Vars[1][1].." Menu built!")
     end
 end
 --[[

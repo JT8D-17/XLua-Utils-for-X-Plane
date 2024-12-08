@@ -47,8 +47,8 @@ LOGGING FUNCTIONS
 ]]
 --[[ Print to terminal/command console and X-Plane developer console/Log.txt ]]
 function PrintToConsole(inputstring)
-    XPLM.XPLMDebugString(ScriptName.." - "..inputstring.."\n")
-    print(ScriptName.." - "..inputstring)
+    XPLM.XPLMDebugString("XLuaUtils - "..inputstring.."\n")
+    print("XLuaUtils - "..inputstring)
 end
 --[[ Write to log file ]]
 function WriteToLogFile(inputstring,infile)
@@ -164,7 +164,7 @@ function Debug_Window_Build()
     DebugWindow_ID = XPLM.XPLMCreateWindowEx(ffi.cast("XPLMCreateWindow_t *",XLuaUtils_Window_Props))
     if DebugWindow_ID ~= nil then
         XPLM.XPLMSetWindowTitle(DebugWindow_ID,ffi.new("char[256]",Window_Title));
-        PrintToConsole("Debug Window created! (ID: "..tostring(DebugWindow_ID)..")")
+        DebugLogOutput("Debug Window created! (ID: "..tostring(DebugWindow_ID)..")")
         run_at_interval(Debug_Window_MainTimer,1)
     end
 end
@@ -227,7 +227,7 @@ function Debug_Menu_Build(ParentMenuID)
                 Debug_Menu_Watchdog(Debug_Menu_Items,i)
             end
         end
-        LogOutput(Debug_Menu_Items[1].." menu initialized!")
+        DebugLogOutput(Debug_Menu_Items[1].." menu initialized!")
     end
 end
 --[[

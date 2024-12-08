@@ -106,7 +106,7 @@ function Preferences_Read(inputfile,outputtable)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
         XLuaUtils_HasConfig = 1
-        LogOutput("FILE READ START: XLuaUtils Preferences")
+        DebugLogOutput("FILE READ START: XLuaUtils Preferences")
         local i=0
         for line in file:lines() do
             -- Find lines matching first subtable of output table
@@ -154,7 +154,7 @@ function Preferences_Read(inputfile,outputtable)
             i = i+1
         end
         file:close()
-        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
+        if i ~= nil and i > 0 then DebugLogOutput("FILE READ SUCCESS: "..inputfile) else LogOutput("FILE READ ERROR: "..inputfile) end
     else
         LogOutput("FILE NOT FOUND: XLuaUtils Preferences")
     end
@@ -162,7 +162,7 @@ end
 --[[ Preferences config file write ]]
 function Preferences_Write(inputtable,outputfile)
     local temptable = { }
-    LogOutput("FILE WRITE START: XLuaUtils Preferences")
+    DebugLogOutput("FILE WRITE START: XLuaUtils Preferences")
     local file = io.open(outputfile, "r")
     if file then
         --Read output file and store all lines not part of inputtable and temptable
@@ -195,7 +195,7 @@ function Preferences_Write(inputtable,outputfile)
             if k < #inputtable[j] then file:write(",") else file:write("\n") end
         end
     end
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: XLuaUtils Preferences") else LogOutput("FILE WRITE ERROR: XLuaUtils Preferences") end
+    if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: XLuaUtils Preferences") else LogOutput("FILE WRITE ERROR: XLuaUtils Preferences") end
     file:close()
 end
 --[[

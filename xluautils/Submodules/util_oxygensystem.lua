@@ -166,7 +166,7 @@ function OxygenSystem_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,OxygenSystem_Menu_Items[1],ffi.cast("void *","None"),1)
         OxygenSystem_Menu_ID = XPLM.XPLMCreateMenu(OxygenSystem_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) OxygenSystem_Menu_Callbacks(inItemRef) end,ffi.cast("void *",OxygenSystem_Menu_Pointer))
         OxygenSystem_Menu_Build()
-        LogOutput(OxygenSystem_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(OxygenSystem_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -189,7 +189,7 @@ function OxygenSystem_Menu_Build()
                     OxygenSystem_Menu_Watchdog(OxygenSystem_Menu_Items,i)
                 end
             end
-            LogOutput(OxygenSystem_Config_Vars[1][1].." Menu built!")
+            DebugLogOutput(OxygenSystem_Config_Vars[1][1].." Menu built!")
         end
     end
 end

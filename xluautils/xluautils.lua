@@ -10,7 +10,7 @@ BK, 2022
 GLOBAL VARIABLES
 
 ]]
-ScriptName = "XLuaUtils"
+Mode = "Stable" -- "Stable" disables some unmaintained and unneeded utilities
 LogFileName = "z_xluautils_log.txt"
 
 ACF_Folder = "" -- KEEP EMPTY, GLOBAL
@@ -34,15 +34,17 @@ dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHAN
 dofile("Submodules/xluautils_core_debugging.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/util_automixture.lua")  -- UTILITY
 dofile("Submodules/util_enginedamage.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
-dofile("Submodules/util_attachobjects.lua")  -- UTILITY
 dofile("Submodules/util_oxygensystem.lua")  -- UTILITY
-dofile("Submodules/util_sticktrim.lua")  -- UTILITY
---dofile("Examples/DebugWindow.lua")  -- Example script for the debug window
+dofile("Submodules/util_sticktrim.lua") -- UTILITY
+if Mode ~= "Stable" then -- UTILITIES FOR NON-LITE VERSION
+    dofile("Submodules/util_attachobjects.lua") -- UTILITY
+    dofile("Submodules/util_automixture.lua") -- UTILITY
+    dofile("Examples/DebugWindow.lua") -- Example script for the debug window
+end
 --[[
 
 TIMERS
@@ -67,14 +69,16 @@ end
 --[[ Modules/Utilities are initialized - called from xluautils_core_mainmenu.lua or below ]]
 function Modules_Init()
     Main_Menu_Init()        -- Only triggers the menu watchdog
-    AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
-    Automix_Init()          -- Initialize the Automixture module, see util_automixture.lua
     EngineDamage_Init()     -- Initialize the Engine Damage module, see util_enginedamage.lua
     MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
     NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
     OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
     StickTrim_Init()        -- Initialize then Stick Trim module, see util_sticktrim.lua
     Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
+    if Mode ~= "Stable" then  -- Modules for non-lite verision
+        AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
+        Automix_Init()          -- Initialize the Automixture module, see util_automixture.lua
+    end
 end
 --[[ Modules/Utilities are reloaded - called from xluautils_core_mainmenu.lua ]]
 function Modules_Reload()
@@ -90,8 +94,10 @@ function Modules_Unload()
     Debug_Unload()
     Notify_Window_Unload()
     Main_Menu_Unload()
-    AttachObject_Unload()
-    Automix_Unload()
+    if Mode ~= "Stable" then  -- Modules for non-lite verision
+        AttachObject_Unload()
+        Automix_Unload()
+    end
 end
 --[[
 
@@ -113,7 +119,7 @@ X-PLANE CALLBACKS
 --[[function aircraft_load()
 end]]
 function aircraft_unload()
-    LogOutput("AIRCRAFT UNLOAD DETECTED")
+    DebugLogOutput("AIRCRAFT UNLOAD DETECTED")
     Modules_Unload()
     LogOutput("SUBMODULES UNLOADED")
 end
@@ -126,10 +132,10 @@ function flight_start()
     XLuaUtils_LogFile = XLuaUtils_Path..LogFileName
     DeleteLogFile(XLuaUtils_LogFile)
     FFI_CheckInit()
-    LogOutput("FLIGHT START")
-    LogOutput("ACF Folder: "..ACF_Folder)
-    LogOutput("ACF File: "..ACF_Filename)
-    LogOutput("XLuaUtils Path: "..XLuaUtils_Path)
+    DebugLogOutput("FLIGHT START")
+    DebugLogOutput("ACF Folder: "..ACF_Folder)
+    DebugLogOutput("ACF File: "..ACF_Filename)
+    DebugLogOutput("XLuaUtils Path: "..XLuaUtils_Path)
     Main_Menu_Build()                   -- Build main XLua Utils menu, see xluautils_core_mainmenu.lua
     Debug_Init()                        -- Initialize debug module, see xluautils_core_debugging.lua
     Debug_Menu_Build(XLuaUtils_Menu_ID) -- Build debugging menu, see xluautils_core_debugging.lua
@@ -137,6 +143,7 @@ function flight_start()
     Debug_Window_Build()                -- Build debugging window, see xluautils_core_debugging.lua
     Modules_Init()                      -- Initialize modules, see above
     if DebugIsEnabled() == 1 then Debug_Start() end -- Starts debugging, see below
+    LogOutput("Initialization complete!")
 end
 -- 3: Flight crash
 --[[function flight_crash() 
@@ -155,8 +162,10 @@ DEBUGGING
 ]]
 -- Register the items that need to be done when debugging is turned on
 function Debug_Start()
-    Example_DebugWindow_Init()      -- Debug test strings, see Examples/DebugWindow.lua
-    Automix_DebugWindow_Init()      -- Debug strings for the Automixture module, see util_automixture.lua
+    if Mode ~= "Stable" then
+        Example_DebugWindow_Init()      -- Debug test strings, see Examples/DebugWindow.lua
+        Automix_DebugWindow_Init()      -- Debug strings for the Automixture module, see util_automixture.lua
+    end
     EngineDamage_DebugWindow_Init() -- Debug strings for the Engine Damage module, see util_enginedamage.lua
 end
 -- Register the items that need to be done when debugging is turned off

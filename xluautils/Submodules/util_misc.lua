@@ -809,7 +809,7 @@ function MiscUtils_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,MiscUtils_Menu_Items[1],ffi.cast("void *","None"),1)
         MiscUtils_Menu_ID = XPLM.XPLMCreateMenu(MiscUtils_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) MiscUtils_Menu_Callbacks(inItemRef) end,ffi.cast("void *",MiscUtils_Menu_Pointer))
         MiscUtils_Menu_Build()
-        LogOutput(MiscUtils_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(MiscUtils_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -832,7 +832,7 @@ function MiscUtils_Menu_Build()
                     MiscUtils_Menu_Watchdog(MiscUtils_Menu_Items,i)
                 end
             end
-            LogOutput(MiscUtils_Config_Vars[1][1].." Menu built!")
+            DebugLogOutput(MiscUtils_Config_Vars[1][1].." Menu built!")
         end
     end
 end

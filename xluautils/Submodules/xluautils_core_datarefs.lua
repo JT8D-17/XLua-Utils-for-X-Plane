@@ -18,7 +18,7 @@ end
 function Dataref_InitContainer(inputdrefline,outputtable)
     local dataref = XPLM.XPLMFindDataRef(inputdrefline[2])
     if dataref == nil then -- Check if dataref exists
-        LogOutput("Dataref "..inputdrefline[2].." discarded: Not found.")
+        DebugLogOutput("Dataref "..inputdrefline[2].." discarded: Not found.")
     else
         if XPLM.XPLMCanWriteDataRef(dataref) == 0 then -- Check if dataref is writable
             --print("Dataref "..inputdrefline[2].." discarded: Not writable.")

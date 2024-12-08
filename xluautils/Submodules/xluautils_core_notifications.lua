@@ -135,7 +135,7 @@ function Notify_Window_Build()
     NotifyWindow_ID = XPLM.XPLMCreateWindowEx(ffi.cast("XPLMCreateWindow_t *",XLuaUtils_NotifyWin))
     if NotifyWindow_ID ~= nil then -- Do after window creation
         XPLM.XPLMSetWindowTitle(NotifyWindow_ID,ffi.new("char[256]",Window_Title))
-        PrintToConsole("Notification window created! (ID: "..tostring(NotifyWindow_ID)..")")
+        DebugLogOutput("Notification window created! (ID: "..tostring(NotifyWindow_ID)..")")
         run_at_interval(NotificationTimer,0.5)
     end
 end

@@ -152,6 +152,6 @@ void XPLMInstanceSetPosition(XPLMInstanceRef instance, const XPLMDrawInfo_t *new
 --[[ Checks if the FFI has loaded correctly ]]
 function FFI_CheckInit()
     --[[ Print initialization result ]]
-    if XPLM ~= nil then PrintToConsole("FFI: Initialized!") end
-    PrintToConsole("FFI: Operating system detected as "..ffi.os)
+    if XPLM ~= nil then DebugLogOutput("FFI: Initialized!") end
+    DebugLogOutput("FFI: Operating system detected as "..ffi.os)
 end

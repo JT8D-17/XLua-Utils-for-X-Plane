@@ -149,7 +149,7 @@ function NCHeadset_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,NCHeadset_Menu_Items[1],ffi.cast("void *","None"),1)
         NCHeadset_Menu_ID = XPLM.XPLMCreateMenu(NCHeadset_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) NCHeadset_Menu_Callbacks(inItemRef) end,ffi.cast("void *",NCHeadset_Menu_Pointer))
         NCHeadset_Menu_Build()
-        LogOutput(NCHeadset_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(NCHeadset_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -172,7 +172,7 @@ function NCHeadset_Menu_Build()
                     NCHeadset_Menu_Watchdog(NCHeadset_Menu_Items,i)
                 end
             end
-            LogOutput(NCHeadset_Config_Vars[1][1].." Menu built!")
+            DebugLogOutput(NCHeadset_Config_Vars[1][1].." Menu built!")
         end
     end
 end

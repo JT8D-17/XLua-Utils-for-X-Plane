@@ -99,7 +99,7 @@ FUNCTIONS
 ]]
 --[[ Attached object config file write ]]
 function AttachObject_Config_Write()
-    LogOutput("FILE WRITE START: Attached Object Configuration")
+    DebugLogOutput("FILE WRITE START: Attached Object Configuration")
     local file = io.open(XLuaUtils_Path..AttachObj_Config_File, "w")
     file:write("# XLuaUtils attachable object configuration generated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
@@ -111,14 +111,14 @@ function AttachObject_Config_Write()
     file:write("# Example: Pole_Test,ACF_Folder,plugins/xlua/scripts/xluautils/Examples/Resources/pole.obj,5,1,2,45,10,22,sim/flightmodel/weight/m_stations,1,gt,600,0\n")
     file:write("# (An object named Pole_Test is loaded from the specified path relative to the aircraft folder, is located 5 m to the right, 1 m up and 2 m aft of the aircraft's origin and is rotated 45° back, 10° clockwise and 22° to the right. It will display when sim/flightmodel/weight/m_stations[1] is greater than 600 kg and does not stick to the ground.)\n")
     file:write("#\n")
-    if file:seek("end") > 0 then LogOutput("FILE WRITE SUCCESS: Attached Object Configuration") else LogOutput("FILE WRITE ERROR: Attached Object Configuration") end
+    if file:seek("end") > 0 then DebugLogOutput("FILE WRITE SUCCESS: Attached Object Configuration") else LogOutput("FILE WRITE ERROR: Attached Object Configuration") end
     file:close()
 end
 --[[ Attached object config file write ]]
 function AttachObject_Config_Read()
     local file = io.open(XLuaUtils_Path..AttachObj_Config_File, "r") -- Check if file exists
     if file then
-        LogOutput("FILE READ START: Attached Object Configuration")
+        DebugLogOutput("FILE READ START: Attached Object Configuration")
         local i=0
         for line in file:lines() do
             if string.match(line,"^[^#]") then -- Only catch lines that are not starting with a "#"
@@ -150,7 +150,7 @@ function AttachObject_Config_Read()
             end
         end
         file:close()
-        if i ~= nil and i > 0 then LogOutput("FILE READ SUCCESS: Attached Object Configuration") else LogOutput("FILE READ ERROR: Attached Object Configuration") end
+        if i ~= nil and i > 0 then DebugLogOutput("FILE READ SUCCESS: Attached Object Configuration") else LogOutput("FILE READ ERROR: Attached Object Configuration") end
     else
         LogOutput("FILE NOT FOUND: Attached Object Configuration")
     end
@@ -369,7 +369,7 @@ function AttachObject_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,AttachObj_Menu_Items[1],ffi.cast("void *","None"),1)
         AttachObj_Menu_ID = XPLM.XPLMCreateMenu(AttachObj_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) AttachObject_Menu_Callbacks(inItemRef) end,ffi.cast("void *",AttachObj_Menu_Pointer))
         AttachObject_Menu_Build()
-        LogOutput(AttachObj_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(AttachObj_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -393,7 +393,7 @@ function AttachObject_Menu_Build()
                 AttachObject_Menu_Watchdog(AttachObj_Menu_Items,i)
             end
         end
-        LogOutput(AttachObj_Config_Vars[1][1].." Menu built!")
+        DebugLogOutput(AttachObj_Config_Vars[1][1].." Menu built!")
     end
 end
 --[[

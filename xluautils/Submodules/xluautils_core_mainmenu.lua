@@ -18,17 +18,17 @@ function Main_Menu_Callbacks(itemref)
         if itemref == Main_Menu_Items[i] then
             if i == 2 then
                 if XLuaUtils_HasConfig == 0 then
-                    LogOutput("FIRST TIME INITIALIZATION START")
+                    DebugLogOutput("FIRST TIME INITIALIZATION START")
                     Modules_FirstRun()
                     if FileExists(XLuaUtils_PrefsFile) then XLuaUtils_HasConfig = 1 end
                     Modules_Init()
                     DisplayNotification("XLuaUtils Initialization Complete","Nominal",5)
-                    LogOutput("FIRST TIME INITIALIZATION END")
+                    DebugLogOutput("FIRST TIME INITIALIZATION END")
                 elseif XLuaUtils_HasConfig == 1 then
-                    LogOutput("SUBMODULES RELOAD START")
+                    DebugLogOutput("SUBMODULES RELOAD START")
                     Modules_Reload()
                     DisplayNotification("XLuaUtils Submodules Reloaded","Nominal",5)
-                    LogOutput("SUBMODULES RELOAD END")
+                    DebugLogOutput("SUBMODULES RELOAD END")
                 end
             end
             Main_Menu_Watchdog(Main_Menu_Items,i)
@@ -62,7 +62,7 @@ function Main_Menu_Build()
                 Main_Menu_Watchdog(Main_Menu_Items,i)
             end
         end
-        LogOutput("XLua Utils main menu initialized!")
+        DebugLogOutput("XLua Utils main menu initialized!")
     end
 end
 --[[

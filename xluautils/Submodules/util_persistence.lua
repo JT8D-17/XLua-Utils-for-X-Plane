@@ -66,7 +66,7 @@ function Persistence_DrefFile_Read(inputfile)
     local file = io.open(inputfile, "r") -- Check if file exists
     if file then
         Persistence_HasDrefFile = 1
-        LogOutput("FILE READ START: Persistence Datarefs")
+        DebugLogOutput("FILE READ START: Persistence Datarefs")
         local counter = 0
         local drefline = { }
         local temptable = {}
@@ -91,7 +91,7 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
     local i=0
     if file then
         Persistence_HasSaveFile = 1
-        LogOutput("FILE READ START: Persistence Save File")
+        DebugLogOutput("FILE READ START: Persistence Save File")
         for line in file:lines() do
             if string.match(line,"^[^#]") then
                 local splitline = SplitString(line,"([^:]+)")
@@ -122,7 +122,7 @@ function Persistence_SaveFile_Read(inputfile,outputtable)
 end
 --[[ Persistence dataref file write ]]
 function Persistence_DrefFile_Write(outputfile)
-    LogOutput("FILE WRITE START: Persistence Dataref File")
+    DebugLogOutput("FILE WRITE START: Persistence Dataref File")
     local file = io.open(outputfile, "w")
     file:write("# XLuaUtils persistence dataref file generated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
@@ -142,7 +142,7 @@ function Persistence_DrefFile_Write(outputfile)
 end
 --[[ Persistence dataref save file write ]]
 function Persistence_SaveFile_Write(outputfile,inputtable)
-    LogOutput("FILE WRITE START: Persistence Save File")
+    DebugLogOutput("FILE WRITE START: Persistence Save File")
     local file = io.open(outputfile, "w")
     file:write("# XLuaUtils persistence save file generated/updated on ",os.date("%x, %H:%M:%S"),"\n")
     file:write("#\n")
@@ -160,7 +160,7 @@ end
 function Persistence_Save()
     Dataref_Read(Persistence_Datarefs,4,"All")
     Persistence_SaveFile_Write(XLuaUtils_Path..Persistence_SaveFile,Persistence_Datarefs)
-    LogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
+    DebugLogOutput(Persistence_Config_Vars[1][1]..": Saved at "..os.date("%X").." h")
 end
 --[[ Loads persistence data ]]
 function Persistence_Load()
@@ -169,7 +169,7 @@ function Persistence_Load()
         simDR_Override_PlanePath = 1 -- Override default position
         Dataref_Write(Persistence_Datarefs,4,"All")
         simDR_Override_PlanePath = 0 -- Override off
-        LogOutput("Loaded Persistence Data at "..os.date("%X").." h")
+        DebugLogOutput("Loaded Persistence Data at "..os.date("%X").." h")
         DisplayNotification("Persistence data loaded!","Success",3)
     end
     RemoveNotification(-99)
@@ -268,7 +268,7 @@ function Persistence_Menu_Register()
         Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,Persistence_Menu_Items[1],ffi.cast("void *","None"),1)
         Persistence_Menu_ID = XPLM.XPLMCreateMenu(Persistence_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) Persistence_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Persistence_Menu_Pointer))
         Persistence_Menu_Build()
-        LogOutput(Persistence_Config_Vars[1][1].." Menu registered!")
+        DebugLogOutput(Persistence_Config_Vars[1][1].." Menu registered!")
     end
 end
 --[[ Initialization routine for the menu ]]
@@ -292,7 +292,7 @@ function Persistence_Menu_Build()
                 Persistence_Menu_Watchdog(Persistence_Menu_Items,i)
             end
         end
-        LogOutput(Persistence_Config_Vars[1][1].." Menu built!")
+        DebugLogOutput(Persistence_Config_Vars[1][1].." Menu built!")
     end
 end
 --[[
