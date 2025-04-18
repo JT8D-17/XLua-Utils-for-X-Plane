@@ -185,21 +185,23 @@ DEBUG WINDOW
 ]]
 --[[ Adds things to the debug window - HANDLED IN xluautils.lua!! ]]
 function EngineDamage_DebugWindow_Init()
-    Debug_Window_AddLine("ED_Spacer"," ")
-    Debug_Window_AddLine("ED_Header","===== Engine Damage =====")
-    --Debug_Window_AddLine("ED_MixtureMode") -- Reserving a line in the debug window only requires an ID.
-    for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
-        Debug_Window_AddLine("ED_E"..i.."Head","Engine "..i..":")
-        if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."CHT") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."EGT") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."ITT") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."MP") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N1") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_P") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_T") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."RPM_P") end
-        if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
+    if EngineDamage_HasProfile == 1 then
+        Debug_Window_AddLine("ED_Spacer"," ")
+        Debug_Window_AddLine("ED_Header","===== Engine Damage =====")
+        --Debug_Window_AddLine("ED_MixtureMode") -- Reserving a line in the debug window only requires an ID.
+        for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
+            Debug_Window_AddLine("ED_E"..i.."Head","Engine "..i..":")
+            if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."CHT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."EGT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."ITT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."MP") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N1") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_P") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_T") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."RPM_P") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
+        end
     end
 end
 --[[ Updates the debug window ]]
@@ -691,7 +693,7 @@ RUNTIME CALLBACKS
 ]]
 --[[ Module Main Timer ]]
 function EngineDamage_MainTimer()
-    if DebugIsEnabled() == 1 then EngineDamage_DebugWindow_Update() end
+    if DebugIsEnabled() == 1 and EngineDamage_HasProfile == 1 then EngineDamage_DebugWindow_Update() end
     Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
     EngineDamage_CheckStress()
 end
