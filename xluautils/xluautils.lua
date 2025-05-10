@@ -1,3 +1,4 @@
+jit.off()
 --[[
 
 Main File for xlua utils

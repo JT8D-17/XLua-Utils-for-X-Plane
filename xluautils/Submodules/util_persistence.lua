@@ -1,3 +1,4 @@
+jit.off()
 --[[
 
 XLuaUtils Module, required by xluautils.lua
