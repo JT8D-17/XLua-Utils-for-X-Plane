@@ -108,7 +108,7 @@ Note that some XLuaUtils elements or submodules do not initially save their stat
  _"Reload XLuaUtils Preferences"_ will replace _"Initialize XLuaUtils"_ as a menu entry if a _"preferences.cfg"_ file was created during initialization or if the file has been detected at startup. Clicking will read the current values from _"preferences.cfg"_.   
 Use this function to reload preferences values that have been altered via manual edit of the file.
 
-- The _"Debug"_ submenu is always visible and contains controls for debug-level logging (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 3)  and the debug window ([Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 7).
+- The _"Debug"_ submenu is always visible and contains controls for debug-level logging (see [Documentation/Developer_Reference.md](Documentation/Developer_Reference.md), section 3) and toggles the XLuaUtils window (chapter "XLuaUtils window" in _xluautils_manual.odt_).
 
 &nbsp;
 
@@ -154,6 +154,8 @@ See [Documentation/Misc_Utils.md](Documentation/Misc_Utils.md) for more informat
 <a name="5.5"></a>
 ### 5.5 Automixture Controls
 
+**CAUTION: This utility is unmaintained!**
+
 As of version 12.00, X-Plane does not support complex automatic mixture controllers as found, for example on [Pratt & Whitney R-1830 type engines](https://www.enginehistory.org/Piston/P&W/R-1830/r-1830.shtml) of Douglas DC-3s and C-47s. These automatic controllers, in their "Auto Lean" and "Auto Rich" modes, automatically set the fuel mixture based on altitude to attain a specific [air-fuel-ratio](https://en.wikipedia.org/wiki/Air%E2%80%93fuel_ratio), easing crew workload and ensure maximum power or fuel saving.
 
 XLuaUtils has an automixture utility modeled after the R-1830's mixture controller with the following modes:
@@ -177,6 +179,8 @@ See [Documentation/Automixture.md](Documentation/Automixture.md) for more inform
 
 <a name="5.6"></a>
 ### 5.6 Attach Objects
+
+**CAUTION: This utility is unmaintained!**
 
 The object attachment utility can be used to display objects loaded from object files outside the aircraft.   
 These objects can be set to display within a certain dataref value range and will either move with the aircraft (e.g. external loads) or stick to the ground (e.g. ground equipment).   

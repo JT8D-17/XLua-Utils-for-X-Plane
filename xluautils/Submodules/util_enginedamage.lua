@@ -19,6 +19,7 @@ local EngineDamage_Config_Vars = {
 {"MainTimerInterval",1},    -- Main timer interval, in seconds
 {"Notify_Pin",1},           -- Display all notifications as long as condition persists
 {"Notify_Time",30},           -- Display all notifications as long as condition persists
+{"Debug_Output",0},           -- Show debug output in XLuaUtils window
 }
 --[[ Table with engine profile information ]]
 local EngineDamage_Profile = {
@@ -157,20 +158,21 @@ local EngineDamage_Menu_Items = {
 "Engine Damage",            -- Menu title, index 1
 "",                         -- Item index: 2
 "Pin Messages",             -- Item index: 3
-"[Separator]",              -- Item index: 4
-"CHT",                      -- Item index: 5
-"EGT",                      -- Item index: 6
-"ITT",                      -- Item index: 7
-"MP",                       -- Item index: 8
-"N1",                       -- Item index: 9
-"N2",                       -- Item index: 10
-"OIL_P",                    -- Item index: 11
-"OIL_T",                    -- Item index: 12
-"RPM_P",                    -- Item index: 13
-"TRQ",                      -- Item index: 14
-"[Separator]",              -- Item index: 15
-"Disable All",              -- Item index: 16
-"Repair Engine(s)",         -- Item index: 17
+"Debug Output",             -- Item index: 4
+"[Separator]",              -- Item index: 5
+"CHT",                      -- Item index: 6
+"EGT",                      -- Item index: 7
+"ITT",                      -- Item index: 8
+"MP",                       -- Item index: 9
+"N1",                       -- Item index: 10
+"N2",                       -- Item index: 11
+"OIL_P",                    -- Item index: 12
+"OIL_T",                    -- Item index: 13
+"RPM_P",                    -- Item index: 14
+"TRQ",                      -- Item index: 15
+"[Separator]",              -- Item index: 16
+"Disable All",              -- Item index: 17
+"Repair Engine(s)",         -- Item index: 18
 }
 --[[ Menu variables for FFI ]]
 local EngineDamage_Menu_ID = nil
@@ -185,33 +187,30 @@ DEBUG WINDOW
 
 ]]
 --[[ Adds things to the debug window - HANDLED IN xluautils.lua!! ]]
-function EngineDamage_DebugWindow_Init()
+function EngineDamage_Debug_Init()
     if EngineDamage_HasProfile == 1 then
-        Debug_Window_AddLine("ED_Spacer"," ")
-        Debug_Window_AddLine("ED_Header","===== Engine Damage =====")
-        --Debug_Window_AddLine("ED_MixtureMode") -- Reserving a line in the debug window only requires an ID.
         for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
-            Debug_Window_AddLine("ED_E"..i.."Head","Engine "..i..":")
-            if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."CHT") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."EGT") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."ITT") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."MP") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N1") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."N2") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_P") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."OIL_T") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."RPM_P") end
-            if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Debug_Window_AddLine("ED_E"..i.."TRQ") end
+             XLuaUtils_Window_AddText("Engine Damage","Engine "..i..":",nil,"ED_E"..i.."Head")
+            if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then     XLuaUtils_Window_AddText("Engine Damage","CHT",nil,"ED_E"..i.."CHT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then     XLuaUtils_Window_AddText("Engine Damage","EGT",nil,"ED_E"..i.."EGT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then     XLuaUtils_Window_AddText("Engine Damage","ITT",nil,"ED_E"..i.."ITT") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then      XLuaUtils_Window_AddText("Engine Damage","MP",nil,"ED_E"..i.."MP") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then      XLuaUtils_Window_AddText("Engine Damage","N1",nil,"ED_E"..i.."N1") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then      XLuaUtils_Window_AddText("Engine Damage","N2",nil,"ED_E"..i.."N2") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then   XLuaUtils_Window_AddText("Engine Damage","OIL_P",nil,"ED_E"..i.."OIL_P") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then   XLuaUtils_Window_AddText("Engine Damage","OIL_T",nil,"ED_E"..i.."OIL_T") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then   XLuaUtils_Window_AddText("Engine Damage","RPM_P",nil,"ED_E"..i.."RPM_P") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then     XLuaUtils_Window_AddText("Engine Damage","TRQ",nil,"ED_E"..i.."TRQ") end
         end
+        XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1)
     end
 end
 --[[ Updates the debug window ]]
-function EngineDamage_DebugWindow_Update()
-    --Debug_Window_ReplaceLine("ED_MixtureMode","Mixture Mode: "..Table_ValGet(EngineDamage_Config_Vars,"MixtureMode",nil,2)) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
+function EngineDamage_Debug_Update()
     for i=1,Table_ValGet(EngineDamage_Drefs_Once,"Eng_Num",4,1) do
         -- Loop through engine data table and see if the parameters in its subtables can be populated
         for j=1,#EngineData[i] do
-            if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 then Debug_Window_ReplaceLine("ED_E"..i..EngineData[i][j][1],"  "..EngineData[i][j][1].." Stress: "..string.format("%.2f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8)).."/"..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." ("..string.format("%+.4f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7)).." / "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s)") end
+            if Table_ValGet(EngineDamage_Profile,"DMG_"..EngineData[i][j][1],nil,2) == 1 then XLuaUtils_Window_ReplaceLine("ED_E"..i..EngineData[i][j][1],EngineData[i][j][1].." Stress: "..string.format("%.2f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,8)).."/"..Table_ValGet(EngineData[i],EngineData[i][j][1],nil,5).." ("..string.format("%+.4f",Table_ValGet(EngineData[i],EngineData[i][j][1],nil,7)).." / "..Table_ValGet(EngineDamage_Config_Vars,"MainTimerInterval",nil,2).." s)",nil) end
         end
     end
 end
@@ -526,47 +525,50 @@ function EngineDamage_Menu_Callbacks(itemref)
             if i == 3 then
                 if Table_ValGet(EngineDamage_Config_Vars,"Notify_Pin",nil,2) == 0 then Table_ValSet(EngineDamage_Config_Vars,"Notify_Pin",nil,2,1) else Table_ValSet(EngineDamage_Config_Vars,"Notify_Pin",nil,2,0) end
             end
-            if i == 5 then
+            if i == 4 then
+                if Table_ValGet(EngineDamage_Config_Vars,"Debug_Output",nil,2) == 0 then Table_ValSet(EngineDamage_Config_Vars,"Debug_Output",nil,2,1) EngineDamage_Debug_Init() else Table_ValSet(EngineDamage_Config_Vars,"Debug_Output",nil,2,0) XLuaUtils_Window_RemoveText("Engine Damage") end
+            end
+            if i == 6 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 6 then
+            if i == 7 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 7 then
+            if i == 8 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 8 then
+            if i == 9 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_MP",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 9 then
+            if i == 10 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N1",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 10 then
+            if i == 11 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_N2",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 11 then
+            if i == 12 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_OIL_P",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 12 then
+            if i == 13 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_OIL_T",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 13 then
+            if i == 14 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_RPM_P",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_RPM_P",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 14 then
+            if i == 15 then
                 if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 0 then Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,1) else Table_ValSet(EngineDamage_Profile,"DMG_TRQ",nil,2,0) end
                 EngineDamage_Profile_Write(XLuaUtils_Path..EngineDamage_Profile_File)
             end
-            if i == 16 then
+            if i == 17 then
                 Table_ValSet(EngineDamage_Profile,"DMG_CHT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,5)
                 Table_ValSet(EngineDamage_Profile,"DMG_EGT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,6)
                 Table_ValSet(EngineDamage_Profile,"DMG_ITT",nil,2,0) EngineDamage_Menu_Watchdog(EngineDamage_Menu_Items,7)
@@ -581,7 +583,7 @@ function EngineDamage_Menu_Callbacks(itemref)
                 DebugLogOutput(EngineDamage_Config_Vars[1][1]..": Disabled all engine damage sources")
                 DisplayNotification("All engine damage sources have been disabled!","Nominal",10)
             end
-            if i == 17 then
+            if i == 18 then
                 EngineDamage_RepairAll()
             end
             Preferences_Write(EngineDamage_Config_Vars,XLuaUtils_PrefsFile)
@@ -601,52 +603,55 @@ function EngineDamage_Menu_Watchdog(intable,index)
     if index == 3 then
         if Table_ValGet(EngineDamage_Config_Vars,"Notify_Pin",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate") else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
     end
-    if index == 5 then
+    if index == 4 then
+        if Table_ValGet(EngineDamage_Config_Vars,"Debug_Output",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate") else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
+    end
+    if index == 6 then
         if Table_ValGet(EngineDamage_Profile,"DMG_CHT",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"CHT",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"CHT",nil,3)).." "..Table_ValGet(EngineData[1],"CHT",nil,2)..")",intable) end
     end
-    if index == 6 then
+    if index == 7 then
         if Table_ValGet(EngineDamage_Profile,"DMG_EGT",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"EGT",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"EGT",nil,3)).." "..Table_ValGet(EngineData[1],"EGT",nil,2)..")",intable) end
     end
-    if index == 7 then
+    if index == 8 then
         if Table_ValGet(EngineDamage_Profile,"DMG_ITT",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"ITT",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"ITT",nil,3)).." "..Table_ValGet(EngineData[1],"ITT",nil,2)..")",intable) end
     end
-    if index == 8 then
+    if index == 9 then
         if Table_ValGet(EngineDamage_Profile,"DMG_MP",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"MP",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%.2f",Table_ValGet(EngineData[1],"MP",nil,3)).." "..Table_ValGet(EngineData[1],"MP",nil,2)..")",intable) end
     end
-    if index == 9 then
+    if index == 10 then
         if Table_ValGet(EngineDamage_Profile,"DMG_N1",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"N1",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"N1",nil,3)).." "..Table_ValGet(EngineData[1],"N1",nil,2)..")",intable) end
     end
-    if index == 10 then
+    if index == 11 then
         if Table_ValGet(EngineDamage_Profile,"DMG_N2",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"N2",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"N2",nil,3)).." "..Table_ValGet(EngineData[1],"N2",nil,2)..")",intable) end
     end
-    if index == 11 then
+    if index == 12 then
         if Table_ValGet(EngineDamage_Profile,"DMG_OIL_P",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"OIL_P",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"OIL_P",nil,3)).." "..Table_ValGet(EngineData[1],"OIL_P",nil,2)..")",intable) end
     end
-    if index == 12 then
+    if index == 13 then
         if Table_ValGet(EngineDamage_Profile,"DMG_OIL_T",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"OIL_T",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"OIL_T",nil,3)).." "..Table_ValGet(EngineData[1],"OIL_T",nil,2)..")",intable) end
     end
-    if index == 13 then
+    if index == 14 then
         if Table_ValGet(EngineDamage_Profile,"DMG_RPM_P",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"RPM_P",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"RPM_P",nil,3)).." "..Table_ValGet(EngineData[1],"RPM_P",nil,2)..")",intable) end
     end
-    if index == 14 then
+    if index == 15 then
         if Table_ValGet(EngineDamage_Profile,"DMG_TRQ",nil,2) == 1 then Menu_CheckItem(EngineDamage_Menu_ID,index,"Activate")
         else Menu_CheckItem(EngineDamage_Menu_ID,index,"Deactivate") end
         if Table_ValGet(EngineData[1],"TRQ",nil,3) > -1 then Menu_ChangeItemSuffix(EngineDamage_Menu_ID,index,"("..string.format("%d",Table_ValGet(EngineData[1],"TRQ",nil,3)).." "..Table_ValGet(EngineData[1],"TRQ",nil,2)..")",intable) end
@@ -694,7 +699,7 @@ RUNTIME CALLBACKS
 ]]
 --[[ Module Main Timer ]]
 function EngineDamage_MainTimer()
-    if DebugIsEnabled() == 1 and EngineDamage_HasProfile == 1 then EngineDamage_DebugWindow_Update() end
+    if Table_ValGet(EngineDamage_Config_Vars,"Debug_Output",nil,2) == 1 and EngineDamage_HasProfile == 1 then EngineDamage_Debug_Update() end
     Dataref_Read(EngineDamage_Drefs_Cont,4,"All") -- Populate dataref container with current values
     EngineDamage_CheckStress()
 end

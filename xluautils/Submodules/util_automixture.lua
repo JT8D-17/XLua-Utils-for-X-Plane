@@ -23,6 +23,7 @@ local Automix_Config_Vars = {
 {"AUTOMIXTURE"},
 {"MainTimerInterval",0.05},    -- Main timer interval, in seconds
 {"MixtureMode","Manual","Manual","Manual","Manual","Manual","Manual","Manual","Manual"}, -- "Manual", "IdleCutoff" "AutoLean", "AutoRich", "FullRich"
+{"Debug_Output",0},           -- Show debug output in XLuaUtils window
 }
 --[[ Default values for the automixture profile ]]
 local Automix_Profile = {
@@ -58,12 +59,13 @@ local Automix_Drefs_Cont = {
 local Automix_Menu_Items = {
 "Automixture",              -- Menu title, index 1
 "",                         -- Item index: 2
-"[Separator]",              -- Item index: 3
-"Full Rich",                -- Item index: 4
-"Auto Rich",                -- Item index: 5
-"Auto Lean",                -- Item index: 6
-"Idle Cutoff",              -- Item index: 7
-"Manual",                   -- Item index: 8
+"Debug Output",             -- Item index: 3
+"[Separator]",              -- Item index: 4
+"Full Rich",                -- Item index: 5
+"Auto Rich",                -- Item index: 6
+"Auto Lean",                -- Item index: 7
+"Idle Cutoff",              -- Item index: 8
+"Manual",                   -- Item index: 9
 }
 --[[ Menu variables for FFI ]]
 local Automix_Menu_ID = nil
@@ -92,32 +94,29 @@ DEBUG WINDOW
 
 ]]
 --[[ Adds things to the debug window ]]
-function Automix_DebugWindow_Init()
-    if Automix_EngineType < 2 then -- Only initialize automixture if the engine is a reciprocating type
-        Debug_Window_AddLine("AM_Spacer"," ")
-        Debug_Window_AddLine("AM_Header","===== Automixture =====")
-        Debug_Window_AddLine("AM_EngineProps","Engine Displacement: "..Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³")
-        Debug_Window_AddLine("AM_AirProps","Gas Constant: "..Table_ValGet(Automix_Profile,"Gas_Constant",nil,2).." J / kg*K")
-        for i=1,Automix_NumEngines do
-            Debug_Window_AddLine("AM_E"..i.."L0","Engine "..i..":") -- Reserving a line in the debug window only requires an ID.
-            Debug_Window_AddLine("AM_E"..i.."MM")
-            Debug_Window_AddLine("AM_E"..i.."L1")
-            Debug_Window_AddLine("AM_E"..i.."L2")
-            Debug_Window_AddLine("AM_E"..i.."L3")
-            Debug_Window_AddLine("AM_E"..i.."L4")
-            Debug_Window_AddLine("AM_E"..i.."L5")
-        end
+function Automix_Debug_Init()
+    XLuaUtils_Window_AddText("AutoMixture","Engine Displacement: "..Table_ValGet(Automix_Profile,"Eng_Displace_Litres",nil,2).." l = "..string.format("%.3f",Automix_Vars.V_d).." m³",nil,nil)
+    XLuaUtils_Window_AddText("AutoMixture","Gas Constant: "..Table_ValGet(Automix_Profile,"Gas_Constant",nil,2).." J / kg*K",nil,nil)
+    for i=1,Automix_NumEngines do
+        XLuaUtils_Window_AddText("AutoMixture","Engine "..i..":",nil,"AM_E"..i.."L0")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."MM")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."L1")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."L2")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."L3")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."L4")
+        XLuaUtils_Window_AddText("AutoMixture","",nil,"AM_E"..i.."L5")
     end
+    XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1)
 end
 --[[ Updates the debug window ]]
-function Automix_DebugWindow_Update()
+function Automix_Debug_Update()
     for i=1,Automix_NumEngines do
-        Debug_Window_ReplaceLine("AM_E"..i.."MM","  Mode: "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1)) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
-        Debug_Window_ReplaceLine("AM_E"..i.."L1","  p_in: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i)).." inHg = "..string.format("%.3f",Automix_Vars.p_in[i]).." N/m²")
-        Debug_Window_ReplaceLine("AM_E"..i.."L2","  N_e: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i)).." 1/min = "..string.format("%.3f",Automix_Vars.N_e[i]).." 1/s")
-        Debug_Window_ReplaceLine("AM_E"..i.."L3","  T_in: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_Carb",4,i)).." °C = "..string.format("%.3f",Automix_Vars.T_in[i]).." K")
-        Debug_Window_ReplaceLine("AM_E"..i.."L4","  --> AFR: "..string.format("%.2f",Automix_Vars.AFR_Act[i]).." = "..string.format("%.4f",Automix_Vars.m_dot[i]).." kg/s air / "..string.format("%.4f",Table_ValGet(Automix_Drefs_Cont,"Eng_FF",4,i)).." kg/s fuel")
-        Debug_Window_ReplaceLine("AM_E"..i.."L5","  AFR Target / Mixture: "..string.format("%.2f",Automix_Vars.AFR_Tgt[i]).." / "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i)))
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."MM","Mode: "..Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,i+1),nil) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."L1","p_in: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_MAP",4,i)).." inHg = "..string.format("%.3f",Automix_Vars.p_in[i]).." N/m²",nil)
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."L2","N_e: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_RPM",4,i)).." 1/min = "..string.format("%.3f",Automix_Vars.N_e[i]).." 1/s",nil)
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."L3","T_in: "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_Carb",4,i)).." °C = "..string.format("%.3f",Automix_Vars.T_in[i]).." K",nil)
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."L4","--> AFR: "..string.format("%.2f",Automix_Vars.AFR_Act[i]).." = "..string.format("%.4f",Automix_Vars.m_dot[i]).." kg/s air / "..string.format("%.4f",Table_ValGet(Automix_Drefs_Cont,"Eng_FF",4,i)).." kg/s fuel",nil)
+        XLuaUtils_Window_ReplaceLine("AM_E"..i.."L5","AFR Target / Mixture: "..string.format("%.2f",Automix_Vars.AFR_Tgt[i]).." / "..string.format("%.3f",Table_ValGet(Automix_Drefs_Cont,"Eng_Mixt",4,i)),nil)
     end
 end
 --[[
@@ -345,19 +344,22 @@ function Automix_Menu_Callbacks(itemref)
                 if Automix_HasProfile == 0 then Automix_FirstRun() end
                 if Automix_HasProfile == 1 then Automix_Reload() end
             end
-            if i == 4 then
-                Automix_Menu_To_Anim("FullRich")
+            if i == 3 then
+                if Table_ValGet(Automix_Config_Vars,"Debug_Output",nil,2) == 0 then Table_ValSet(Automix_Config_Vars,"Debug_Output",nil,2,1) Automix_Debug_Init() else Table_ValSet(Automix_Config_Vars,"Debug_Output",nil,2,0) XLuaUtils_Window_RemoveText("AutoMixture") end
             end
             if i == 5 then
-                Automix_Menu_To_Anim("AutoRich")
+                Automix_Menu_To_Anim("FullRich")
             end
             if i == 6 then
-                Automix_Menu_To_Anim("AutoLean")
+                Automix_Menu_To_Anim("AutoRich")
             end
             if i == 7 then
-                Automix_Menu_To_Anim("IdleCutoff")
+                Automix_Menu_To_Anim("AutoLean")
             end
             if i == 8 then
+                Automix_Menu_To_Anim("IdleCutoff")
+            end
+            if i == 9 then
                 Automix_Menu_To_Anim("Manual")
             end
             Automix_Menu_Watchdog(Automix_Menu_Items,i)
@@ -370,7 +372,10 @@ function Automix_Menu_Watchdog(intable,index)
         if Automix_HasProfile == 0 then Menu_ChangeItemPrefix(Automix_Menu_ID,index,"Generate Automix Profile",intable)
         elseif Automix_HasProfile == 1 then Menu_ChangeItemPrefix(Automix_Menu_ID,index,"Reload Automix Profile",intable) end
     end
-    if index == 4 then
+    if index == 3 then
+        if Table_ValGet(Automix_Config_Vars,"Debug_Output",nil,2) == 1 then Menu_CheckItem(Automix_Menu_ID,index,"Activate") else Menu_CheckItem(Automix_Menu_ID,index,"Deactivate") end
+    end
+    if index == 5 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "FullRich" then
             Menu_CheckItem(Automix_Menu_ID,index,"Activate")
             Menu_CheckItem(Automix_Menu_ID,5,"Deactivate")
@@ -379,7 +384,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,8,"Deactivate")
         end
     end
-    if index == 5 then
+    if index == 6 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "AutoRich" then
             Menu_CheckItem(Automix_Menu_ID,4,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,index,"Activate")
@@ -388,7 +393,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,8,"Deactivate")
         end
     end
-    if index == 6 then
+    if index == 7 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "AutoLean" then
             Menu_CheckItem(Automix_Menu_ID,4,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,5,"Deactivate")
@@ -397,7 +402,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,8,"Deactivate")
         end
     end
-    if index == 7 then
+    if index == 8 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "IdleCutoff" then
             Menu_CheckItem(Automix_Menu_ID,4,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,5,"Deactivate")
@@ -406,7 +411,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,8,"Deactivate")
         end
     end
-    if index == 8 then
+    if index == 9 then
         if Table_ValGet(Automix_Config_Vars,"MixtureMode",nil,2) == "Manual" then
             Menu_CheckItem(Automix_Menu_ID,4,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,5,"Deactivate")
@@ -415,7 +420,7 @@ function Automix_Menu_Watchdog(intable,index)
             Menu_CheckItem(Automix_Menu_ID,index,"Activate")
         end
     end
-    if index == 9 then -- Deactivate all menu mixture modes
+    if index == 10 then -- Deactivate all menu mixture modes
             Menu_CheckItem(Automix_Menu_ID,4,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,5,"Deactivate")
             Menu_CheckItem(Automix_Menu_ID,6,"Deactivate")
@@ -466,7 +471,7 @@ RUNTIME CALLBACKS
 --[[ Module Main Timer ]]
 function Automix_MainTimer()
     if Automix_HasProfile == 1 then -- Only update if an aircraft profile file is present
-        if DebugIsEnabled() == 1 then Automix_DebugWindow_Update() end
+        if Table_ValGet(Automix_Config_Vars,"Debug_Output",nil,2) == 1 then Automix_Debug_Update() end
         Dataref_Read(Automix_Drefs_Cont,4,"All") -- Update continuously monitored datarefs
         --[[ Calculate mass flow per engine
         Source: Equation 3.14 from: Fantenberg, E. "Estimation of Air Mass Flow in Engines with Variable Valve Timing",Linköping, 2018

@@ -1,6 +1,6 @@
 ## XLuaUtils Stick Trim
 
-This document contains information about XLuaUtil's stick trim utility.
+This document contains information about XLuaUtils' stick trim utility.
 
 [Back to Readme.md](../README.md) 
 
@@ -18,7 +18,7 @@ This document contains information about XLuaUtil's stick trim utility.
 <a name="1"></a>
 ### 1. Features/Usage
 
-“Stick Trim” allows trimming the aircraft with the control stick/yoke/cyclic or pedals by means of the custom _”xluautils/stick_trim”_ command.
+“Stick Trim” allows setting a new center for the stick and pedals by means of the custom _”xluautils/stick_trim”_ command to improve hands-off flying.
 
 &nbsp;
 
@@ -40,13 +40,7 @@ No configuration with _"preferences.cfg"_.
 <a name="3"></a>
 ### 3. Menu/Functionality
 
-![XLuaUtils Stick Trim Menu](Images/XLuaUtils_Stick_Trim_Menu.jpg  "XLuaUtils Stick Trim Menu")
-
-Menu Item|Function
--|-
-Notifications|Enables/disables notifications sent by Stick Trim.
-Monitor Stick|Enables/disables Stick Trim's stick/yoke/cyclic channel
-Monitor Pedals|Enables/disables Stick Trim's rudder/pedal channel
+TO DO: Rewrite.
 
 &nbsp;
 
@@ -62,20 +56,9 @@ Monitor Pedals|Enables/disables Stick Trim's rudder/pedal channel
 In order to use Stick Trim, the _”xluautils/stick_trim”_ command must be assigned to a key or controller button.
 
 
-#### 4.2 Trimming
+#### 4.2 Usage
 
-When you’re flying the aircraft and wish to trim out the current stick/yoke/cyclic or pedal deflection:
-1. Press the button/key assigned to the "stick_trim” command.
-1. Move the stick/yoke/cyclic or pedals to the centered position.
-1. Release the button/key.
-
-The control deflection will then be automatically converted into trim deflection.   
-If enabled, a notification will inform you that the aircraft was trimmed.
-
-
-#### 4.3 Resetting the trim
-A short press on the “stick_trim” key/button will reset all trims to neutral.   
-If enabled, a notification will inform you that the trims were reset.
+The "Instructions" menu item will display usage instructions for Stick Trim in the XLuaUtils window.
 
 &nbsp;
 

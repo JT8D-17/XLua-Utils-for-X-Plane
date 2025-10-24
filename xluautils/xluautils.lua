@@ -32,9 +32,9 @@ ffi = require("ffi") -- LuaJIT FFI module
 dofile("Submodules/xluautils_core_ffi.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_common.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_mainmenu.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
+dofile("Submodules/xluautils_core_window.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_debugging.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/xluautils_core_datarefs.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
-dofile("Submodules/xluautils_core_notifications.lua")  -- CORE COMPONENT; DO NOT CHANGE ORDER
 dofile("Submodules/util_enginedamage.lua")  -- UTILITY
 dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
@@ -44,7 +44,6 @@ dofile("Submodules/util_sticktrim.lua") -- UTILITY
 if Mode ~= "Stable" then -- UTILITIES FOR NON-LITE VERSION
     dofile("Submodules/util_attachobjects.lua") -- UTILITY
     dofile("Submodules/util_automixture.lua") -- UTILITY
-    dofile("Examples/DebugWindow.lua") -- Example script for the debug window
 end
 --[[
 
@@ -86,14 +85,14 @@ function Modules_Reload()
     NCHeadset_Reload()  -- Reloads the ncheadset module
     MiscUtils_Reload()  -- Reloads the misc utilities module
     OxygenSystem_Reload() -- Reloads the oxygen system module
-    Debug_Window_Reload() -- Reloads the debug window module
+    XLuaUtils_Window_Reload() -- Reloads the XLuaUtils window module
 end
 --[[ Modules/Utilities are unloaded - called from aircraft_unload() below ]]
 function Modules_Unload()
     Persistence_Unload()
     NCHeadset_Off()
+    XLuaUtils_Window_Unload()
     Debug_Unload()
-    Notify_Window_Unload()
     Main_Menu_Unload()
     if Mode ~= "Stable" then  -- Modules for non-lite verision
         AttachObject_Unload()
@@ -138,10 +137,10 @@ function flight_start()
     DebugLogOutput("ACF File: "..ACF_Filename)
     DebugLogOutput("XLuaUtils Path: "..XLuaUtils_Path)
     Main_Menu_Build()                   -- Build main XLua Utils menu, see xluautils_core_mainmenu.lua
+    XLuaUtils_Window_Init()             -- Initialize the XLuaUtils window module, see xluautils_core_window.lua
     Debug_Init()                        -- Initialize debug module, see xluautils_core_debugging.lua
     Debug_Menu_Build(XLuaUtils_Menu_ID) -- Build debugging menu, see xluautils_core_debugging.lua
-    Notify_Window_Build()               -- Build notification window, see xluautils_core_notifications.lua
-    Debug_Window_Build()                -- Build debugging window, see xluautils_core_debugging.lua
+    XLuaUtils_Window_Build()            -- Build XLuaUtils window, see xluautils_core_window.lua
     Modules_Init()                      -- Initialize modules, see above
     if DebugIsEnabled() == 1 then Debug_Start() end -- Starts debugging, see below
     LogOutput("Initialization complete!")
@@ -163,15 +162,11 @@ DEBUGGING
 ]]
 -- Register the items that need to be done when debugging is turned on
 function Debug_Start()
-    if Mode ~= "Stable" then
-        Example_DebugWindow_Init()      -- Debug test strings, see Examples/DebugWindow.lua
-        Automix_DebugWindow_Init()      -- Debug strings for the Automixture module, see util_automixture.lua
-    end
-    EngineDamage_DebugWindow_Init() -- Debug strings for the Engine Damage module, see util_enginedamage.lua
+
 end
 -- Register the items that need to be done when debugging is turned off
 function Debug_Stop()
-    Debug_Window_ClearAll()
+
 end
 -- Register the items that need to be done when debugging is restarted
 function Debug_Reload()

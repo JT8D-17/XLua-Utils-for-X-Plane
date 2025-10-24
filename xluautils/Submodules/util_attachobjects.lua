@@ -82,19 +82,6 @@ simDR_pos_phi = find_dataref("sim/flightmodel/position/phi") -- Roll
 simDR_pos_psi = find_dataref("sim/flightmodel/position/psi") -- Yaw
 --[[
 
-DEBUG WINDOW
-
-]]
---[[ Adds things to the debug window ]]
-function AttachObj_DebugWindow_Init()
-
-end
---[[ Updates the debug window ]]
-function AttachObj_DebugWindow_Update()
-
-end
---[[
-
 FUNCTIONS
 
 ]]

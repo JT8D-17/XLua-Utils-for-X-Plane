@@ -14,7 +14,7 @@ This document contains information about some XLuaUtils features useful for XLua
 4. [Preferences](#4)   
 5. [Menus](#5)   
 6. [Notifications](#6)   
-7. [Debug Window](#7)    
+7. [XLuaUtils Window](#7)    
 8. [Dataref Handlers](#8)   
 
 &nbsp;
@@ -162,27 +162,7 @@ Reference: `XLuaUtils/Submodules/util_persistence.lua`
 <a name="6"></a>
 ### 6 Notifications
 
-To provide short-time (or permanent) information, XLuaUtils features a notification window.
-
-![XLuaUtils Notification Window](Images/XLuaUtils_Notifications.jpg "XLuaUtils Notification Window")
-
-Notifications are handled by means of a message stack table. This table is refreshed regularly, and time-limited notifications are automatically purged from the message stack table. If the message stack table's length is zero, the notification window will close. Use the functions below to interact with the stack.
-
-- `DisplayNotification(inputstring,colorkey,displaytime)`   
-_"inputstring"_: An input string, e.g. "Hello"   
-_"colorkey"_: Can be "Nominal" (white) or "Success" (green) or "Caution" (orange) or "Warning" (red) .  
-_"displaytime"_: **Positive numbers define the amount of time in seconds that a notification will display, any negative number produces a pinned notification. Each pinned notification must have a unique, numerical ID!**
-
-- `CheckNotification(inID)`   
-Returns "true" if a notification was found in the stack by its ID.
-
-- `RemoveNotification(inID)`   
-Removes a notification from the stack by its ID.
-
-- `UpdateNotification(inputstring,colorkey,inID)`   
-Will remove a notification from and then re-add it to the stack. Use this to refresh a notification with input string that contains a variable.
-
-Reference: `XLuaUtils/Submodules/xluautils_core_notifications.lua`
+See the chapter "Notifications" in _xluautils_manual.odt_
 
 &nbsp;
 
@@ -191,32 +171,9 @@ Reference: `XLuaUtils/Submodules/xluautils_core_notifications.lua`
 &nbsp;
 
 <a name="7"></a>
-### 7 Debug Window
+### 7 XLuaUtils Window
 
-The debug window is a simple window that may be used to display debug data or other information. Its size and position as well as its state (open/closed) is automatically saved and restored after a script reload or X-Plane restart.   
-Toggling the window's visibility is done with "[Open/Close] Debug Window" in the _"XLuaUtils/Debug"_ menu.
-
- ![XLuaUtils Debug Window](Images/XLuaUtils_DebugWindow.jpg  "XLuaUtils Debug Window")
- 
- The following methods are provided for interacting with the debug window's content:
- 
- -  `Debug_Window_AddLine(id,string,colorkey)`    
- Adds a line with the following parameters:
- _"id"_: A unique ID for the line, e.g. "Greeting". **Passing an ID is mandatory!**   
-_"string"_: The string to be displayed, e.g. "Hi there"   
-_"colorkey"_: A key for the colour the text is to be displayed in. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
-
-- `Debug_Window_RemoveLine(id)`   
-Removes the line by its ID.
-
-- `Debug_Window_ReplaceLine(id,string,colorkey)`   
-Replaces a line by its ID. **Use this to update a line in the debug window from a flight or timer loop.**   
-_"id"_: The unique ID of the item to be replaced.   
-_"string"_: The new string for the item.   
- _"colorkey"_: The colour of the item. Can be "Nominal", "Success", "Caution" or "Warning". Passing "nil" will default to "Nominal" (i.e. white).
-
-Reference: `XLuaUtils/Submodules/xluautils_core_debugging.lua`   
-Reference: `XLuaUtils/Examples/DebugWindow.lua`
+See the chapter "XLuaUtils window" in _xluautils_manual.odt_
 
 &nbsp;
 

@@ -15,96 +15,93 @@ VARIABLES
 --[[ Table that contains the configuration variables for the Stick Trim module ]]
 local StrickTrim_Config_Vars = {
 {"STICKTRIM"},
-{"MainTimerInterval",0.1},  -- Main timer interval, in seconds
-{"Stick",1},                -- Monitor stick trim
-{"Pedals",1},               -- Monitor predal trim
-{"Push_For_Reset",0.25},    -- Command press time for reset
-{"Reset_Rate",1},           -- Rate at which the trim resets
 {"Notifications",1},        -- Display Notifications?
+{"Channel_P",1},            -- Monitor the pitch channel
+{"Channel_R",1},            -- Monitor the roll channel
+{"Channel_Y",1},            -- Monitor the yaw channel
 }
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local StickTrim_Menu_Items = {
 "Stick Trim",               -- Menu title, index 1
-"Notifications",            -- Item index: 2
+"Instructions",             -- Item index: 2
 "[Separator]",              -- Item index: 3
-"Monitor Stick",            -- Item index: 4
-"Monitor Pedals",           -- Item index: 5
+"Pitch Channel",            -- Item index: 4
+"Roll Channel",             -- Item index: 5
+"Yaw Channel",              -- Item index: 6
 }
 
-local Trim_Offset = {P=0,R=0,Y=0}
-local Control_Deflection = {P=0,R=0,Y=0}
-local Reset_Commanded = {S=0,P=0} -- Trim reset commanded for stick and pedals
+local Control_Offset = {P=0,R=0,Y=0,Acquire=0,Reset=0}
+local Display_Instructions = 0
+local StickTrim_Instructions ="Press the button assigned to the \"xluautils/stick_trim\" command\nand keep it pressed.\nReturn the stick to the center and release the button.\nKeep the stick centered and press the button to reset."
 --[[
 
 DATAREFS
 
 ]]
-simDR_IsHelicopter = find_dataref("sim/aircraft2/metadata/is_helicopter")
-simDR_JoyMappedAxis = find_dataref("sim/joystick/joy_mapped_axis_value") -- 1 = pitch, 2 = roll, 3 = yaw
+simDR_Joystick_P = find_dataref("sim/joystick/joy_mapped_axis_value[1]") -- 1 = pitch, 2 = roll, 3 = yaw
+simDR_Joystick_R = find_dataref("sim/joystick/joy_mapped_axis_value[2]") -- 1 = pitch, 2 = roll, 3 = yaw
+simDR_Joystick_Y = find_dataref("sim/joystick/joy_mapped_axis_value[3]") -- 1 = pitch, 2 = roll, 3 = yaw
 simDR_Override_Joy_P = find_dataref("sim/operation/override/override_joystick_pitch")
 simDR_Override_Joy_R = find_dataref("sim/operation/override/override_joystick_roll")
 simDR_Override_Joy_H = find_dataref("sim/operation/override/override_joystick_heading")
-simDR_Yoke_P = find_dataref("sim/joystick/yoke_pitch_ratio")
-simDR_Yoke_R = find_dataref("sim/joystick/yoke_roll_ratio")
-simDR_Yoke_H = find_dataref("sim/joystick/yoke_heading_ratio")
-simDR_Total_Time = find_dataref("sim/time/total_running_time_sec")
-simDR_Trim_E = find_dataref("sim/cockpit2/controls/elevator_trim")
-simDR_Trim_A = find_dataref("sim/cockpit2/controls/aileron_trim")
-simDR_Trim_R = find_dataref("sim/cockpit2/controls/rudder_trim")
+simDR_Yoke_P = find_dataref("sim/cockpit2/controls/yoke_pitch_ratio")
+simDR_Yoke_R = find_dataref("sim/cockpit2/controls/yoke_roll_ratio")
+simDR_Yoke_H = find_dataref("sim/cockpit2/controls/yoke_heading_ratio")
+--[[
+
+CUSTOM DATAREFS
+
+]]
+function fake_handler() end -- Makes custom datarefs writable
+Dref_Yoke_NewCtr_P = create_dataref("sim/xluautils/yoke_pitch_offset","number",fake_handler)
+Dref_Yoke_NewCtr_R = create_dataref("sim/xluautils/yoke_roll_offset","number",fake_handler)
+Dref_Yoke_NewCtr_Y = create_dataref("sim/xluautils/yoke_yaw_offset","number",fake_handler)
 --[[
 
 FUNCTIONS
 
 ]]
+local reset = 0
+--[[ Clamps a value ]]
+function Clamp(value,min,max)
+    if value < min then return min
+    elseif value > max then return max
+    else return value end
+end
+--[[ The callback for the custom stick trim command ]]
 function Callback_Stick_Trim(phase,duration)
     if phase == 0 then -- Begin
-        if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 1 then
-            Control_Deflection.P = simDR_JoyMappedAxis[1] -- Pitch
-            Control_Deflection.R = simDR_JoyMappedAxis[2] -- Roll
-        end
-        if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 1 then
-            Control_Deflection.Y = simDR_JoyMappedAxis[3] -- Yaw
-        end
+        Control_Offset.Acquire = 1
+        Control_Offset.P = simDR_Yoke_P
+        Control_Offset.R = simDR_Yoke_R
+        Control_Offset.Y = simDR_Yoke_Y
+        if simDR_Joystick_P > -0.01 and simDR_Joystick_P < 0.01 and simDR_Joystick_R > -0.01 and simDR_Joystick_R < 0.01 then Control_Offset.Reset = 1 end
     end
-    if phase == 1 and duration > Table_ValGet(StrickTrim_Config_Vars,"Push_For_Reset",nil,2) then
+    if phase == 1 then -- Hold
 
     end
     if phase == 2 then -- Release
-        if duration < Table_ValGet(StrickTrim_Config_Vars,"Push_For_Reset",nil,2) then
-            if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 1 and Reset_Commanded.S == 0 then Reset_Commanded.S = 1 end
-            if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 1 and Reset_Commanded.P == 0 then Reset_Commanded.P = 1 end
+        Control_Offset.Acquire = 0
+        if Control_Offset.Reset == 0 then
+            Dref_Yoke_NewCtr_P = simDR_Yoke_P
+            Dref_Yoke_NewCtr_R = simDR_Yoke_R
+            Dref_Yoke_NewCtr_Y = simDR_Yoke_Y
         else
-            if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 1 then
-                Trim_Offset.P = Control_Deflection.P - simDR_JoyMappedAxis[1]
-                Trim_Offset.R = Control_Deflection.R - simDR_JoyMappedAxis[2]
-                simDR_Trim_E = Trim_Offset.P
-                simDR_Trim_A = Trim_Offset.R
-            end
-            if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 1 then
-                Trim_Offset.Y = Control_Deflection.Y - simDR_JoyMappedAxis[3]
-                simDR_Trim_R = Trim_Offset.Y
-            end
-            if Table_ValGet(StrickTrim_Config_Vars,"Notifications",nil,2) == 1 then DisplayNotification("Stick Trim: Trimmed","Nominal",2) end
+            Dref_Yoke_NewCtr_P = 0
+            Dref_Yoke_NewCtr_R = 0
+            Dref_Yoke_NewCtr_Y = 0
+            Control_Offset.Reset = 0
         end
     end
 end
---[[ Increment/decrement to target value ]]
-function Delta_To_Target(anim,target,rate)
-    if math.abs(target-anim) < rate * Table_ValGet(StrickTrim_Config_Vars,"MainTimerInterval",nil,2) then
-        anim = target
-    elseif target > anim then
-        anim = anim + rate * Table_ValGet(StrickTrim_Config_Vars,"MainTimerInterval",nil,2)
-    else
-        anim = anim - rate * Table_ValGet(StrickTrim_Config_Vars,"MainTimerInterval",nil,2)
-    end
-    return anim
-end
+
 --[[
 
 CUSTOM COMMANDS
 
 ]]
 create_command("xluautils/stick_trim","XluaUtils Stick Trim",Callback_Stick_Trim)
+
 --[[
 
 MENU
@@ -115,13 +112,16 @@ function StickTrim_Menu_Callbacks(itemref)
     for i=2,#StickTrim_Menu_Items do
         if itemref == StickTrim_Menu_Items[i] then
             if i == 2 then
-                if Table_ValGet(StrickTrim_Config_Vars,"Notifications",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Notifications",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Notifications",nil,2,0) end
+                if Display_Instructions == 0 then XLuaUtils_Window_AddText("Stick Trim Instructions",StickTrim_Instructions,"Nominal") XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1) Display_Instructions = 1 else XLuaUtils_Window_RemoveText("Stick Trim Instructions") Display_Instructions = 0 end
             end
             if i == 4 then
-                if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Stick",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Stick",nil,2,0) end
+                if Table_ValGet(StrickTrim_Config_Vars,"Channel_P",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Channel_P",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Channel_P",nil,2,0) end
             end
             if i == 5 then
-                if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Pedals",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Pedals",nil,2,0) end
+                if Table_ValGet(StrickTrim_Config_Vars,"Channel_R",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Channel_R",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Channel_R",nil,2,0) end
+            end
+            if i == 6 then
+                if Table_ValGet(StrickTrim_Config_Vars,"Channel_Y",nil,2) == 0 then Table_ValSet(StrickTrim_Config_Vars,"Channel_Y",nil,2,1) else Table_ValSet(StrickTrim_Config_Vars,"Channel_Y",nil,2,0) end
             end
         end
         Preferences_Write(StrickTrim_Config_Vars,XLuaUtils_PrefsFile)
@@ -131,13 +131,16 @@ end
 --[[ This is the menu watchdog that is used to check an item or change its prefix ]]
 function StickTrim_Menu_Watchdog(intable,index)
     if index == 2 then
-        if Table_ValGet(StrickTrim_Config_Vars,"Notifications",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
+        if Display_Instructions == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
     end
     if index == 4 then
-        if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(StrickTrim_Config_Vars,"Channel_P",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
     end
     if index == 5 then
-        if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
+        if Table_ValGet(StrickTrim_Config_Vars,"Channel_R",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
+    end
+    if index == 6 then
+        if Table_ValGet(StrickTrim_Config_Vars,"Channel_Y",nil,2) == 1 then Menu_CheckItem(StickTrim_Menu_ID,index,"Activate") else Menu_CheckItem(StickTrim_Menu_ID,index,"Deactivate") end
     end
 end
 --[[ Registration routine for the menu ]]
@@ -178,25 +181,20 @@ end
 RUNTIME CALLBACKS
 
 ]]
---[[ Module Main Timer ]]
-function StickTrim_MainTimer()
-    if Table_ValGet(StrickTrim_Config_Vars,"Stick",nil,2) == 1 and Reset_Commanded.S == 1 then -- Reset pitch and roll
-        simDR_Trim_E = Delta_To_Target(simDR_Trim_E,0,Table_ValGet(StrickTrim_Config_Vars,"Reset_Rate",nil,2))
-        simDR_Trim_A = Delta_To_Target(simDR_Trim_A,0,Table_ValGet(StrickTrim_Config_Vars,"Reset_Rate",nil,2))
-        Trim_Offset.P = simDR_Trim_E
-        Trim_Offset.R = simDR_Trim_A
-        if simDR_Trim_E == 0 and simDR_Trim_A == 0 then -- Check if stick has been reset
-            Reset_Commanded.S = 0
-            if Table_ValGet(StrickTrim_Config_Vars,"Notifications",nil,2) == 1 then DisplayNotification("Stick Trim: Stick Reset","Nominal",2) end
-        end
-    end
-    if Table_ValGet(StrickTrim_Config_Vars,"Pedals",nil,2) == 1 and Reset_Commanded.P == 1 then -- Reset yaw
-        simDR_Trim_R = Delta_To_Target(simDR_Trim_R,0,Table_ValGet(StrickTrim_Config_Vars,"Reset_Rate",nil,2))
-        Trim_Offset.Y = simDR_Trim_R
-        if simDR_Trim_R == 0 then -- Check if stick has been reset
-            Reset_Commanded.P = 0
-            if Table_ValGet(StrickTrim_Config_Vars,"Notifications",nil,2) == 1 then DisplayNotification("Stick Trim: Pedals Reset","Nominal",2) end
-        end
+
+--[[ Runs before each frame's physics calculation ]]
+function before_physics()
+    simDR_Override_Joy_P = 1
+    simDR_Override_Joy_R = 1
+    simDR_Override_Joy_Y = 1
+    if Control_Offset.Acquire == 0 then
+        simDR_Yoke_P = Clamp(simDR_Joystick_P + Dref_Yoke_NewCtr_P,-1,1)
+        simDR_Yoke_R = Clamp(simDR_Joystick_R + Dref_Yoke_NewCtr_R,-1,1)
+        simDR_Yoke_Y = Clamp(simDR_Joystick_Y + Dref_Yoke_NewCtr_Y,-1,1)
+    else
+        simDR_Yoke_P = Control_Offset.P
+        simDR_Yoke_R = Control_Offset.R
+        simDR_Yoke_Y = Control_Offset.Y
     end
 end
 --[[
@@ -213,8 +211,6 @@ end
 function StickTrim_Init()
     Preferences_Read(XLuaUtils_PrefsFile,StrickTrim_Config_Vars)
     if XLuaUtils_HasConfig == 1 then
-        run_at_interval(StickTrim_MainTimer,Table_ValGet(StrickTrim_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(StickTrim_MainTimer) then DisplayNotification("Stick Trim: Initialized","Nominal",5) end
         StickTrim_Menu_Register()
     end
     LogOutput(StrickTrim_Config_Vars[1][1]..": Initialized!")
