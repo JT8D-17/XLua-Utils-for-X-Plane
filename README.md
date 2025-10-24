@@ -154,7 +154,7 @@ See [Documentation/Misc_Utils.md](Documentation/Misc_Utils.md) for more informat
 <a name="5.5"></a>
 ### 5.5 Automixture Controls
 
-**CAUTION: This utility is unmaintained!**
+_**CAUTION: This utility is unmaintained and only available when "Mode" in xluautils.lua is set to anything but "Stable"!**_
 
 As of version 12.00, X-Plane does not support complex automatic mixture controllers as found, for example on [Pratt & Whitney R-1830 type engines](https://www.enginehistory.org/Piston/P&W/R-1830/r-1830.shtml) of Douglas DC-3s and C-47s. These automatic controllers, in their "Auto Lean" and "Auto Rich" modes, automatically set the fuel mixture based on altitude to attain a specific [air-fuel-ratio](https://en.wikipedia.org/wiki/Air%E2%80%93fuel_ratio), easing crew workload and ensure maximum power or fuel saving.
 
@@ -180,7 +180,7 @@ See [Documentation/Automixture.md](Documentation/Automixture.md) for more inform
 <a name="5.6"></a>
 ### 5.6 Attach Objects
 
-**CAUTION: This utility is unmaintained!**
+_**CAUTION: This utility is unmaintained and only available when "Mode" in xluautils.lua is set to anything but "Stable"!**_
 
 The object attachment utility can be used to display objects loaded from object files outside the aircraft.   
 These objects can be set to display within a certain dataref value range and will either move with the aircraft (e.g. external loads) or stick to the ground (e.g. ground equipment).   
