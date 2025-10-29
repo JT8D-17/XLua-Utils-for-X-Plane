@@ -89,6 +89,7 @@ function Modules_Reload()
 end
 --[[ Modules/Utilities are unloaded - called from aircraft_unload() below ]]
 function Modules_Unload()
+    StickTrim_Unload()
     Persistence_Unload()
     NCHeadset_Off()
     XLuaUtils_Window_Unload()

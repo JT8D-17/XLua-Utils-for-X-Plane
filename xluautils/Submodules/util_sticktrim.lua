@@ -186,7 +186,7 @@ RUNTIME CALLBACKS
 function before_physics()
     simDR_Override_Joy_P = 1
     simDR_Override_Joy_R = 1
-    simDR_Override_Joy_Y = 1
+    simDR_Override_Joy_H = 1
     if Control_Offset.Acquire == 0 then
         simDR_Yoke_P = Clamp(simDR_Joystick_P + Dref_Yoke_NewCtr_P,-1,1)
         simDR_Yoke_R = Clamp(simDR_Joystick_R + Dref_Yoke_NewCtr_R,-1,1)
@@ -220,4 +220,10 @@ function StickTrim_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,StrickTrim_Config_Vars)
     StickTrim_Menu_Build()
     LogOutput(StrickTrim_Config_Vars[1][1]..": Reloaded!")
+end
+--[[ Runs on aircraft unload ]]
+function StickTrim_Unload()
+    simDR_Override_Joy_P = 0
+    simDR_Override_Joy_R = 0
+    simDR_Override_Joy_H = 0
 end
