@@ -40,7 +40,6 @@ dofile("Submodules/util_misc.lua")  -- UTILITY
 dofile("Submodules/util_ncheadset.lua")  -- UTILITY
 dofile("Submodules/util_persistence.lua")  -- UTILITY
 dofile("Submodules/util_oxygensystem.lua")  -- UTILITY
-dofile("Submodules/util_sticktrim.lua") -- UTILITY
 if Mode ~= "Stable" then -- UTILITIES FOR NON-LITE VERSION
     dofile("Submodules/util_attachobjects.lua") -- UTILITY
     dofile("Submodules/util_automixture.lua") -- UTILITY
@@ -73,7 +72,6 @@ function Modules_Init()
     MiscUtils_Init()        -- Initialize the Misc Utilities module, see util_misc.lua
     NCHeadset_Init()        -- Initialize the Noise-Cancelling Headset module, see util_ncheadset.lua
     OxygenSystem_Init()     -- Initialize the Oxygen System module, see util_oxygensystem.lua
-    StickTrim_Init()        -- Initialize then Stick Trim module, see util_sticktrim.lua
     Persistence_Init()      -- Initialize the Persistence module, see util_persistence.lua
     if Mode ~= "Stable" then  -- Modules for non-lite verision
         AttachObject_Init()     -- Initialize the Attach Object module, see util_attachobjects.lua
@@ -89,7 +87,6 @@ function Modules_Reload()
 end
 --[[ Modules/Utilities are unloaded - called from aircraft_unload() below ]]
 function Modules_Unload()
-    StickTrim_Unload()
     Persistence_Unload()
     NCHeadset_Off()
     XLuaUtils_Window_Unload()
