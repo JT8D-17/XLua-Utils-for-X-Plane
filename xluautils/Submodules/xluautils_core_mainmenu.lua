@@ -63,7 +63,7 @@ function Main_Menu_Build()
                 Main_Menu_Watchdog(Main_Menu_Items,i)
             end
         end
-        DebugLogOutput("XLua Utils main menu initialized!")
+        DebugLogOutput("XLuaUtils main menu initialized!")
     end
 end
 --[[

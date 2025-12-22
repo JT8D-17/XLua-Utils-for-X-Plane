@@ -14,7 +14,9 @@ local Window_Title = "XLuaUtils"
 --[[ Table that contains the configuration variables for the XLuaUtils window ]]
 local XLuaUtils_Window_Config_Vars = {
 {"XLUAUTILS_WINDOW"},
-{"Position",200,600,600,200},  -- Left, top, right, bottom in boxels (X-Plane window size across all monitors)
+{"DefaultPosition",100,600,500,200},  -- Left, top, right, bottom in boxels (X-Plane window size across all monitors)
+{"ActualPosition",100,600,500,200},  -- Left, top, right, bottom in boxels (X-Plane window size across all monitors)
+{"MinAlertLevel","Warning"}, -- Stores the minimum alert level on which the window will open
 }
 local Window_StringColors = {
 {0.929, 0.929, 0.929},  -- RGB Nominal
@@ -42,6 +44,17 @@ local Notification_Stack_ToDelete = { } -- Temporary; ignore
 local mouse_x_old = 0
 local mouse_y_old = 0
 
+--[[ Table for main menu items ]]
+local Window_Menu_Items = {
+"Window",                   -- Index 1: Menu title
+"Toggle Window",            -- Index 2
+"",                         -- Index 3: Placeholder for min. window alert level
+"Reset Window Position",    -- Index 4
+"Save Window Position",     -- Index 5
+}
+--[[ Menu variables for FFI ]]
+local Window_Menu_ID = nil
+local Window_Menu_Pointer = ffi.new("const char")
 --[[
 
 DATAREFS
@@ -157,7 +170,7 @@ end
 --[[ Reloads the XLuaUtils window ]]
 function XLuaUtils_Window_Reload()
     Preferences_Read(XLuaUtils_PrefsFile,XLuaUtils_Window_Config_Vars)
-    for i=1,4 do Window_Coords[i] = Table_ValGet(XLuaUtils_Window_Config_Vars,"Position",nil,(i+1)) end
+    for i=1,4 do Window_Coords[i] = Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,(i+1)) end
     Window_Coords_Set(XLuaUtilsWindow_ID,Window_Coords)
 end
 --[[
@@ -218,9 +231,18 @@ function XLuaUtils_WindowStatus(inmenuid,inindex)
 end
 --[[ Window main timer ]]
 function XLuaUtils_Window_MainTimer()
-    if #Notification_Stack > 0 and XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1) end
+    if #Notification_Stack > 0 then
+        for i=1,#Notification_Stack do
+            if Notification_Stack[i][2] == "Nominal" and Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Nominal" and XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1) end
+            if (Notification_Stack[i][2] == "Caution" or Notification_Stack[i][2] == "Warning") and Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Caution" and XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1) end
+            if Notification_Stack[i][2] == "Warning" and Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Warning" and XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1) end
+        end
+    end
     -- Close the window if there is no content to display
     if #Notification_Stack == 0 and #XLuaUtils_Window_TextStack == 0 and XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 1 then XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,0) end
+    -- Test messages if window is opened manually
+    XLuaUtils_Window_ReplaceLine("Clock","Date and time: "..os.date("%x, %H:%M:%S"),nil) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
+    XLuaUtils_Window_ReplaceLine("Window_Pos","Coordinates L  "..Window_Coords[1]..", T "..Window_Coords[2]..", R "..Window_Coords[3]..", B "..Window_Coords[4],nil) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
 end
 --[[ Draws a window button, see "XLuaUtils_Window_Update_Buttons()" above ]]
 function XLuaUtils_Window_DrawButton(index)
@@ -258,7 +280,7 @@ function XLuaUtils_Window_Draw(inWindowID,inRefcon)
     Window_Coords_Get(XLuaUtilsWindow_ID,Window_Coords)
     Window_Size[1] = Window_Coords[3] - Window_Coords[1] -- Width = right - left
     Window_Size[2] = Window_Coords[2] - Window_Coords[4] -- Height = top - bottom
-    --for i=1,4 do Table_ValSet(XLuaUtils_Window_Config_Vars,"Position",nil,(i+1),Window_Coords[i]) end
+    --for i=1,4 do Table_ValSet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,(i+1),Window_Coords[i]) end
     XPLM.XPLMDrawTranslucentDarkBox(Window_Coords[1],Window_Coords[2],Window_Coords[3],Window_Coords[4])
     -- Calculate the maximum number of characters per line that can be accomodated by the window width
     Window_Lines.MaxChars = tonumber(string.format("%d",(Window_Size[1] / Window_FontProps[1] * 1.855)))
@@ -303,10 +325,10 @@ function XLuaUtils_Window_Build()
     Window_Font_Info(Window_FontID,Window_FontProps)
     Window_Lines.Height = Window_FontProps[2] * 1.5 -- Calculate line height
     XLuaUtils_Window_Props = ffi.new("XPLMCreateWindow_t")
-    XLuaUtils_Window_Props.left = Table_ValGet(XLuaUtils_Window_Config_Vars,"Position",nil,2)
-    XLuaUtils_Window_Props.top = Table_ValGet(XLuaUtils_Window_Config_Vars,"Position",nil,3)
-    XLuaUtils_Window_Props.right = Table_ValGet(XLuaUtils_Window_Config_Vars,"Position",nil,4)
-    XLuaUtils_Window_Props.bottom = Table_ValGet(XLuaUtils_Window_Config_Vars,"Position",nil,5)
+    XLuaUtils_Window_Props.left = Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,2)
+    XLuaUtils_Window_Props.top = Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,3)
+    XLuaUtils_Window_Props.right = Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,4)
+    XLuaUtils_Window_Props.bottom = Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,5)
     XLuaUtils_Window_Props.visible = 0
     XLuaUtils_Window_Props.drawWindowFunc = XLuaUtils_Window_Draw
     XLuaUtils_Window_Props.handleMouseClickFunc = function(inWindowID,x,y,inMouse,inRefcon) XLuaUtils_Window_Mouse(x,y,inMouse) return 1 end
@@ -321,8 +343,94 @@ function XLuaUtils_Window_Build()
     XLuaUtilsWindow_ID = XPLM.XPLMCreateWindowEx(ffi.cast("XPLMCreateWindow_t *",XLuaUtils_Window_Props))
     if XLuaUtilsWindow_ID ~= nil then
         XPLM.XPLMSetWindowTitle(XLuaUtilsWindow_ID,ffi.new("char[256]",Window_Title));
-        DebugLogOutput("XLuaUtils Window created! (ID: "..tostring(XLuaUtilsWindow_ID)..")")
+        DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1].." created! (ID: "..tostring(XLuaUtilsWindow_ID)..")")
         run_at_interval(XLuaUtils_Window_MainTimer,0.5)
+    end
+end
+--[[
+
+MENU
+
+]]
+--[[ Window menu callbacks. The functions to run or actions to do when picking any non-title and nonseparator item from the table above ]]
+function Window_Menu_Callbacks(itemref)
+    for i=2,#Window_Menu_Items do
+        if itemref == Window_Menu_Items[i] then
+            if i == 2 then
+                if XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then
+                    XLuaUtils_Window_AddText("Test","Forcing the XLuaUtils window open","Nominal",nil)
+                    XLuaUtils_Window_AddText("Test","Clock placeholder","Nominal","Clock")
+                    XLuaUtils_Window_AddText("Test","Window Position","Nominal","Window_Pos")
+                    XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1)
+                else
+                    XLuaUtils_Window_RemoveText("Test")
+                end
+            end
+            if i == 3 then
+                if Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Nominal" then Table_ValSet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2,"Caution")
+                elseif Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Caution" then Table_ValSet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2,"Warning")
+                elseif Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Warning" then Table_ValSet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2,"Nominal") end
+                Preferences_Write(XLuaUtils_Window_Config_Vars,XLuaUtils_PrefsFile)
+                DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1]..": Set minimum altert level for the XLuaUtils window to: "..Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2))
+            end
+            if i == 4 then
+                for i=1,4 do
+                    Window_Coords[i] = Table_ValGet(XLuaUtils_Window_Config_Vars,"DefaultPosition",nil,(i+1))
+                    Table_ValSet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,(i+1),Window_Coords[i])
+                end
+                Window_Coords_Set(XLuaUtilsWindow_ID,Window_Coords)
+                DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1]..": Position reset to default! ("..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,2)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,3)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,4)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,5)..")")
+            end
+            if i == 5 then
+                for i=1,4 do
+                    Table_ValSet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,(i+1),Window_Coords[i])
+                end
+                Preferences_Write(XLuaUtils_Window_Config_Vars,XLuaUtils_PrefsFile)
+                DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1]..": Position saved! ("..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,2)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,3)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,4)..","..Table_ValGet(XLuaUtils_Window_Config_Vars,"ActualPosition",nil,5)..")")
+            end
+            Window_Menu_Watchdog(Window_Menu_Items,i)
+        end
+    end
+end
+--[[ Menu watchdog that is used to check an item or change its prefix ]]
+function Window_Menu_Watchdog(intable,index)
+    if index == 3 then
+        if Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Nominal" then Menu_ChangeItemPrefix(Window_Menu_ID,index,"Window Opens On: All",intable) end
+        if Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Caution" then Menu_ChangeItemPrefix(Window_Menu_ID,index,"Window Opens On: Caution",intable) end
+        if Table_ValGet(XLuaUtils_Window_Config_Vars,"MinAlertLevel",nil,2) == "Warning" then Menu_ChangeItemPrefix(Window_Menu_ID,index,"Window Opens On: Warning",intable) end
+    end
+end
+--[[ Registration routine for the menu ]]
+function Window_Menu_Register()
+    if XPLM ~= nil and Window_Menu_ID == nil then
+        local Menu_Index = nil
+        Menu_Index = XPLM.XPLMAppendMenuItem(XLuaUtils_Menu_ID,Window_Menu_Items[1],ffi.cast("void *","None"),1)
+        Window_Menu_ID = XPLM.XPLMCreateMenu(Window_Menu_Items[1],XLuaUtils_Menu_ID,Menu_Index,function(inMenuRef,inItemRef) Window_Menu_Callbacks(inItemRef) end,ffi.cast("void *",Window_Menu_Pointer))
+        Window_Menu_Build()
+        DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1].." Menu registered!")
+    end
+end
+--[[ Build logic for the window menu ]]
+function Window_Menu_Build()
+    local Menu_Indices = {}
+    if XLuaUtils_HasConfig == 1 then
+        for i=2,#Window_Menu_Items do Menu_Indices[i] = 0 end
+        if Window_Menu_ID ~= nil then
+            for i=2,#Window_Menu_Items do
+                if Window_Menu_Items[i] ~= "[Separator]" then
+                    Window_Menu_Pointer = Window_Menu_Items[i]
+                    Menu_Indices[i] = XPLM.XPLMAppendMenuItem(Window_Menu_ID,Window_Menu_Items[i],ffi.cast("void *",Window_Menu_Pointer),1)
+                else
+                    XPLM.XPLMAppendMenuSeparator(Window_Menu_ID)
+                end
+            end
+            for i=2,#Window_Menu_Items do
+                if Window_Menu_Items[i] ~= "[Separator]" then
+                    Window_Menu_Watchdog(Window_Menu_Items,i)
+                end
+            end
+            DebugLogOutput(XLuaUtils_Window_Config_Vars[1][1].." Menu built!")
+        end
     end
 end
 --[[
@@ -333,12 +441,21 @@ INITIALIZATION
 --[[ Initializes the XLuaUtils window module at every startup ]]
 function XLuaUtils_Window_Init()
     Preferences_Read(XLuaUtils_PrefsFile,XLuaUtils_Window_Config_Vars)
+    if XLuaUtils_HasConfig == 1 then
+        Window_Menu_Register()
+    end
     LogOutput(XLuaUtils_Window_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Unload logic for this module ]]
 function XLuaUtils_Window_Unload()
     if XLuaUtilsWindow_ID ~= 0 then Window_Destroy(XLuaUtilsWindow_ID) end
     if FileExists(XLuaUtils_PrefsFile) then Preferences_Write(XLuaUtils_Window_Config_Vars,XLuaUtils_PrefsFile) end
+end
+--[[ Module reload ]]
+function XLuaUtils_Window_Reload()
+    Preferences_Read(XLuaUtils_PrefsFile,XLuaUtils_Window_Config_Vars)
+    Window_Menu_Build()
+    LogOutput(XLuaUtils_Window_Config_Vars[1][1]..": Reloaded!")
 end
 --[[
 

@@ -1,8 +1,12 @@
 ## XLuaUtils Object Attachment Utility
 
-This document contains information about XLuaUtils' object attachment utility.
+&nbsp;
 
-[Back to Readme.md](../README.md) 
+_**CAUTION: This utility is unmaintained and only available when "Mode" in xluautils.lua is set to anything but "Stable"!**_
+
+The object attachment utility can be used to display objects loaded from object files outside the aircraft.   
+These objects can be set to display within a certain dataref value range and will either move with the aircraft (e.g. external loads) or stick to the ground (e.g. ground equipment).   
+Object definition is provided from a simple text-based input file and objects can be reloaded at any time.
 
 &nbsp;
 

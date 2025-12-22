@@ -18,7 +18,6 @@ local Debug_Config_Vars = {
 local Debug_Menu_Items = {
 "Debug",
 "Debug Output",
-"Toggle XLuaUtils Window",
 "Debug Reload",
 }
 --[[ Menu variables for FFI ]]
@@ -64,14 +63,6 @@ function DebugIsEnabled()
 end
 --[[
 
-OTHER FUNCTIONS
-
-]]
-function Debug_Clock_Timer()
-    XLuaUtils_Window_ReplaceLine("Clock","Date and time: "..os.date("%x, %H:%M:%S"),nil) -- Replaces a line by means of its ID. Use this within a timer to refresh the displayed values of variables.
-end
---[[
-
 DEBUG MENU
 
 ]]
@@ -85,17 +76,6 @@ function Debug_Menu_Callbacks(itemref)
                 DebugLogOutput("Set XLuaUtils Debug Output to "..Table_ValGet(Debug_Config_Vars,"DebugOutput",nil,2))
             end
             if i == 3 then
-                if XPLM.XPLMGetWindowIsVisible(XLuaUtilsWindow_ID) == 0 then
-                    XLuaUtils_Window_AddText("Debug Test","Forcing the XLuaUtils window open","Nominal",nil)
-                    XLuaUtils_Window_AddText("Debug Test","Clock placeholder","Nominal","Clock")
-                    XPLM.XPLMSetWindowIsVisible(XLuaUtilsWindow_ID,1)
-                    run_at_interval(Debug_Clock_Timer,1)
-                else
-                    stop_timer(Debug_Clock_Timer)
-                    XLuaUtils_Window_RemoveText("Debug Test")
-                end
-            end
-            if i == 4 then
                 Debug_Reload()
             end
             Debug_Menu_Watchdog(Debug_Menu_Items,i)

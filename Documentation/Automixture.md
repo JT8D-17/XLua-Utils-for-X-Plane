@@ -1,8 +1,21 @@
 ## XLuaUtils Automixture Utility
 
-This document contains information about XLuaUtils' automixture utility.
+&nbsp;
 
-[Back to Readme.md](../README.md) 
+_**CAUTION: This utility is unmaintained and only available when "Mode" in xluautils.lua is set to anything but "Stable"!**_
+
+As of version 12.00, X-Plane does not support complex automatic mixture controllers as found, for example on [Pratt & Whitney R-1830 type engines](https://www.enginehistory.org/Piston/P&W/R-1830/r-1830.shtml) of Douglas DC-3s and C-47s. These automatic controllers, in their "Auto Lean" and "Auto Rich" modes, automatically set the fuel mixture based on altitude to attain a specific [air-fuel-ratio](https://en.wikipedia.org/wiki/Air%E2%80%93fuel_ratio), easing crew workload and ensure maximum power or fuel saving.
+
+XLuaUtils has an automixture utility modeled after the R-1830's mixture controller with the following modes:
+- Manual: Manual mixture control
+- Idle Cutoff: Turns off the engine(s)
+- Auto Lean: Lean mixture (default air-fuel-ratio: 16.5) for fuel economy during cruise
+- Auto Rich: Rich mixture (default air-fuel-ratio: 12.5) for maximum power for takeoff
+- Full Rich: Maximum fuel consumption, but the excess fuel provides cylinder head cooling for situations with maximum power demands
+
+While X-Plane (12) offers a FADEC-based automixture control for reciprocating engines, the controller only offers a "maximum power" target, i.e. "Auto Rich" mode. Therefore, I felt it was necessary to code a custom solution.
+
+To offer seamless integration into aircraft models, the utility comes with a built-in capability to modify object files, primarily in order to implement detents for mixture levers. This offers a possibility for realistic in-cockpit operations without having to resort to an external menu.
 
 &nbsp;
 
