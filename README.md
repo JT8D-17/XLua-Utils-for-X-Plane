@@ -1,11 +1,9 @@
-# XLuaUtils for X-Plane 11/12
+# XLuaUtils for X-Plane 12 (and maybe still 11)
 
-XLuaUtils is a collection of scripts and utilities for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua), implemented as a companion script. XLuaUtils extends XLua's capabilities for demonstrating interaction with X-Plane's C API by means of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI).   
-It can be installed and used in any X-Plane 11/12 aircraft
-
-It also implements wrappers for some paths, logging, notifications, dataref interaction and debug information, which can help aircraft developers during development of XLua scripts.
-
-The persistence and noise-cancelling headset modules, as well as some miscellaneous utilities are aimed at end users who seek to get more out of an aircraft.
+XLuaUtils is a collection of scripts for X-Plane's [XLua plugin](https://github.com/X-Plane/XLua) that can be installed and used in any aircraft for X-Plane 12 (and maybe still 11).    
+End-users get a collection of handy utilities that facilitate or enhance the operation of aircraft in X-Plane, such as persistence, oxygen, headset and engine damage systems (plus various smaller items).    
+Developers get a collection of wrappers and an API to add their own utilities to the XLuaUtils environment.    
+As XLuaUtils makes heavy use of [LuaJIT](https://luajit.org/)'s [Foreign Function Interface](https://luajit.org/ext_ffi.html) (FFI) to access X-Plane's SDK library (written in C), it also serves as a demonstration for acessing C code from xlua.
 
 &nbsp;
 
