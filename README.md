@@ -9,7 +9,7 @@ As XLuaUtils makes heavy use of [LuaJIT](https://luajit.org/)'s [Foreign Functio
 
 <a name="toc"></a>
 ## Table of Contents
-1. [Features] (#1.0)
+1. [Features](#1.0)
 1. [Requirements](#2.0)
 1. [Installation](#3.0)
 1. [Uninstallation](#4.0)
