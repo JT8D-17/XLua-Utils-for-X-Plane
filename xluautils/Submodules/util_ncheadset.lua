@@ -19,6 +19,7 @@ local NCHeadset_Config_Vars = {
 {"MainTimerInterval",0.5},
 {"FModCompliant",1},
 {"NotifySuppress",0},
+{"Volume_Sliders",0,0,0,0,0,0,0}
 }
 --[[ List of Datarefs used by this module ]]
 local Dref_List = {
@@ -68,16 +69,19 @@ local function AllEnginesRunning()
 end
 --[[ Apply headset muffling ]]
 function NCHeadset_On()
-    for i=2,#NCHeadset_Datarefs do
-        NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * NCHeadset_Datarefs[i][5][1] -- Multiply default noise levels by noise cancellation factor
-        Dataref_Write(NCHeadset_Datarefs,4,"All")
-    end
+   Dataref_Read(NCHeadset_Datarefs,5,"All")
+   for i=2,#NCHeadset_Datarefs do
+      Table_ValSet(NCHeadset_Config_Vars,"Volume_Sliders",nil,i,NCHeadset_Datarefs[i][5][1])
+      NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"NoiseCancelLevel",nil,2) * NCHeadset_Datarefs[i][5][1] -- Multiply default noise levels by noise cancellation factor
+   end
+   Dataref_Write(NCHeadset_Datarefs,4,"All")
 end
 --[[ Remove headset muffling ]]
 function NCHeadset_Off()
-    for i=2,#NCHeadset_Datarefs do
-        Dataref_Write(NCHeadset_Datarefs,5,"All")
-    end
+   for i=2,#NCHeadset_Datarefs do
+      NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"Volume_Sliders",nil,i)
+   end
+   Dataref_Write(NCHeadset_Datarefs,5,"All")
 end
 --[[
 
@@ -224,16 +228,16 @@ function NCHeadset_FirstRun()
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function NCHeadset_Init()
-    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
-    if XLuaUtils_HasConfig == 1 then
-        DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-        Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
-        Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
-        run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(NCHeadset_MainTimer) then DisplayNotification("Headset: Initialized","Nominal",5) end
-        NCHeadset_Menu_Register()
-    end
-    LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
+   Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
+   if XLuaUtils_HasConfig == 1 then
+      DrefTable_Read(Dref_List,NCHeadset_Datarefs)
+      --Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
+      --Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
+      run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
+      if is_timer_scheduled(NCHeadset_MainTimer) then DisplayNotification("Headset: Initialized","Nominal",5) end
+      NCHeadset_Menu_Register()
+   end
+   LogOutput(NCHeadset_Config_Vars[1][1]..": Initialized!")
 end
 --[[ Module reload ]]
 function NCHeadset_Reload()
