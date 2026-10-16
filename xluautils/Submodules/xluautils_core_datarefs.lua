@@ -27,7 +27,7 @@ function Dataref_InitContainer(inputdrefline,outputtable)
         end
         -- Types: 1 - Integer, 2 - Float, 4 - Double, 7 - Unspecified numerical, 8 - Float array, 16 - Integer array, 32 - Data array
         -- Create subtable for dataref
-        outputtable[#outputtable+1] = {"","",0,{},{}} -- Alias, dataref, {values 1}, {values 2}
+        outputtable[#outputtable+1] = {"","",0,{},{}} -- 1:alias,2:dataref,3:dataref type,4:{values 1},5:{values 2}
         outputtable[#outputtable][1] = inputdrefline[1]
         outputtable[#outputtable][2] = inputdrefline[2]
         outputtable[#outputtable][3] = XPLM.XPLMGetDataRefTypes(dataref)

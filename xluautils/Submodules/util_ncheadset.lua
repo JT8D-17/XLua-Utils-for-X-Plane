@@ -19,7 +19,7 @@ local NCHeadset_Config_Vars = {
 {"MainTimerInterval",0.5},
 {"FModCompliant",1},
 {"NotifySuppress",0},
-{"Volume_Sliders",0,0,0,0,0,0,0}
+{"Volume_Sliders",-1,-1,-1,-1,-1,-1,-1}
 }
 --[[ List of Datarefs used by this module ]]
 local Dref_List = {
@@ -79,9 +79,9 @@ end
 --[[ Remove headset muffling ]]
 function NCHeadset_Off()
    for i=2,#NCHeadset_Datarefs do
-      NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"Volume_Sliders",nil,i)
+      if Table_ValGet(NCHeadset_Config_Vars,"Volume_Sliders",nil,i) >= 0 then NCHeadset_Datarefs[i][4][1] = Table_ValGet(NCHeadset_Config_Vars,"Volume_Sliders",nil,i) end
    end
-   Dataref_Write(NCHeadset_Datarefs,5,"All")
+   if NCHeadset_Datarefs[1][5] ~= nil then Dataref_Write(NCHeadset_Datarefs,5,"All") end
 end
 --[[
 
@@ -231,8 +231,6 @@ function NCHeadset_Init()
    Preferences_Read(XLuaUtils_PrefsFile,NCHeadset_Config_Vars)
    if XLuaUtils_HasConfig == 1 then
       DrefTable_Read(Dref_List,NCHeadset_Datarefs)
-      --Dataref_Read(NCHeadset_Datarefs,5,"All") -- Populate dataref container with current values as defaults
-      --Dataref_Read(NCHeadset_Datarefs,4,"All") -- Populate dataref container with current values
       run_at_interval(NCHeadset_MainTimer,Table_ValGet(NCHeadset_Config_Vars,"MainTimerInterval",nil,2))
       if is_timer_scheduled(NCHeadset_MainTimer) then DisplayNotification("Headset: Initialized","Nominal",5) end
       NCHeadset_Menu_Register()
