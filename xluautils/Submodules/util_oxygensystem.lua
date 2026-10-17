@@ -14,11 +14,11 @@ local OxygenSystem_Config_Vars = {
 {"MainTimerInterval",1},
 {"Automation",0},
 {"PilotAltitude",10000,8000},
-{"BottleCapacityLiters",50},
-{"BottleRemainingLiters",50},
-{"FlowSetting",2},
+{"BottleCapacityLiters",-1},
+{"BottleRemainingLiters",-1},
+{"FlowSetting",-1},
 {"MasksOn",0},
-{"Users",1},
+{"Users",-1},
 }
 --[[ Menu item table. The first item ALWAYS contains the menu's title! All other items list the menu item's name. ]]
 local OxygenSystem_Menu_Items = {
@@ -61,26 +61,17 @@ DRef_PilotAlt = find_dataref("sim/cockpit2/oxygen/indicators/pilot_felt_altitude
 FUNCTIONS
 
 ]]
---[[ Apply oxygen system ]]
+--[[ Put on oxygen mask ]]
 function OxygenSystem_On()
     DRef_Oxy_ValvePos = 1
     Table_ValSet(OxygenSystem_Config_Vars,"MasksOn",nil,2,1)
     DisplayNotification("Oxygen System: On ("..DRef_Oxy_NumUsers.." Users, Flow "..DRef_Oxy_FlowSetting..")","Nominal",10)
 end
---[[ Remove oxygen system ]]
+--[[ Remove oxygen mask ]]
 function OxygenSystem_Off()
     DRef_Oxy_ValvePos = 0
     Table_ValSet(OxygenSystem_Config_Vars,"MasksOn",nil,2,0)
     DisplayNotification("Oxygen System: Off","Nominal",10)
-end
-
---[[ Gets old dataref values ]]
-function OxygenSystem_WriteSaved()
-    if Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2) > DRef_Oxy_Capacity then DRef_Oxy_Capacity = Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2) end
-    DRef_Oxy_Remain = Table_ValGet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2)
-    DRef_Oxy_FlowSetting = Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2)
-    DRef_Oxy_NumUsers = Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2)
-    if Table_ValGet(OxygenSystem_Config_Vars,"MasksOn",nil,2) == 1 then OxygenSystem_On() end
 end
 --[[
 
@@ -257,19 +248,24 @@ INITIALIZATION
 ]]
 --[[ Module is run for the very first time ]]
 function OxygenSystem_FirstRun()
-    Preferences_Write(OxygenSystem_Config_Vars,XLuaUtils_PrefsFile)
-    LogOutput(OxygenSystem_Config_Vars[1][1]..": First Run!")
+   Preferences_Write(OxygenSystem_Config_Vars,XLuaUtils_PrefsFile)
+   LogOutput(OxygenSystem_Config_Vars[1][1]..": First Run!")
 end
 --[[ Module initialization at every Xlua Utils start ]]
 function OxygenSystem_Init()
-    Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
-    if XLuaUtils_HasConfig == 1 then
-        OxygenSystem_WriteSaved()
-        run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
-        if is_timer_scheduled(OxygenSystem_MainTimer) then DisplayNotification("Oxygen System: Initialized","Nominal",5) end
-        OxygenSystem_Menu_Register()
-        LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
-    end
+   Preferences_Read(XLuaUtils_PrefsFile,OxygenSystem_Config_Vars)
+   if XLuaUtils_HasConfig == 1 then
+      -- Detect the configuration of the aircraft's oxygen system'
+      if Table_ValGet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2) == -1 then Table_ValSet(OxygenSystem_Config_Vars,"BottleCapacityLiters",nil,2,DRef_Oxy_Capacity) end
+      if Table_ValGet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2) == -1 then Table_ValSet(OxygenSystem_Config_Vars,"BottleRemainingLiters",nil,2,DRef_Oxy_Remain) end
+      if Table_ValGet(OxygenSystem_Config_Vars,"FlowSetting",nil,2) == -1 then Table_ValSet(OxygenSystem_Config_Vars,"FlowSetting",nil,2,DRef_Oxy_FlowSetting) end
+      if Table_ValGet(OxygenSystem_Config_Vars,"Users",nil,2) == -1 then Table_ValSet(OxygenSystem_Config_Vars,"Users",nil,2,DRef_Oxy_NumUsers) end
+      if Table_ValGet(OxygenSystem_Config_Vars,"MasksOn",nil,2) == 1 then OxygenSystem_On() end
+      run_at_interval(OxygenSystem_MainTimer,Table_ValGet(OxygenSystem_Config_Vars,"MainTimerInterval",nil,2))
+      if is_timer_scheduled(OxygenSystem_MainTimer) then DisplayNotification("Oxygen System: Initialized","Nominal",5) end
+      OxygenSystem_Menu_Register()
+      LogOutput(OxygenSystem_Config_Vars[1][1]..": Initialized!")
+   end
 end
 --[[ Module reload ]]
 function OxygenSystem_Reload()
